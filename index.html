@@ -4,18 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mike Hadfield</title>
+    <meta name="description" content="Personal site of Mike Hadfield — coming soon.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="grid"></div>
-    <div class="vignette"></div>
-    <div class="noise"></div>
-    <div class="orb"></div>
-    <div class="orb"></div>
-    
-    <div class="container">
-        <div class="symbol">◬</div>
-        <h1>Coming Soon...</h1>
-    </div>
+    <div class="grid-bg" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <main class="terminal">
+        <div class="terminal__bar">
+            <div class="terminal__dots">
+                <span class="dot dot--red"></span>
+                <span class="dot dot--yellow"></span>
+                <span class="dot dot--green"></span>
+            </div>
+            <span class="terminal__path">visitor@mikehadfield:~</span>
+        </div>
+
+        <div class="terminal__body">
+            <p class="kicker"><span class="status-dot"></span>SYSTEM STATUS: UNDER MAINTENANCE</p>
+
+            <h1 class="name">MIKE HADFIELD</h1>
+
+            <p class="tagline"><span class="prompt">$</span> site under construction<span class="cursor">_</span></p>
+
+            <nav class="links" aria-label="Site sections (coming soon)">
+                <button class="link-btn" type="button" disabled title="Coming soon">
+                    <span class="link-btn__label">CV</span>
+                    <span class="link-btn__tag">soon</span>
+                </button>
+                <button class="link-btn" type="button" disabled title="Coming soon">
+                    <span class="link-btn__label">Projects</span>
+                    <span class="link-btn__tag">soon</span>
+                </button>
+                <button class="link-btn" type="button" disabled title="Coming soon">
+                    <span class="link-btn__label">Contact</span>
+                    <span class="link-btn__tag">soon</span>
+                </button>
+            </nav>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span>mikehadfield.co.uk</span>
+        <span class="footer__sep" aria-hidden="true">·</span>
+        <span>&copy; 2026</span>
+    </footer>
 </body>
 </html>
