@@ -16,37 +16,71 @@
     <div class="grid-bg" aria-hidden="true"></div>
     <div class="scanlines" aria-hidden="true"></div>
 
-    <main class="terminal">
+    <main class="terminal" id="terminal">
         <div class="terminal__bar">
             <div class="terminal__dots">
-                <span class="dot dot--red"></span>
-                <span class="dot dot--yellow"></span>
-                <span class="dot dot--green"></span>
+                <button class="dot dot--red" type="button" id="close-dot" title="Close and return to landing page" aria-label="Close and return to landing page"></button>
+                <span class="dot dot--yellow" aria-hidden="true"></span>
+                <span class="dot dot--green" aria-hidden="true"></span>
             </div>
-            <span class="terminal__path">visitor@mikehadfield:~</span>
+            <span class="terminal__path" id="terminal-path">visitor@mikehadfield:~</span>
         </div>
 
-        <div class="terminal__body">
-            <p class="kicker"><span class="status-dot"></span>SYSTEM STATUS: UNDER MAINTENANCE</p>
+        <div class="terminal__viewport">
+            <div class="terminal__body view view--home" id="view-home">
+                <p class="kicker"><span class="status-dot"></span>SYSTEM STATUS: UNDER MAINTENANCE</p>
 
-            <h1 class="name">MIKE HADFIELD</h1>
+                <h1 class="name">MIKE HADFIELD</h1>
 
-            <p class="tagline"><span class="prompt">$</span> site under construction<span class="cursor">_</span></p>
+                <p class="tagline"><span class="prompt">$</span> site under construction<span class="cursor">_</span></p>
 
-            <nav class="links" aria-label="Site sections (coming soon)">
-                <button class="link-btn" type="button" disabled title="Coming soon">
-                    <span class="link-btn__label">CV</span>
-                    <span class="link-btn__tag">soon</span>
+                <nav class="links" aria-label="Site sections">
+                    <button class="link-btn" type="button" disabled title="Coming soon">
+                        <span class="link-btn__label">CV</span>
+                        <span class="link-btn__tag">soon</span>
+                    </button>
+                    <button class="link-btn" type="button" disabled title="Coming soon">
+                        <span class="link-btn__label">Projects</span>
+                        <span class="link-btn__tag">soon</span>
+                    </button>
+                    <button class="link-btn link-btn--active" type="button" id="contact-btn">
+                        <span class="link-btn__label">Contact</span>
+                        <span class="link-btn__arrow" aria-hidden="true">&rarr;</span>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="terminal__body view view--contact" id="view-contact" hidden>
+                <button class="back-btn" type="button" id="back-btn">
+                    <span aria-hidden="true">&larr;</span> back
                 </button>
-                <button class="link-btn" type="button" disabled title="Coming soon">
-                    <span class="link-btn__label">Projects</span>
-                    <span class="link-btn__tag">soon</span>
-                </button>
-                <button class="link-btn" type="button" disabled title="Coming soon">
-                    <span class="link-btn__label">Contact</span>
-                    <span class="link-btn__tag">soon</span>
-                </button>
-            </nav>
+
+                <h2 class="form-title"><span class="prompt">$</span> contact --new</h2>
+                <p class="tagline">fill in the form below<span class="cursor">_</span></p>
+
+                <form class="contact-form" id="contact-form" action="https://formspree.io/f/xeajwnoj" method="POST">
+                    <label class="field">
+                        <span class="field__label">name</span>
+                        <input type="text" name="name" placeholder="Jane Doe" autocomplete="name" required>
+                    </label>
+                    <label class="field">
+                        <span class="field__label">email</span>
+                        <input type="email" name="email" placeholder="jane@example.com" autocomplete="email" required>
+                    </label>
+                    <label class="field">
+                        <span class="field__label">message</span>
+                        <textarea name="message" rows="4" placeholder="Say hello..." required></textarea>
+                    </label>
+
+                    <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
+                    <input type="hidden" name="_subject" value="New message from mikehadfield.co.uk">
+
+                    <div class="form-actions">
+                        <button class="submit-btn" type="submit" id="submit-btn">send message</button>
+                        <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+                    </div>
+                </form>
+            </div>
         </div>
     </main>
 
@@ -55,5 +89,7 @@
         <span class="footer__sep" aria-hidden="true">·</span>
         <span>&copy; 2026</span>
     </footer>
+
+    <script src="script.js" defer></script>
 </body>
 </html>

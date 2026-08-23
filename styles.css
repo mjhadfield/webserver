@@ -96,11 +96,28 @@ body {
     height: 10px;
     border-radius: 50%;
     background: #333;
+    border: none;
+    padding: 0;
 }
 
 .dot--red { background: #ff5f56; }
 .dot--yellow { background: #ffbd2e; }
 .dot--green { background: #27c93f; }
+
+button.dot {
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+button.dot:hover {
+    filter: brightness(1.2);
+    transform: scale(1.15);
+}
+
+button.dot:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
 
 .terminal__path {
     font-size: 0.75rem;
@@ -108,14 +125,65 @@ body {
     letter-spacing: 0.02em;
 }
 
+.terminal__viewport {
+    position: relative;
+}
+
 .terminal__body {
     padding: clamp(32px, 6vw, 56px) clamp(24px, 6vw, 48px);
-    text-align: center;
 }
 
 @keyframes fade-in {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- view switching ---------- */
+
+.view--home {
+    text-align: center;
+}
+
+.view--contact {
+    text-align: left;
+}
+
+.view[hidden] {
+    display: none;
+}
+
+.view {
+    animation: view-in 0.35s ease both;
+}
+
+.view--leaving {
+    animation: view-out 0.2s ease both;
+}
+
+@keyframes view-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+        filter: blur(2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+@keyframes view-out {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-6px);
+        filter: blur(2px);
+    }
 }
 
 /* ---------- status kicker ---------- */
@@ -219,6 +287,187 @@ body {
     padding: 2px 6px;
 }
 
+.link-btn--active {
+    cursor: pointer;
+    color: var(--fg);
+    border: 1px solid var(--accent-dim);
+    background: rgba(53, 224, 160, 0.05);
+}
+
+.link-btn--active .link-btn__arrow {
+    color: var(--accent);
+    transition: transform 0.2s ease;
+}
+
+.link-btn--active:hover {
+    border-color: var(--accent);
+    background: rgba(53, 224, 160, 0.09);
+}
+
+.link-btn--active:hover .link-btn__arrow {
+    transform: translateX(3px);
+}
+
+.link-btn--active:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* ---------- contact view ---------- */
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 24px;
+    background: none;
+    border: none;
+    color: var(--fg-dim);
+    font-family: inherit;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.2s ease;
+}
+
+.back-btn:hover {
+    color: var(--accent);
+}
+
+.back-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.form-title {
+    font-size: clamp(1.2rem, 3.4vw, 1.5rem);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    margin-bottom: 8px;
+}
+
+.view--contact .tagline {
+    margin-bottom: 8px;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 28px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field__label {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+}
+
+.field input,
+.field textarea {
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--fg);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+    color: var(--grey-btn-text);
+}
+
+.field input:focus,
+.field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.submit-btn {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 12px 22px;
+    background: rgba(53, 224, 160, 0.08);
+    border: 1px solid var(--accent-dim);
+    border-radius: 8px;
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.submit-btn:hover {
+    border-color: var(--accent);
+    background: rgba(53, 224, 160, 0.14);
+}
+
+.submit-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.submit-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.form-status {
+    font-size: 0.78rem;
+    color: var(--fg-dim);
+}
+
+.form-status--success {
+    color: var(--accent);
+}
+
+.form-status--error {
+    color: #ff5f56;
+}
+
+.reset-btn {
+    background: none;
+    border: none;
+    color: var(--fg-dim);
+    font-family: inherit;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.reset-btn:hover {
+    color: var(--accent);
+}
+
+.reset-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
 /* ---------- footer ---------- */
 
 .footer {
@@ -245,6 +494,11 @@ body {
     .link-btn {
         flex: 1 1 100%;
         max-width: none;
+    }
+
+    .submit-btn {
+        align-self: stretch;
+        text-align: center;
     }
 }
 
