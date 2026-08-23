@@ -58,18 +58,18 @@
                 <h2 class="form-title"><span class="prompt">$</span> contact --new</h2>
                 <p class="tagline">fill in the form below<span class="cursor">_</span></p>
 
-                <form class="contact-form" id="contact-form" action="https://formspree.io/f/xeajwnoj" method="POST">
+                <form class="contact-form" id="contact-form" action="https://formspree.io/f/xeajwnoj" method="POST" novalidate>
                     <label class="field">
                         <span class="field__label">name</span>
-                        <input type="text" name="name" placeholder="Jane Doe" autocomplete="name" required>
+                        <input type="text" name="name" placeholder="Scooby Doo" autocomplete="name" minlength="3" required>
                     </label>
                     <label class="field">
                         <span class="field__label">email</span>
-                        <input type="email" name="email" placeholder="jane@example.com" autocomplete="email" required>
+                        <input type="email" name="email" placeholder="scooby@example.com" autocomplete="email" required>
                     </label>
                     <label class="field">
                         <span class="field__label">message</span>
-                        <textarea name="message" rows="4" placeholder="Say hello..." required></textarea>
+                        <textarea name="message" rows="4" placeholder="Say hello..." minlength="10" required></textarea>
                     </label>
 
                     <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">

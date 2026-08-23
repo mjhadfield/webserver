@@ -48,6 +48,61 @@
         }
     });
 
+    var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    var fields = [
+        {
+            el: form.querySelector('input[name="name"]'),
+            validate: function (value) { return value.trim().length >= 3; }
+        },
+        {
+            el: form.querySelector('input[name="email"]'),
+            validate: function (value) { return EMAIL_PATTERN.test(value.trim()); }
+        },
+        {
+            el: form.querySelector('textarea[name="message"]'),
+            validate: function (value) { return value.trim().length >= 10; }
+        }
+    ];
+
+    function validateField(field) {
+        var valid = field.validate(field.el.value);
+        field.el.classList.toggle('is-invalid', !valid);
+        field.el.setAttribute('aria-invalid', valid ? 'false' : 'true');
+        return valid;
+    }
+
+    function validateAll() {
+        var allValid = true;
+        fields.forEach(function (field) {
+            if (!validateField(field)) {
+                allValid = false;
+            }
+        });
+        return allValid;
+    }
+
+    function clearValidation() {
+        fields.forEach(function (field) {
+            field.el.classList.remove('is-invalid');
+            field.el.removeAttribute('aria-invalid');
+        });
+    }
+
+    fields.forEach(function (field) {
+        // Validate once the visitor leaves a field...
+        field.el.addEventListener('blur', function () {
+            validateField(field);
+        });
+        // ...and re-check on every keystroke only once it's already
+        // flagged invalid, so the red border clears as soon as it's fixed.
+        field.el.addEventListener('input', function () {
+            if (field.el.classList.contains('is-invalid')) {
+                validateField(field);
+            }
+        });
+    });
+
     function setStatus(text, variant) {
         status.textContent = text;
         status.className = 'form-status' + (variant ? ' form-status--' + variant : '');
@@ -69,6 +124,7 @@
         reset.addEventListener('click', function () {
             form.reset();
             lockForm(false);
+            clearValidation();
             setStatus('');
             reset.remove();
             submitBtn.textContent = 'send message';
@@ -80,6 +136,19 @@
 
     form.addEventListener('submit', function (event) {
         event.preventDefault();
+
+        if (!validateAll()) {
+            var firstInvalid = fields.filter(function (field) {
+                return field.el.classList.contains('is-invalid');
+            })[0];
+
+            if (firstInvalid) {
+                firstInvalid.el.focus();
+            }
+
+            setStatus('Please check the highlighted fields.', 'error');
+            return;
+        }
 
         submitBtn.disabled = true;
         submitBtn.textContent = 'sending...';

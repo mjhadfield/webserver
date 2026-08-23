@@ -395,6 +395,13 @@ button.dot:focus-visible {
     border-color: var(--accent);
 }
 
+.field input.is-invalid,
+.field textarea.is-invalid,
+.field input.is-invalid:focus,
+.field textarea.is-invalid:focus {
+    border-color: #ff5f56;
+}
+
 .submit-btn {
     align-self: flex-start;
     margin-top: 4px;
@@ -487,6 +494,14 @@ button.dot:focus-visible {
 /* ---------- responsive ---------- */
 
 @media (max-width: 480px) {
+    body {
+        justify-content: flex-start;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding-top: 56px;
+        padding-bottom: 32px;
+    }
+
     .terminal__body {
         padding: 32px 20px;
     }
