@@ -498,7 +498,7 @@ button.dot:focus-visible {
         justify-content: flex-start;
         overflow-x: hidden;
         overflow-y: auto;
-        padding-top: 56px;
+        padding-top: clamp(48px, 12vh, 160px);
         padding-bottom: 32px;
     }
 
