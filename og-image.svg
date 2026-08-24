@@ -34,8 +34,8 @@
     <text x="1004" y="127" text-anchor="end" font-size="17" fill="#78897f" letter-spacing="0.5">visitor@mikehadfield:~</text>
 
     <!-- kicker -->
-    <circle cx="386" cy="222" r="5" fill="#ff9f40"/>
-    <text x="402" y="228" font-size="16" fill="#78897f" letter-spacing="3">SYSTEM STATUS: UNDER MAINTENANCE</text>
+    <circle cx="386" cy="222" r="5" fill="#35e0a0"/>
+    <text x="402" y="228" font-size="16" fill="#78897f" letter-spacing="3">SYSTEM STATUS: ONLINE</text>
 
     <!-- name -->
     <text x="600" y="322" text-anchor="middle" font-size="72" font-weight="700" fill="#e7f3ee" letter-spacing="6">MIKE HADFIELD</text>
@@ -47,17 +47,15 @@
       <tspan fill="#35e0a0" dx="4">_</tspan>
     </text>
 
-    <!-- nav buttons (decorative) -->
-    <rect x="322" y="432" width="150" height="54" rx="8" fill="rgba(53,224,160,0.05)" stroke="#35e0a0" stroke-opacity="0.35" stroke-width="1.5"/>
-    <text x="397" y="465" text-anchor="middle" font-size="18" fill="#e7f3ee" letter-spacing="1.5">CV</text>
-
-    <rect x="497" y="432" width="200" height="54" rx="8" fill="#0e1311" stroke="#232c27" stroke-width="1.5" stroke-dasharray="4 4"/>
-    <text x="522" y="465" font-size="18" fill="#4c5850" letter-spacing="1.5">Projects</text>
-    <rect x="632" y="450" width="42" height="18" rx="9" fill="rgba(255,255,255,0.04)" stroke="#232c27" stroke-width="1"/>
-    <text x="653" y="463" text-anchor="middle" font-size="10" fill="#4c5850" letter-spacing="1">SOON</text>
-
-    <rect x="727" y="432" width="150" height="54" rx="8" fill="rgba(53,224,160,0.05)" stroke="#35e0a0" stroke-opacity="0.35" stroke-width="1.5"/>
-    <text x="802" y="465" text-anchor="middle" font-size="18" fill="#e7f3ee" letter-spacing="1.5">Contact</text>
+    <!-- sub-terminal command line -->
+    <text x="600" y="448" text-anchor="middle" font-size="19">
+      <tspan fill="#35e0a0">$</tspan>
+      <tspan fill="#78897f" dx="10">cat about.txt</tspan>
+    </text>
+    <text x="600" y="480" text-anchor="middle" font-size="19">
+      <tspan fill="#e7f3ee">A virtual CV and digital portfolio for Mike Hadfield</tspan>
+      <tspan fill="#35e0a0" dx="4">_</tspan>
+    </text>
 
     <!-- footer -->
     <text x="600" y="580" text-anchor="middle" font-size="15" fill="#78897f" letter-spacing="1">mikehadfield.co.uk</text>
