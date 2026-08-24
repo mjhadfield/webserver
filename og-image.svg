@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(53,224,160,0.09)" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="fade" cx="50%" cy="46%" r="65%">
+      <stop offset="0%" stop-color="white" stop-opacity="1"/>
+      <stop offset="75%" stop-color="white" stop-opacity="1"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="fade-mask">
+      <rect width="1200" height="630" fill="url(#fade)"/>
+    </mask>
+    <radialGradient id="glow" cx="50%" cy="46%" r="55%">
+      <stop offset="0%" stop-color="#35e0a0" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#35e0a0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- base -->
+  <rect width="1200" height="630" fill="#06080a"/>
+  <rect width="1200" height="630" fill="url(#grid)" mask="url(#fade-mask)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- terminal card -->
+  <g font-family="Hack, 'DejaVu Sans Mono', 'JetBrains Mono', monospace">
+    <rect x="160" y="92" width="880" height="446" rx="14" fill="#0c1210" stroke="#1c2622" stroke-width="2"/>
+
+    <!-- title bar -->
+    <line x1="160" y1="150" x2="1040" y2="150" stroke="#141b18" stroke-width="2"/>
+    <circle cx="196" cy="121" r="7" fill="#ff5f56"/>
+    <circle cx="220" cy="121" r="7" fill="#ffbd2e"/>
+    <circle cx="244" cy="121" r="7" fill="#27c93f"/>
+    <text x="1004" y="127" text-anchor="end" font-size="17" fill="#78897f" letter-spacing="0.5">visitor@mikehadfield:~</text>
+
+    <!-- kicker -->
+    <circle cx="386" cy="222" r="5" fill="#ff9f40"/>
+    <text x="402" y="228" font-size="16" fill="#78897f" letter-spacing="3">SYSTEM STATUS: UNDER MAINTENANCE</text>
+
+    <!-- name -->
+    <text x="600" y="322" text-anchor="middle" font-size="72" font-weight="700" fill="#e7f3ee" letter-spacing="6">MIKE HADFIELD</text>
+
+    <!-- tagline -->
+    <text x="600" y="382" text-anchor="middle" font-size="24">
+      <tspan fill="#35e0a0">$</tspan>
+      <tspan fill="#78897f" dx="10">LIMS specialist</tspan>
+      <tspan fill="#35e0a0" dx="4">_</tspan>
+    </text>
+
+    <!-- nav buttons (decorative) -->
+    <rect x="322" y="432" width="150" height="54" rx="8" fill="rgba(53,224,160,0.05)" stroke="#35e0a0" stroke-opacity="0.35" stroke-width="1.5"/>
+    <text x="397" y="465" text-anchor="middle" font-size="18" fill="#e7f3ee" letter-spacing="1.5">CV</text>
+
+    <rect x="497" y="432" width="200" height="54" rx="8" fill="#0e1311" stroke="#232c27" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <text x="522" y="465" font-size="18" fill="#4c5850" letter-spacing="1.5">Projects</text>
+    <rect x="632" y="450" width="42" height="18" rx="9" fill="rgba(255,255,255,0.04)" stroke="#232c27" stroke-width="1"/>
+    <text x="653" y="463" text-anchor="middle" font-size="10" fill="#4c5850" letter-spacing="1">SOON</text>
+
+    <rect x="727" y="432" width="150" height="54" rx="8" fill="rgba(53,224,160,0.05)" stroke="#35e0a0" stroke-opacity="0.35" stroke-width="1.5"/>
+    <text x="802" y="465" text-anchor="middle" font-size="18" fill="#e7f3ee" letter-spacing="1.5">Contact</text>
+
+    <!-- footer -->
+    <text x="600" y="580" text-anchor="middle" font-size="15" fill="#78897f" letter-spacing="1">mikehadfield.co.uk</text>
+  </g>
+</svg>
