@@ -104,17 +104,17 @@ body {
 .dot--yellow { background: #ffbd2e; }
 .dot--green { background: #27c93f; }
 
-button.dot {
+.dot--link {
     cursor: pointer;
     transition: filter 0.15s ease, transform 0.15s ease;
 }
 
-button.dot:hover {
+.dot--link:hover {
     filter: brightness(1.2);
     transform: scale(1.15);
 }
 
-button.dot:focus-visible {
+.dot--link:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
@@ -268,8 +268,17 @@ button.dot:focus-visible {
     font-family: inherit;
     font-size: 0.85rem;
     letter-spacing: 0.06em;
+    text-decoration: none;
     cursor: not-allowed;
     transition: border-color 0.2s ease;
+}
+
+.link-btn:visited {
+    color: var(--grey-btn-text);
+}
+
+.link-btn--active:visited {
+    color: var(--fg);
 }
 
 .link-btn:hover {
@@ -475,6 +484,231 @@ button.dot:focus-visible {
     outline-offset: 2px;
 }
 
+/* ---------- document pages (cv, projects) ---------- */
+
+body.page--doc {
+    justify-content: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-top: clamp(40px, 8vh, 96px);
+    padding-bottom: 48px;
+}
+
+.terminal--doc {
+    max-width: 760px;
+    text-align: left;
+}
+
+.cv-header,
+.cv-section {
+    padding: 28px clamp(24px, 6vw, 48px);
+}
+
+.cv-section {
+    border-top: 1px solid var(--border-soft);
+}
+
+.cv-header .back-btn {
+    margin-bottom: 20px;
+}
+
+.contact-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    list-style: none;
+    font-size: 0.8rem;
+    color: var(--fg-dim);
+    margin-top: 16px;
+}
+
+.contact-list a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.contact-list a:hover,
+.contact-list a:focus-visible {
+    color: var(--accent);
+}
+
+.contact-list a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.contact-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.contact-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--accent);
+}
+
+.section-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--fg);
+    margin-bottom: 20px;
+}
+
+.section-body {
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--fg-dim);
+    max-width: 68ch;
+}
+
+.section-body + .section-body {
+    margin-top: 14px;
+}
+
+.inline-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.inline-link:hover,
+.inline-link:focus-visible {
+    color: var(--fg);
+}
+
+.inline-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* skills */
+
+.skills-group + .skills-group {
+    margin-top: 20px;
+}
+
+.skills-group__label {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    margin-bottom: 10px;
+}
+
+.skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+}
+
+.skill-tags li {
+    font-size: 0.78rem;
+    color: var(--fg);
+    background: rgba(53, 224, 160, 0.05);
+    border: 1px solid var(--accent-dim);
+    border-radius: 999px;
+    padding: 5px 12px;
+    letter-spacing: 0.02em;
+}
+
+/* timeline (work experience) */
+
+.timeline {
+    list-style: none;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding-left: 24px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 3.5px;
+    top: 6px;
+    bottom: 6px;
+    width: 1px;
+    background: var(--border);
+}
+
+.timeline__item {
+    position: relative;
+}
+
+.timeline__item::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--bg-elevated);
+}
+
+.timeline__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 16px;
+    margin-bottom: 2px;
+}
+
+.timeline__role {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--fg);
+    letter-spacing: 0.01em;
+}
+
+.timeline__date {
+    font-size: 0.72rem;
+    color: var(--accent);
+    white-space: nowrap;
+}
+
+.timeline__org {
+    font-size: 0.8rem;
+    color: var(--fg-dim);
+    margin-bottom: 10px;
+}
+
+.timeline__list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 18px;
+}
+
+.timeline__list li {
+    font-size: 0.82rem;
+    color: var(--fg-dim);
+    line-height: 1.5;
+}
+
+.timeline__list li::marker {
+    color: var(--accent);
+}
+
+/* education / interests (reuse timeline typography, no line) */
+
+.doc-entry + .doc-entry {
+    margin-top: 24px;
+}
+
 /* ---------- footer ---------- */
 
 .footer {
@@ -514,6 +748,25 @@ button.dot:focus-visible {
     .submit-btn {
         align-self: stretch;
         text-align: center;
+    }
+
+    .cv-header,
+    .cv-section {
+        padding: 24px 20px;
+    }
+
+    .timeline {
+        padding-left: 20px;
+    }
+
+    .timeline__item::before {
+        left: -20px;
+    }
+
+    .timeline__head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
     }
 }
 

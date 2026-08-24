@@ -13,6 +13,14 @@
     var HOME_PATH = 'visitor@mikehadfield:~';
     var CONTACT_PATH = 'visitor@mikehadfield:~/contact';
 
+    // Deep link support: arriving at index.html#contact (e.g. from the
+    // redacted phone number on the CV page) opens straight into the form.
+    if (window.location.hash === '#contact') {
+        home.hidden = true;
+        contact.hidden = false;
+        path.textContent = CONTACT_PATH;
+    }
+
     // Swaps one view for another with a brief exit/enter animation,
     // then moves focus somewhere sensible for keyboard users.
     function swapView(from, to, pathText, focusTarget) {
