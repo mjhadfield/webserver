@@ -768,6 +768,10 @@ body.page--doc {
         align-items: flex-start;
         gap: 2px;
     }
+
+    body.page--doc {
+        padding-top: 16px;
+    }
 }
 
 /* ---------- motion preference ---------- */
