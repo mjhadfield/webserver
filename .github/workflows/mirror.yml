@@ -1,0 +1,27 @@
+name: Sync to Work Mirror
+
+on:
+  push:
+    branches:
+      - main  # Change to 'master' if your default branch is named master
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+
+      - name: Remove CNAME for mirror
+        run: rm -f CNAME
+
+      - name: Push to Mirror Repo
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.MIRROR_TOKEN }}
+        with:
+          source-directory: '.'
+          destination-github-username: 'mjhadfield'
+          destination-repository-name: 'site'
+          user-email: 'mikehadfield89@gmail.com'
+          target-branch: 'main'
