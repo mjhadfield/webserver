@@ -22,6 +22,9 @@ jobs:
           GH_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           rm -rf .git
+          rm -rf .github
+          rm -f CNAME
+
           git init
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -31,4 +34,5 @@ jobs:
           git add .
           git commit -m "Mirror website from main repository"
           git branch -M main
+
           git push --force origin main
