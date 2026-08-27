@@ -19,7 +19,7 @@ jobs:
 
       - name: Copy website to mirror repository
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           rm -rf .git
           git init
