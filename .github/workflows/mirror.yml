@@ -25,3 +25,4 @@ jobs:
           destination-repository-name: 'site'
           user-email: 'mikehadfield89@gmail.com'
           target-branch: 'main'
+          create-target-branch-if-needed: true
