@@ -3,7 +3,8 @@ name: Sync to Work Mirror
 on:
   push:
     branches:
-      - main  # Change to 'master' if your default branch is named master
+      - main
+  workflow_dispatch:
 
 jobs:
   mirror:
@@ -24,5 +25,6 @@ jobs:
           destination-github-username: 'mjhadfield'
           destination-repository-name: 'site'
           user-email: 'mikehadfield89@gmail.com'
+          user-name: 'mjhadfield'
           target-branch: 'main'
           create-target-branch-if-needed: true
