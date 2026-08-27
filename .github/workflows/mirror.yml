@@ -12,19 +12,21 @@ jobs:
     steps:
       - name: Checkout main repository
         uses: actions/checkout@v4
-
-      - name: Remove CNAME for mirror
-        run: rm -f CNAME
-
-      - name: Push to Mirror Repo
-        uses: cpina/github-action-push-to-another-repository@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.MIRROR_TOKEN }}
         with:
-          source-directory: '.'
-          destination-github-username: 'mjhadfield'
-          destination-repository-name: 'site'
-          user-email: 'mikehadfield89@gmail.com'
-          user-name: 'mjhadfield'
-          target-branch: 'main'
-          create-target-branch-if-needed: true
+          fetch-depth: 0
+
+      - name: Push to Mirror Repository
+        run: |
+          # 1. Remove CNAME so github.io won't redirect
+          rm -f CNAME
+          
+          # 2. Configure temporary git identity for the commit
+          git config user.name "mjhadfield"
+          git config user.email "mikehadfield89@gmail.com"
+          
+          # 3. Commit the CNAME removal if needed
+          git add -A
+          git diff-index --quiet HEAD || git commit -m "Strip CNAME for work mirror"
+          
+          # 4. Push directly using the classic token in the URL
+          git push --force https://mjhadfield:${{ secrets.MIRROR_TOKEN }}@github.com/mjhadfield/site.git HEAD:main
