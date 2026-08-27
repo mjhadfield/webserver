@@ -1,0 +1,34 @@
+name: Mirror website to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main website
+        uses: actions/checkout@v6
+
+      - name: Copy website to mirror repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          rm -rf .git
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git remote add origin https://x-access-token:${GH_TOKEN}@github.com/mjhadfield/site.git
+
+          git add .
+          git commit -m "Mirror website from main repository"
+          git branch -M main
+          git push --force origin main
