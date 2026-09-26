@@ -1,0 +1,61 @@
+{
+  "slug": "home-casino",
+  "title": "Home Casino",
+  "summary": "Browser-based card games for game night — one host, everyone else joins from their phone.",
+  "tags": [
+    "JavaScript",
+    "WebSockets",
+    "Node",
+    "CSS"
+  ],
+  "repo": "https://github.com/mjhadfield",
+  "status": "published",
+  "started": "2025-11",
+  "updated": "2026-08-02",
+  "body": "## Why\nDonec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat.\n::figure[table]\n## Architecture\nAliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus. Phasellus ultrices nulla quis nibh.\n```\nhost  ──ws──▶  table state  ◀──ws──  phones\n```\n::figure[lobby]\nQuisque a lectus. Donec consectetuer ligula vulputate sem tristique cursus.",
+  "figures": {
+    "table": {
+      "src": "content/img/home-casino/casino-table.svg",
+      "w": 1600,
+      "h": 1000,
+      "title": "The table",
+      "caption": "Donec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus.",
+      "hotspots": [
+        {
+          "x": 50,
+          "y": 17,
+          "note": "Neque id cursus faucibus — the player to act."
+        },
+        {
+          "x": 50,
+          "y": 49,
+          "note": "Tortor neque egestas augue, the community cards."
+        },
+        {
+          "x": 50,
+          "y": 61.5,
+          "note": "Eu vulputate magna eros eu erat — the pot."
+        }
+      ]
+    },
+    "lobby": {
+      "src": "content/img/home-casino/casino-lobby.svg",
+      "w": 1600,
+      "h": 1000,
+      "title": "Lobby and history",
+      "caption": "Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor.",
+      "hotspots": [
+        {
+          "x": 42,
+          "y": 22,
+          "note": "Facilisis luctus, metus — join a table."
+        },
+        {
+          "x": 75,
+          "y": 45,
+          "note": "Phasellus ultrices nulla quis nibh, session results."
+        }
+      ]
+    }
+  }
+}

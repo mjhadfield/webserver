@@ -1,0 +1,58 @@
+[
+  {
+    "slug": "citadel",
+    "title": "Citadel",
+    "summary": "A self-hosted life dashboard that launches, supervises and links together everything running at home.",
+    "tags": [
+      "Python",
+      "FastAPI",
+      "JavaScript",
+      "SQLite"
+    ],
+    "status": "published",
+    "started": "2026-03",
+    "updated": "2026-09-20"
+  },
+  {
+    "slug": "music-companion",
+    "title": "Music Companion",
+    "summary": "Fifteen years of scrobbles, a vinyl collection and every gig attended, in one queryable library.",
+    "tags": [
+      "Python",
+      "SQLite",
+      "sql.js",
+      "MusicBrainz"
+    ],
+    "status": "published",
+    "started": "2026-06",
+    "updated": "2026-09-25"
+  },
+  {
+    "slug": "home-casino",
+    "title": "Home Casino",
+    "summary": "Browser-based card games for game night — one host, everyone else joins from their phone.",
+    "tags": [
+      "JavaScript",
+      "WebSockets",
+      "Node",
+      "CSS"
+    ],
+    "status": "published",
+    "started": "2025-11",
+    "updated": "2026-08-02"
+  },
+  {
+    "slug": "star-epr",
+    "title": "Star EPR",
+    "summary": "An electronic patient record prototype exploring clean request and results workflows.",
+    "tags": [
+      "Python",
+      "Flask",
+      "HL7",
+      "SQL"
+    ],
+    "status": "published",
+    "started": "2025-06",
+    "updated": "2026-02-14"
+  }
+]

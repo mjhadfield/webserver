@@ -1,0 +1,477 @@
+/* Admin page only (admin.html) -- visitors never load this. Builds on styles.css. */
+
+/* ---------- admin ---------- */
+
+.admin-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 18px clamp(20px, 3vw, 32px) 0;
+    padding: 9px 14px;
+    font-size: 0.72rem;
+    color: var(--warn);
+    border: 1px dashed var(--warn-dim);
+    border-radius: 6px;
+}
+
+.login {
+    padding: 48px clamp(24px, 5vw, 48px);
+    font-size: 0.86rem;
+    line-height: 2;
+}
+
+.login__line { color: var(--fg-dim); }
+
+.login input {
+    font: inherit;
+    color: var(--fg);
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 20ch;
+    caret-color: var(--accent);
+}
+
+.login__hint {
+    margin-top: 18px;
+    font-size: 0.72rem;
+    color: var(--grey-btn-text);
+}
+
+.admin {
+    padding: 18px clamp(20px, 3vw, 32px) 32px;
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.admin-tabs button,
+.btn {
+    font-family: inherit;
+    font-size: 0.75rem;
+    color: var(--fg-dim);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px 6px 0 0;
+    padding: 8px 14px;
+    cursor: pointer;
+}
+
+.admin-tabs button[aria-selected="true"] {
+    color: var(--fg);
+    border-color: var(--border-soft);
+    border-bottom-color: var(--bg-elevated);
+    margin-bottom: -1px;
+    background: var(--bg-elevated);
+}
+
+.btn {
+    display: inline-block;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--inset);
+    color: var(--fg);
+    padding: 7px 12px;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+.btn--primary {
+    background: var(--wash-2);
+    border-color: var(--accent-dim);
+}
+
+.btn--small { font-size: 0.68rem; padding: 4px 9px; }
+
+.admin-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.admin-toolbar .spacer { flex: 1; }
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+.admin-table th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--grey-btn-text);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.admin-table td {
+    padding: 11px 10px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--fg-dim);
+}
+
+.admin-table td:first-child { color: var(--fg); }
+
+.badge {
+    display: inline-block;
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--accent-dim);
+    color: var(--accent);
+}
+
+.badge--draft { border-color: var(--warn-dim); color: var(--warn); }
+
+.editor {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+}
+
+.editor__meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.editor__meta .field--wide { grid-column: 1 / -1; }
+
+.field select {
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--fg);
+    background: var(--inset);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 10px;
+}
+
+.editor textarea.md {
+    min-height: 420px;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    tab-size: 4;
+}
+
+.editor__preview {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--inset);
+    max-height: 640px;
+    overflow-y: auto;
+}
+
+.editor__preview .prose { padding: 4px 22px 24px; }
+
+.editor__label {
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--grey-btn-text);
+    padding: 12px 22px 0;
+}
+
+.figman {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-soft);
+}
+
+.figman h3 {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+.figman__hint {
+    font-size: 0.72rem;
+    color: var(--fg-dim);
+    margin-bottom: 14px;
+}
+
+.figman__body {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr) minmax(0, 0.8fr);
+    gap: 18px;
+}
+
+.figman__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.figman__thumb {
+    display: block;
+    width: 100%;
+    padding: 4px;
+    background: var(--inset);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    font: 0.66rem 'JetBrains Mono', monospace;
+    color: var(--fg-dim);
+}
+
+.figman__thumb img { display: block; width: 100%; border-radius: 4px; margin-bottom: 4px; }
+.figman__thumb[aria-pressed="true"] { border-color: var(--accent); color: var(--fg); }
+
+.figman__canvas {
+    position: relative;
+    align-self: start;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: crosshair;
+    line-height: 0;
+}
+
+.figman__canvas img { display: block; width: 100%; user-select: none; }
+
+.figman__notes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.note-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.note-row .num {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: 0.66rem;
+    font-weight: 700;
+}
+
+.note-row input {
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 0.76rem;
+    color: var(--fg);
+    background: var(--inset);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 9px;
+}
+
+.note-row input:focus { outline: none; border-color: var(--accent); }
+
+.site-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 720px;
+}
+
+/* admin: CV editor -- file tree | section editor | live preview */
+.cvedit {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.cv-tree {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.76rem;
+    padding: 10px 0;
+    background: var(--inset);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.cv-tree__root {
+    padding: 2px 12px 6px;
+    color: var(--grey-btn-text);
+}
+
+.cv-tree button {
+    display: flex;
+    gap: 6px;
+    padding: 4px 12px;
+    text-align: left;
+    font-size: 0.76rem;
+    color: var(--fg-dim);
+    background: none;
+    border: none;
+    border-left: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.cv-tree button .glyph { color: var(--grey-btn-text); }
+.cv-tree button:hover { color: var(--fg); }
+
+.cv-tree button[aria-current="true"] {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: var(--wash-1);
+}
+
+.cvedit__form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cvedit__form .editor__label { padding: 0; }
+
+.cv-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: var(--inset);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.cv-card__head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--fg-dim);
+}
+
+.cv-card__head .grow {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-card .field input,
+.cv-card .field textarea { background: var(--bg-elevated); }
+
+.cv-grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.skill-row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) auto;
+    gap: 6px;
+    align-items: start;
+}
+
+.skill-row input,
+.skill-row textarea {
+    width: 100%;
+    font-size: 0.74rem;
+    color: var(--fg);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    resize: vertical;
+}
+
+.skill-row input:focus,
+.skill-row textarea:focus { outline: none; border-color: var(--accent); }
+
+.skill-row__head {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) 30px;
+    gap: 6px;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--grey-btn-text);
+}
+
+.cvedit__preview {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 660px;
+    overflow-y: auto;
+}
+
+.cvedit__preview .cv-section,
+.cvedit__preview .cv-header { border-top: none; padding: 18px 22px; }
+
+@media (max-width: 600px) {
+    .editor,
+    .figman__body,
+    .editor__meta { grid-template-columns: 1fr; }
+    .figman__list { flex-direction: row; overflow-x: auto; }
+    .figman__thumb { width: 120px; flex: none; }
+    .cvedit { grid-template-columns: 1fr; }
+    .cv-tree { flex-direction: row; overflow-x: auto; }
+    .cv-tree__root { display: none; }
+    .cv-grid2 { grid-template-columns: 1fr; }
+}
+
+/* ---------- real-admin additions ---------- */
+
+.admin-banner--ok {
+    color: var(--ok);
+    border-color: var(--ok-dim);
+    border-style: solid;
+}
+
+.admin-banner .spacer { flex: 1; }
+
+.admin-banner code {
+    font: inherit;
+    color: var(--fg);
+}
+
+.save-note {
+    font-size: 0.7rem;
+    color: var(--fg-dim);
+    margin-right: 4px;
+}
+
+.save-note--error { color: var(--bad); }
+
+.dim { color: var(--grey-btn-text); }
+
+.row-actions { text-align: right; white-space: nowrap; }
+
+.btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+    border-color: var(--border);
+    color: var(--fg);
+}
+
+.btn--danger:hover:not(:disabled) {
+    border-color: var(--bad);
+    color: var(--bad);
+}
+
+.login form { margin: 0; }

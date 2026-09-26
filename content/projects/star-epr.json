@@ -1,0 +1,42 @@
+{
+  "slug": "star-epr",
+  "title": "Star EPR",
+  "summary": "An electronic patient record prototype exploring clean request and results workflows.",
+  "tags": [
+    "Python",
+    "Flask",
+    "HL7",
+    "SQL"
+  ],
+  "repo": "https://github.com/mjhadfield",
+  "status": "published",
+  "started": "2025-06",
+  "updated": "2026-02-14",
+  "body": "## Background\nNam quis nulla. Integer malesuada. In in enim a arcu imperdiet malesuada. Sed vel lectus. Donec odio urna, tempus molestie, porttitor ut, iaculis quis, sem.\n::figure[record]\n## Interfacing\nPhasellus rhoncus. Aenean id metus id velit ullamcorper pulvinar. Vestibulum fermentum tortor id mi. `ORU^R01` pellentesque ipsum.\n- Nulla non arcu lacinia neque faucibus fringilla\n- Nulla non lectus sed nisl molestie malesuada\nProin in tellus sit amet nibh dignissim sagittis. Vivamus luctus egestas leo.",
+  "figures": {
+    "record": {
+      "src": "content/img/star-epr/star-epr-record.svg",
+      "w": 1600,
+      "h": 1000,
+      "title": "The patient record",
+      "caption": "Nam quis nulla. Integer malesuada. In in enim a arcu imperdiet malesuada.",
+      "hotspots": [
+        {
+          "x": 18,
+          "y": 30,
+          "note": "Sed vel lectus, donec odio urna — demographics."
+        },
+        {
+          "x": 50,
+          "y": 30,
+          "note": "Tempus molestie, porttitor ut — open requests."
+        },
+        {
+          "x": 28,
+          "y": 76,
+          "note": "Iaculis quis, sem — results, abnormal flagged."
+        }
+      ]
+    }
+  }
+}

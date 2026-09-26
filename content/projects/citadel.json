@@ -1,0 +1,66 @@
+{
+  "slug": "citadel",
+  "title": "Citadel",
+  "summary": "A self-hosted life dashboard that launches, supervises and links together everything running at home.",
+  "tags": [
+    "Python",
+    "FastAPI",
+    "JavaScript",
+    "SQLite"
+  ],
+  "repo": "https://github.com/mjhadfield",
+  "status": "published",
+  "started": "2026-03",
+  "updated": "2026-09-20",
+  "body": "## Why I built it\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio praesent libero, sed cursus ante dapibus diam. Sed nisi, nulla quis sem at nibh elementum imperdiet. **Duis sagittis ipsum** praesent mauris.\nFusce nec tellus sed augue semper porta. Mauris massa, vestibulum lacinia arcu eget nulla. Class aptent taciti sociosqu ad litora torquent per conubia nostra.\n::figure[dash]\n## How it works\nCurabitur sodales ligula in libero. Sed dignissim lacinia nunc, `app.state` curabitur tortor. Pellentesque nibh, aenean quam in scelerisque sem at dolor:\n- Maecenas mattis, sed convallis tristique sem\n- Proin ut ligula vel nunc egestas porttitor\n- Morbi lectus risus, iaculis vel suscipit quis\n```\n$ citadel start --all\n[ok] music-companion   :8642\n[ok] music-maintenance :8643\n```\n::figure[services]\n## What I learned\n> Vestibulum sapien. Proin quam. Etiam ultrices, suspendisse in justo eu magna luctus suscipit.\nSed lectus. Integer euismod lacus luctus magna. Quisque cursus, metus vitae pharetra auctor, sem massa mattis sem, at interdum magna augue eget diam. See the [repository](https://github.com/mjhadfield) for more.",
+  "figures": {
+    "dash": {
+      "src": "content/img/citadel/citadel-dashboard.svg",
+      "w": 1600,
+      "h": 1000,
+      "title": "The launchpad",
+      "caption": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.",
+      "hotspots": [
+        {
+          "x": 12,
+          "y": 15.5,
+          "note": "Lorem ipsum dolor sit amet — the navigation rail."
+        },
+        {
+          "x": 34,
+          "y": 16,
+          "note": "Consectetur adipiscing elit, each tile is a service."
+        },
+        {
+          "x": 85,
+          "y": 16,
+          "note": "Sed do eiusmod tempor — live host statistics."
+        },
+        {
+          "x": 30,
+          "y": 72,
+          "note": "Ut enim ad minim veniam, the activity feed."
+        }
+      ]
+    },
+    "services": {
+      "src": "content/img/citadel/citadel-services.svg",
+      "w": 1600,
+      "h": 1000,
+      "title": "Supervised services",
+      "caption": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.",
+      "hotspots": [
+        {
+          "x": 6.5,
+          "y": 55.5,
+          "note": "Excepteur sint occaecat — a service needing attention."
+        },
+        {
+          "x": 90,
+          "y": 21.5,
+          "note": "Cupidatat non proident, restart in place."
+        }
+      ]
+    }
+  }
+}

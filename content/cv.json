@@ -1,0 +1,232 @@
+{
+  "name": "MIKE HADFIELD",
+  "title": "IT Laboratory Systems Specialist",
+  "contacts": [
+    {
+      "type": "email",
+      "text": "mikehadfield@live.co.uk",
+      "href": "mailto:mikehadfield@live.co.uk"
+    },
+    {
+      "type": "phone",
+      "text": "<REDACTED>",
+      "href": "#/contact",
+      "title": "Phone number redacted — click to contact via form"
+    },
+    {
+      "type": "location",
+      "text": "Manchester, UK",
+      "href": ""
+    },
+    {
+      "type": "linkedin",
+      "text": "LinkedIn",
+      "href": "https://www.linkedin.com/in/mike-hadfield"
+    }
+  ],
+  "profile": [
+    "I've spent the last 12 years working for the UK's largest independent provider of clinical pathology. During that time I've had the opportunity to work on a large-scale project to replace our existing LIMS with an in-house bespoke solution, overseen two major laboratory moves, and learned the infrastructure for both our virtual and physical estates.",
+    "In addition to my personal growth, I've also taken on management roles in both laboratory and IT environments. This experience has expanded my skills and honed my ability to lead teams effectively towards achieving our objectives."
+  ],
+  "skills": [
+    {
+      "label": "LIMS & Interfacing",
+      "items": [
+        {
+          "name": "LIMS Configuration & Implementation",
+          "detail": ""
+        },
+        {
+          "name": "HL7 Interfacing",
+          "detail": "Placeholder — lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore."
+        },
+        {
+          "name": "Mirth Connect",
+          "detail": "Placeholder — ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip."
+        },
+        {
+          "name": "Middleware Integration",
+          "detail": ""
+        },
+        {
+          "name": "Analyser Support",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "label": "Systems & Infrastructure",
+      "items": [
+        {
+          "name": "Active Directory",
+          "detail": ""
+        },
+        {
+          "name": "Endpoint Manager (SCCM)",
+          "detail": ""
+        },
+        {
+          "name": "Virtual Server Administration",
+          "detail": ""
+        },
+        {
+          "name": "Network configuration",
+          "detail": ""
+        },
+        {
+          "name": "Server Security & Patch Management",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "label": "Data & Databases",
+      "items": [
+        {
+          "name": "Microsoft SQL",
+          "detail": "Placeholder — duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore."
+        },
+        {
+          "name": "Data Integrity & GDPR Compliance",
+          "detail": ""
+        },
+        {
+          "name": "Reporting & Analytics",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "label": "Tools & Platforms",
+      "items": [
+        {
+          "name": "Windows",
+          "detail": ""
+        },
+        {
+          "name": "Linux",
+          "detail": ""
+        },
+        {
+          "name": "Freshworks",
+          "detail": ""
+        },
+        {
+          "name": "JavaScript & Front-end Development",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "label": "Leadership & Process",
+      "items": [
+        {
+          "name": "Team Leadership",
+          "detail": "Placeholder — excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia."
+        },
+        {
+          "name": "SOP Authoring",
+          "detail": ""
+        },
+        {
+          "name": "Incident Management",
+          "detail": ""
+        },
+        {
+          "name": "Stakeholder Management",
+          "detail": ""
+        }
+      ]
+    }
+  ],
+  "experience": [
+    {
+      "role": "Laboratory Systems Specialist",
+      "date": "Sep 2023 — Present",
+      "org": "TDL Manchester",
+      "points": [
+        "Configuration and implementation of a newly developed in-house LIMS system.",
+        "2nd line analyser support for 100+ analysers across the country.",
+        "Analyser interfacing, predominantly with HL7 and Mirth Connect.",
+        "Integration with associated middleware and client down-stream systems.",
+        "Microsoft SQL for database insertion and data queries.",
+        "Performing security updates to company-critical servers while maintaining minimal downtime."
+      ]
+    },
+    {
+      "role": "IT Support Specialist",
+      "date": "Apr 2022 — Sep 2023",
+      "org": "TDL Manchester",
+      "points": [
+        "Initial triage of all customer tickets.",
+        "First and second line desktop, laptop, and mobile support.",
+        "First line analyser and middleware support (Roche CITM, Sysmex EPU, Clinisys Winpath).",
+        "Active Directory and Microsoft Endpoint management.",
+        "Monitoring our virtual servers to diagnose issues and ensure good levels of performance.",
+        "General day-to-day site work (patching switches, imaging devices, installing equipment).",
+        "Promoted to team leader after one year in post."
+      ]
+    },
+    {
+      "role": "Sample Reception Supervisor",
+      "date": "Sep 2018 — Apr 2022",
+      "org": "TDL Manchester",
+      "points": [
+        "Led a team of up to 12 staff, ensuring smooth day-to-day operations.",
+        "Authored departmental SOPs, managed incident and GDPR reporting.",
+        "Held annual joint reviews, monthly team meetings, probationary and HR meetings.",
+        "Resolved queries and investigated problems with internal departments and external clients.",
+        "Maintained laboratory technical equipment, including centrifuges, scanners, and zebra printers.",
+        "Gained extensive knowledge of laboratory operations, procedures, and general pathology."
+      ]
+    },
+    {
+      "role": "Administration Assistant (Courier Department)",
+      "date": "Dec 2016 — Sep 2018",
+      "org": "TDL London",
+      "points": [
+        "Managed and monitored attendance, sickness, productivity, and wages of all non-PAYE staff, maintaining accuracy and confidentiality of information.",
+        "Generated monthly activity reports to provide insights on courier trends and financials.",
+        "Managed the departmental email, phones, and courier software (DA Systems) for user and courier management, routes, and job assignment."
+      ]
+    },
+    {
+      "role": "Medical Laboratory Assistant (Data Entry Clerk)",
+      "date": "Mar 2014 — Dec 2016",
+      "org": "TDL London",
+      "points": [
+        "Transcribing patient demographic and coded test information from pathology requests.",
+        "Gained extensive knowledge in pathology sample handling and prerequisite testing requirements.",
+        "Collaborated with other staff to resolve queries, contributing to departmental SOPs and improved workflows."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "title": "Certificate of Higher Education in Forensic Science",
+      "date": "Sep 2008 — May 2010",
+      "org": "University of West England, UK",
+      "body": "Key modules in Organic Chemistry, Inorganic and Physical Chemistry, Molecular Genetics, and Scientific Research Methods."
+    },
+    {
+      "title": "A Levels & GCSEs",
+      "date": "A Lifetime Ago",
+      "org": "Imberhorne, West Sussex",
+      "body": "10 GCSEs, 3 A-levels, and a diploma in Music Technology"
+    }
+  ],
+  "interests": [
+    {
+      "title": "Web development",
+      "body": "After needing to understand the basics of JavaScript for LIMS integration, in my spare time I've rediscovered an enjoyment for website creation and front end development. You can see (some of) my pet projects on [GitHub](https://github.com/mjhadfield)."
+    },
+    {
+      "title": "Programming",
+      "body": "In the new age of LLMs and neural networks, learning and creating has never been easier. Currently dabbling in Python."
+    },
+    {
+      "title": "Poker",
+      "body": "One of the best games ever created, up there with Chess. It helped fund me through university and remains a hobby ever since."
+    }
+  ]
+}

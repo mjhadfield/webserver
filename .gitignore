@@ -1,0 +1,3 @@
+# admin password hash -- local only, never commit
+.admin-password
+__pycache__/
