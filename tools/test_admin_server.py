@@ -138,6 +138,8 @@ class AdminServerTests(unittest.TestCase):
         self.assertFalse((self.tmp / "content" / "evil.json").exists())
         self.assertEqual(self.req("PUT", "/api/projects/ok", {"project": self.project(status="live")})[0], 400)
         self.assertEqual(self.req("PUT", "/api/projects/ok", {"project": self.project(repo="javascript:alert(1)")})[0], 400)
+        status, body, _ = self.req("PUT", "/api/projects/ok2", {"project": self.project(repo=" Private ")})
+        self.assertEqual((status, body["project"]["repo"]), (200, "private"))   # the inactive "Private repo" button
         bad_fig = self.project(figures={"a": {"src": "../../etc/passwd"}})
         self.assertEqual(self.req("PUT", "/api/projects/ok", {"project": bad_fig})[0], 400)
         self.assertFalse((self.tmp / "content/projects/ok.json").exists())

@@ -149,8 +149,10 @@ class Site:
         if not isinstance(tags, list) or not all(isinstance(t, str) for t in tags):
             raise ApiError("tags must be a list of words")
         repo = s("repo")
-        if repo and not re.match(r"^https?://", repo):
-            raise ApiError("the repo link must start with http:// or https://")
+        if repo.lower() == "private":
+            repo = "private"  # shown on the site as an inactive "Private repo" button
+        elif repo and not re.match(r"^https?://", repo):
+            raise ApiError("the repo link must start with http:// or https:// (or just say private)")
         figures = {}
         for fid, f in (p.get("figures") or {}).items():
             if not FIG_ID_RE.match(fid) or not isinstance(f, dict):

@@ -257,7 +257,7 @@
                     '<button class="btn btn--small btn--danger" type="button" data-act="delete" data-slug="' + esc(p.slug) + '">delete</button></td></tr>';
             }).join('') +
             (S.index.length ? '' : '<tr><td colspan="5" class="dim">No projects yet.</td></tr>') + '</tbody></table>' +
-            '<p class="figman__hint" style="margin-top:12px">The order here is the order on the site. Drafts never appear on the site.</p>';
+            '<p class="figman__hint" style="margin-top:12px">The order here is the order on the site. Drafts show there as a “coming soon” tile (title, summary and tags) that can’t be opened.</p>';
     }
 
     function wireTable() {
@@ -314,8 +314,8 @@
             '<div class="editor__meta">' +
             field('title', 'title', p.title) + field('slug (the address: #/projects/…)', 'slug', p.slug) +
             field('summary (shown on the card)', 'summary', p.summary, true) +
-            field('tags (comma separated)', 'tags', (p.tags || []).join(', ')) + field('github repo', 'repo', p.repo, false, 'url', 'https://github.com/…') +
-            '<label class="field"><span class="field__label">status</span><select data-meta="status"><option value="draft"' + (p.status === 'draft' ? ' selected' : '') + '>draft — hidden</option><option value="published"' + (p.status === 'published' ? ' selected' : '') + '>published</option></select></label>' +
+            field('tags (comma separated)', 'tags', (p.tags || []).join(', ')) + field('github repo — a link, or “private”', 'repo', p.repo, false, 'text', 'https://github.com/… or private') +
+            '<label class="field"><span class="field__label">status</span><select data-meta="status"><option value="draft"' + (p.status === 'draft' ? ' selected' : '') + '>draft — shown as coming soon</option><option value="published"' + (p.status === 'published' ? ' selected' : '') + '>published</option></select></label>' +
             field('started', 'started', p.started, false, 'text', '2026-03') +
             '</div>' +
             '<label class="field"><span class="field__label">write-up — markdown: ## heading · **bold** · *italic* · `code` · [link](https://…) · - list · ``` code block · ::figure[id] places an image</span>' +

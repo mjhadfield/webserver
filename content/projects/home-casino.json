@@ -1,17 +1,15 @@
 {
   "slug": "home-casino",
   "title": "Home Casino",
-  "summary": "Browser-based card games for game night — one host, everyone else joins from their phone.",
+  "summary": "A casino game written entirely in Python with no external assets. With a progression system, unlocks, themes, and detailed statistics.",
   "tags": [
-    "JavaScript",
-    "WebSockets",
-    "Node",
-    "CSS"
+    "Python",
+    "Tkinter"
   ],
   "repo": "https://github.com/mjhadfield",
-  "status": "published",
+  "status": "draft",
   "started": "2025-11",
-  "updated": "2026-08-02",
+  "updated": "2026-09-26",
   "body": "## Why\nDonec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat.\n::figure[table]\n## Architecture\nAliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus. Phasellus ultrices nulla quis nibh.\n```\nhost  ──ws──▶  table state  ◀──ws──  phones\n```\n::figure[lobby]\nQuisque a lectus. Donec consectetuer ligula vulputate sem tristique cursus.",
   "figures": {
     "table": {
@@ -20,19 +18,20 @@
       "h": 1000,
       "title": "The table",
       "caption": "Donec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus.",
+      "alt": "",
       "hotspots": [
         {
-          "x": 50,
-          "y": 17,
+          "x": 50.0,
+          "y": 17.0,
           "note": "Neque id cursus faucibus — the player to act."
         },
         {
-          "x": 50,
-          "y": 49,
+          "x": 50.0,
+          "y": 49.0,
           "note": "Tortor neque egestas augue, the community cards."
         },
         {
-          "x": 50,
+          "x": 50.0,
           "y": 61.5,
           "note": "Eu vulputate magna eros eu erat — the pot."
         }
@@ -44,15 +43,16 @@
       "h": 1000,
       "title": "Lobby and history",
       "caption": "Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor.",
+      "alt": "",
       "hotspots": [
         {
-          "x": 42,
-          "y": 22,
+          "x": 42.0,
+          "y": 22.0,
           "note": "Facilisis luctus, metus — join a table."
         },
         {
-          "x": 75,
-          "y": 45,
+          "x": 75.0,
+          "y": 45.0,
           "note": "Phasellus ultrices nulla quis nibh, session results."
         }
       ]

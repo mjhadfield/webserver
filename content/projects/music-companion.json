@@ -1,17 +1,20 @@
 {
   "slug": "music-companion",
   "title": "Music Companion",
-  "summary": "Fifteen years of scrobbles, a vinyl collection and every gig attended, in one queryable library.",
+  "summary": "A fully interactive archive of my history with music. Linking together my physical record collection, digital listening, and gig history.",
   "tags": [
     "Python",
     "SQLite",
-    "sql.js",
-    "MusicBrainz"
+    "FastAPI",
+    "MusicBrainz",
+    "Discogs",
+    "Spotify",
+    "LastFM"
   ],
   "repo": "https://github.com/mjhadfield",
-  "status": "published",
+  "status": "draft",
   "started": "2026-06",
-  "updated": "2026-09-25",
+  "updated": "2026-09-26",
   "body": "## The problem\nPellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, *ultricies eget*, tempor sit amet, ante.\n::figure[wall]\n## Data model\nDonec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo:\n1. Quisque sit amet est et sapien ullamcorper pharetra\n2. Vestibulum erat wisi, condimentum sed\n3. Commodo vitae, ornare sit amet, wisi\n::figure[maint]\n## Next steps\nAenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui.",
   "figures": {
     "wall": {
@@ -20,20 +23,21 @@
       "h": 1000,
       "title": "The vinyl wall",
       "caption": "Nam nec ante. Sed lacinia, urna non tincidunt mattis, tortor neque adipiscing diam.",
+      "alt": "",
       "hotspots": [
         {
-          "x": 8,
-          "y": 17,
+          "x": 8.0,
+          "y": 17.0,
           "note": "Pellentesque habitant — covers fetched automatically."
         },
         {
-          "x": 83,
-          "y": 19,
+          "x": 83.0,
+          "y": 19.0,
           "note": "Morbi tristique senectus, yearly totals."
         },
         {
-          "x": 83,
-          "y": 66,
+          "x": 83.0,
+          "y": 66.0,
           "note": "Et netus et malesuada, top artists."
         }
       ]
@@ -44,15 +48,16 @@
       "h": 1000,
       "title": "Maintenance: tracklist review",
       "caption": "Fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget.",
+      "alt": "",
       "hotspots": [
         {
-          "x": 50,
-          "y": 22,
+          "x": 50.0,
+          "y": 22.0,
           "note": "Tempor sit amet — the song rows behind each track."
         },
         {
-          "x": 88,
-          "y": 21,
+          "x": 88.0,
+          "y": 21.0,
           "note": "Ante donec eu libero — put a stray song on its track."
         }
       ]

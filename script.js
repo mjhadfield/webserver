@@ -19,7 +19,8 @@
 
     // ---------------------------------------------------------------------------------------
     // Project content. The index is small and fetched straight away; a write-up is fetched
-    // when it's opened, then kept. Drafts are never listed or shown.
+    // when it's opened, then kept. Drafts are listed as "coming soon" cards (title, summary and
+    // tags only) but never opened.
     // ---------------------------------------------------------------------------------------
     var projectIndex = null;
     var projects = {};
@@ -30,12 +31,12 @@
         });
     }
     var indexReady = getJSON('content/projects/index.json')
-        .then(function (list) { projectIndex = list.filter(function (p) { return p.status === 'published'; }); })
+        .then(function (list) { projectIndex = list.filter(function (p) { return p.status === 'published' || p.status === 'draft'; }); })
         .catch(function () { projectIndex = null; });
     function loadProject(slug) {
         if (projects[slug]) return Promise.resolve(projects[slug]);
         return indexReady.then(function () {
-            var listed = (projectIndex || []).some(function (p) { return p.slug === slug; });
+            var listed = (projectIndex || []).some(function (p) { return p.slug === slug && p.status === 'published'; });
             if (!listed) return null;
             return getJSON('content/projects/' + encodeURIComponent(slug) + '.json').then(function (p) {
                 projects[slug] = p;
@@ -44,29 +45,38 @@
         }).catch(function () { return null; });
     }
 
+    function isDraft(slug) {
+        return (projectIndex || []).some(function (p) { return p.slug === slug && p.status === 'draft'; });
+    }
+
     function renderProjects() {
         var list = projectIndex;
+        var live = (list || []).filter(function (p) { return p.status === 'published'; }).length;
+        var soon = (list || []).length - live;
         views.projects.innerHTML =
             '<div class="proj-head">' + MH.cdBtn('#/', 'cd ~') +
             '<p class="section-label"><span class="prompt">$</span> ls -la ~/projects</p>' +
-            '<p class="tagline">' + (list ? list.length + ' write-ups — how they work, why they exist, and what I learned'
+            '<p class="tagline">' + (list ? live + ' write-up' + (live === 1 ? '' : 's') + (soon ? ' · ' + soon + ' coming soon' : '') + ' — how they work, why they exist, and what I learned'
                 : 'couldn’t load the project list — try again in a moment') + '<span class="cursor">_</span></p>' +
             '</div>' +
             (list ? '<div class="proj-grid">' + list.map(function (p) {
-                return '<a class="proj-card" href="#/projects/' + esc(p.slug) + '">' +
-                    '<span class="proj-card__ls">drwxr-xr-x  mike  ' + esc(p.updated) + '  <b>' + esc(p.slug) + '/</b></span>' +
+                var draft = p.status === 'draft';
+                // a draft: same tile, not a link -- no read permission yet (drwx------)
+                var inner = '<span class="proj-card__ls">' + (draft ? 'drwx------' : 'drwxr-xr-x') + '  mike  ' + esc(p.updated) + '  <b>' + esc(p.slug) + '/</b></span>' +
                     '<span class="proj-card__title">' + esc(p.title) + '</span>' +
                     '<span class="proj-card__summary">' + esc(p.summary) + '</span>' +
-                    '<span class="proj-card__foot">' + MH.tagsHtml(p.tags) + '<span class="proj-card__read">read &rarr;</span></span>' +
-                    '</a>';
+                    '<span class="proj-card__foot">' + MH.tagsHtml(p.tags) +
+                    (draft ? '<span class="proj-card__soon">coming soon</span>' : '<span class="proj-card__read">read &rarr;</span>') + '</span>';
+                return draft ? '<div class="proj-card proj-card--draft" aria-label="' + esc(p.title) + ' — coming soon">' + inner + '</div>'
+                    : '<a class="proj-card" href="#/projects/' + esc(p.slug) + '">' + inner + '</a>';
             }).join('') + '</div>' : '');
     }
 
     function renderArticle(slug, p) {
         views.article.innerHTML = p ? MH.articleHtml(p, '#/projects')
             : '<div class="terminal__body">' + MH.cdBtn('#/projects', 'cd ..') +
-              '<p class="section-label"><span class="prompt">$</span> cat projects/' + esc(slug) + '</p>' +
-              '<p class="tagline">No such project.</p></div>';
+              '<p class="section-label"><span class="prompt">$</span> cat projects/' + esc(slug) + '/README.md</p>' +
+              '<p class="tagline">' + (isDraft(slug) ? 'Permission denied — this write-up is still being written. Coming soon.' : 'No such project.') + '</p></div>';
         views.article.querySelectorAll('.fig__frame').forEach(function (btn) {
             btn.addEventListener('click', function () { openLightbox(p, btn.dataset.fig, btn); });
         });
@@ -90,7 +100,7 @@
         if (route.view === 'projects') return indexReady.then(renderProjects);
         if (route.view === 'article') {
             return loadProject(route.slug).then(function (p) {
-                route.title = (p ? p.title : 'Not found') + ' — Mike Hadfield';
+                route.title = (p ? p.title : isDraft(route.slug) ? 'Coming soon' : 'Not found') + ' — Mike Hadfield';
                 renderArticle(route.slug, p);
             });
         }

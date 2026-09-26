@@ -942,6 +942,31 @@ body {
 
 .proj-card:hover .proj-card__read { transform: translateX(3px); }
 
+/* a draft: the tile is shown, but it isn't a link yet */
+.proj-card--draft,
+.proj-card--draft:hover {
+    border-style: dashed;
+    border-color: var(--grey-btn-border);
+    background: var(--inset);
+    cursor: default;
+}
+
+.proj-card--draft .proj-card__title,
+.proj-card--draft .proj-card__summary,
+.proj-card--draft .skill-tags { opacity: 0.6; }
+
+.proj-card__soon {
+    flex: none;
+    font-size: 0.64rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--warn);
+    border: 1px dashed var(--warn-dim);
+    border-radius: 999px;
+    padding: 2px 9px;
+    white-space: nowrap;
+}
+
 .skill-tags--sm li {
     font-size: 0.66rem;
     padding: 3px 9px;
@@ -997,6 +1022,15 @@ body {
 }
 
 .repo-btn svg { width: 15px; height: 15px; }
+
+/* repo field says "private": same button, inactive */
+.repo-btn--private,
+.repo-btn--private:hover {
+    color: var(--grey-btn-text);
+    background: var(--grey-btn-bg);
+    border: 1px dashed var(--grey-btn-border);
+    cursor: not-allowed;
+}
 
 .prose {
     padding: 8px clamp(24px, 5vw, 48px) 48px;

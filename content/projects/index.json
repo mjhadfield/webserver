@@ -1,45 +1,45 @@
 [
   {
     "slug": "citadel",
-    "title": "Citadel",
-    "summary": "A self-hosted life dashboard that launches, supervises and links together everything running at home.",
+    "title": "Citadel Hub",
+    "summary": "A way for me to manage my digital estate, with API integration for external services. Hosted locally, and served via a dashboard.",
     "tags": [
       "Python",
       "FastAPI",
-      "JavaScript",
       "SQLite"
     ],
     "status": "published",
     "started": "2026-03",
-    "updated": "2026-09-20"
+    "updated": "2026-09-26"
   },
   {
     "slug": "music-companion",
     "title": "Music Companion",
-    "summary": "Fifteen years of scrobbles, a vinyl collection and every gig attended, in one queryable library.",
+    "summary": "A fully interactive archive of my history with music. Linking together my physical record collection, digital listening, and gig history.",
     "tags": [
       "Python",
       "SQLite",
-      "sql.js",
-      "MusicBrainz"
+      "FastAPI",
+      "MusicBrainz",
+      "Discogs",
+      "Spotify",
+      "LastFM"
     ],
-    "status": "published",
+    "status": "draft",
     "started": "2026-06",
-    "updated": "2026-09-25"
+    "updated": "2026-09-26"
   },
   {
     "slug": "home-casino",
     "title": "Home Casino",
-    "summary": "Browser-based card games for game night — one host, everyone else joins from their phone.",
+    "summary": "A casino game written entirely in Python with no external assets. With a progression system, unlocks, themes, and detailed statistics.",
     "tags": [
-      "JavaScript",
-      "WebSockets",
-      "Node",
-      "CSS"
+      "Python",
+      "Tkinter"
     ],
-    "status": "published",
+    "status": "draft",
     "started": "2025-11",
-    "updated": "2026-08-02"
+    "updated": "2026-09-26"
   },
   {
     "slug": "star-epr",
@@ -51,8 +51,8 @@
       "HL7",
       "SQL"
     ],
-    "status": "published",
+    "status": "draft",
     "started": "2025-06",
-    "updated": "2026-02-14"
+    "updated": "2026-09-26"
   }
 ]
