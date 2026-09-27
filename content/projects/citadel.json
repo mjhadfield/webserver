@@ -3,14 +3,26 @@
   "title": "Citadel Hub",
   "summary": "A way for me to manage my digital estate, with API integration for external services. Hosted locally, and served via a dashboard.",
   "tags": [
-    "Python",
     "FastAPI",
-    "SQLite"
+    "Python",
+    "JavaScript",
+    "HTML",
+    "CSS"
   ],
   "repo": "private",
   "status": "published",
-  "started": "2026-03",
-  "updated": "2026-09-26",
-  "body": "## Why I built it\nI was sick of going to my council website every Wednesday evening to check which bins I was supposed to put out for collection, surely I could automate that? It escalated from there.\n\nIt uses a combination of external APIs and (polite!) web scraping, along with my Music Companion's SQL database, to tailor information to me and cut out the noise. \n\nThe GitHub repo is currently private, while my secrets and API keys are .gitignored, I'm sill nervous about making this public without a thorough vetting. \n\n## How it works\nHosted locally on a linux server, and accessible from any device on my  network. It includes IP whitelisting so settings and sensitive information is only available from dedicated devices. Guest devices have access to a limited number of services. \n\n## What it contains\nDashboard:\n- Google calendar integration\n- Local services monitoring\n- Upcoming music releases and vinyl pre-order tracking\n- Gig radar of upcoming concerts\n- System monitoring for temperatures and disk space\n- A launchpad for all services\n- Notification system for upcoming events, life admin, etc. \n\nMedia server:\n- Hosted on a JellyFin installation\n- Digitised TV and Film library\n- Extensive live concert selection\n\nMusic Companion:\n- Fully integrated Music Companion\n- See the project page for full details",
-  "figures": {}
+  "started": "2026-08",
+  "updated": "2026-09-27",
+  "body": "::figure[screenshot-20260927-084846]\n\n## Why I built it\nI was sick of going to my council website every week to see which bins I needed to put out, surely I could automate that? It escalated from there. \n\nThe GitHub repo is currently private, while my secrets and API keys are .gitignored, I'm sill nervous about making this public without a thorough vetting. \n\n## How it works\nHosted locally on a linux server, and open to any device on my network. It includes IP whitelisting and MAC address filtering so settings and sensitive information are only available from dedicated devices. Guest devices only have access to the media server.\n\nEach tile can be expanded to show a detailed view. Upcoming vinyl pre-orders show price comparisons, local services show activity logs, etc. \n\nThe music radar is tailored to me, showing information only about artists that have either 100 plays on Spotify, are already part of my physical collection, or are explicitly defined. \n\n## What it contains\nDashboard:\n- Google calendar integration (Google API)\n- Upcoming music releases (MusicBrainz API)\n- Upcoming vinyl preorders (Web scraping)\n- Gig radar of upcoming concerts (Ticketmaster API)\n- System monitoring for temperatures and disk space\n- A launchpad for local applications \n- Services monitoring and logging\n\nMedia server:\n- Hosted on a dedicated JellyFin install\n- Digitised TV and Film library\n- Extensive live concert archive\n\nMusic Companion:\n- Fully integrated Music Companion\n- See the project page for full details\n\nSettings:\n- Device enrolment and activity logs\n- Backups update schedule\n- Easy adding of new stores, news feeds, and local applications.",
+  "figures": {
+    "screenshot-20260927-084846": {
+      "src": "content/img/citadel/screenshot-20260927-084846.png",
+      "w": 2560,
+      "h": 1440,
+      "title": "Citadel Home Screen",
+      "caption": "",
+      "alt": "",
+      "hotspots": []
+    }
+  }
 }

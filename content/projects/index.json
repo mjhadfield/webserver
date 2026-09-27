@@ -4,13 +4,15 @@
     "title": "Citadel Hub",
     "summary": "A way for me to manage my digital estate, with API integration for external services. Hosted locally, and served via a dashboard.",
     "tags": [
-      "Python",
       "FastAPI",
-      "SQLite"
+      "Python",
+      "JavaScript",
+      "HTML",
+      "CSS"
     ],
     "status": "published",
-    "started": "2026-03",
-    "updated": "2026-09-26"
+    "started": "2026-08",
+    "updated": "2026-09-27"
   },
   {
     "slug": "music-companion",
