@@ -110,7 +110,7 @@
     // shell
     // ---------------------------------------------------------------------------------------
     function render() {
-        pathEl.textContent = 'mike@mikehadfield:~/admin' + (S.authed ? '/' + S.tab : '');
+        pathEl.innerHTML = 'mike<a class="path-host" href="index.html" title="Home" aria-label="mikehadfield — home">@mikehadfield</a>:~/admin' + (S.authed ? '/' + esc(S.tab) : '');
         if (!S.authed) return S.mode === 'local' && S.setup ? renderSetup() : renderLogin();
         var logout = '<span class="spacer"></span><button class="btn btn--small" type="button" data-act="logout">log out</button>';
         var banner = S.mode === 'readonly'
@@ -318,20 +318,23 @@
             '<label class="field"><span class="field__label">status</span><select data-meta="status"><option value="draft"' + (p.status === 'draft' ? ' selected' : '') + '>draft — shown as coming soon</option><option value="published"' + (p.status === 'published' ? ' selected' : '') + '>published</option></select></label>' +
             field('started', 'started', p.started, false, 'text', '2026-03') +
             '</div>' +
-            '<label class="field"><span class="field__label">write-up — markdown: ## heading · **bold** · *italic* · `code` · [link](https://…) · - list · ``` code block · ::figure[id] places an image</span>' +
+            '<label class="field"><span class="field__label">write-up — markdown: ## heading · **bold** · *italic* · `code` · [link](https://…) · - list · ``` code block (```python or ```sql for colours) · ::figure[id] places an image</span>' +
             '<textarea class="md" data-meta="body" spellcheck="true">' + esc(p.body) + '</textarea></label>' +
             '</div><div class="editor__preview"><p class="editor__label">live preview</p><div data-role="preview"></div></div></div>' +
             '<div class="figman"><h3>Figures</h3>' +
-            '<p class="figman__hint">' + (S.savedSlug ? 'Add an image, then click on it to drop numbered pins and describe each one. Drag a pin to move it. “insert” puts the figure at the cursor in the write-up.'
-                : 'Save the project once to start adding images.') + '</p>' +
+            '<p class="figman__hint">' + (S.savedSlug ? 'Add an image or a video (.webm). On an image, click to drop numbered pins and describe each one; drag a pin to move it. “insert” puts the figure at the cursor in the write-up.'
+                : 'Save the project once to start adding images and videos.') + '</p>' +
             '<div class="figman__body"><div class="figman__list">' +
             figIds.map(function (id) {
                 var x = p.figures[id];
-                return '<button type="button" class="figman__thumb" data-fig="' + esc(id) + '" aria-pressed="' + (id === S.fig) + '"><img src="' + esc(x.src) + '" alt="">::figure[' + esc(id) + ']</button>';
+                var thumb = MH.isVideo(x.src) ? '<video src="' + esc(x.src) + '" muted preload="metadata"></video>' : '<img src="' + esc(x.src) + '" alt="">';
+                return '<button type="button" class="figman__thumb" data-fig="' + esc(id) + '" aria-pressed="' + (id === S.fig) + '">' + thumb + '::figure[' + esc(id) + ']</button>';
             }).join('') +
-            '<button type="button" class="btn btn--small" data-act="add-fig"' + (S.savedSlug ? '' : ' disabled') + '>+ add image</button>' +
-            '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml" data-role="file" hidden></div>' +
-            (f ? '<div class="figman__canvas" data-role="canvas"><img src="' + esc(f.src) + '" alt="" draggable="false">' + MH.pinsHtml(f.hotspots, false) + '</div>' +
+            '<button type="button" class="btn btn--small" data-act="add-fig"' + (S.savedSlug ? '' : ' disabled') + '>+ add image / video</button>' +
+            '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml,video/webm,video/mp4,.webm,.mp4" data-role="file" hidden></div>' +
+            (f && MH.isVideo(f.src) ? '<div class="figman__canvas figman__canvas--video"><video src="' + esc(f.src) + '" controls muted preload="metadata"></video></div>' : '') +
+            (f && !MH.isVideo(f.src) ? '<div class="figman__canvas" data-role="canvas"><img src="' + esc(f.src) + '" alt="" draggable="false">' + MH.pinsHtml(f.hotspots, false) + '</div>' : '') +
+            (f ?
                 '<div class="figman__notes">' +
                 '<div class="note-row"><span class="field__label" style="flex:1">::figure[' + esc(S.fig) + ']</span>' +
                 '<button class="btn btn--small" type="button" data-act="insert-fig">insert</button>' +
@@ -339,11 +342,14 @@
                 '<label class="field"><span class="field__label">title</span><input type="text" data-figmeta="title" value="' + esc(f.title) + '"></label>' +
                 '<label class="field"><span class="field__label">caption</span><input type="text" data-figmeta="caption" value="' + esc(f.caption) + '"></label>' +
                 '<label class="field"><span class="field__label">alt text (for screen readers)</span><input type="text" data-figmeta="alt" value="' + esc(f.alt) + '" placeholder="defaults to the title"></label>' +
-                '<span class="field__label">pins</span>' +
-                (f.hotspots || []).map(function (h, i) {
-                    return '<div class="note-row"><span class="num">' + (i + 1) + '</span><input type="text" data-note-i="' + i + '" value="' + esc(h.note) + '" placeholder="what this points at…"><button class="btn btn--small" type="button" data-del-pin="' + i + '" aria-label="Remove pin ' + (i + 1) + '">✕</button></div>';
-                }).join('') +
-                ((f.hotspots || []).length ? '' : '<p class="figman__hint">No pins yet — click the image.</p>') +
+                (MH.isVideo(f.src)
+                    ? '<label class="field-check"><input type="checkbox" data-figflag="loop"' + (f.loop ? ' checked' : '') + '> play like a GIF — muted, looping, starts by itself while on screen (best for short clips)</label>' +
+                      '<p class="figman__hint">Otherwise it shows its first frame with play controls. Pins aren’t available on videos.</p>'
+                    : '<span class="field__label">pins</span>' +
+                      (f.hotspots || []).map(function (h, i) {
+                          return '<div class="note-row"><span class="num">' + (i + 1) + '</span><input type="text" data-note-i="' + i + '" value="' + esc(h.note) + '" placeholder="what this points at…"><button class="btn btn--small" type="button" data-del-pin="' + i + '" aria-label="Remove pin ' + (i + 1) + '">✕</button></div>';
+                      }).join('') +
+                      ((f.hotspots || []).length ? '' : '<p class="figman__hint">No pins yet — click the image.</p>')) +
                 '</div>'
                 : '<p class="figman__hint">No figures yet.</p>') +
             '</div></div>';
@@ -381,37 +387,73 @@
             b.addEventListener('click', function () { S.fig = b.dataset.fig; render(); });
         });
 
-        // images: read the size in the browser, upload into content/img/<slug>/, add a figure
+        // images and videos: read the real size in the browser, upload into content/img/<slug>/,
+        // add a figure. GitHub refuses files over 100 MB and warns above 50 MB.
         var fileInput = rootEl.querySelector('[data-role="file"]');
         rootEl.querySelector('[data-act="add-fig"]').addEventListener('click', function () { fileInput.click(); });
         fileInput.addEventListener('change', function () {
             var file = fileInput.files[0];
             if (!file) return;
+            var video = /^video\//.test(file.type) || MH.isVideo(file.name);
+            var mb = file.size / 1048576;
+            if (mb > 100) { S.note = '✕ ' + file.name + ' is ' + mb.toFixed(0) + ' MB — GitHub won’t take files over 100 MB; shorten or compress it'; render(); return; }
+            if (mb > 50 && !window.confirm(file.name + ' is ' + mb.toFixed(0) + ' MB. GitHub warns about files over 50 MB and every visitor downloads it — upload anyway?')) return;
             var url = URL.createObjectURL(file);
-            var img = new Image();
-            img.onload = function () {
-                var w = img.naturalWidth || 1600, h = img.naturalHeight || 1000;
+            var el = document.createElement(video ? 'video' : 'img');
+            if (video) el.preload = 'metadata';
+            el.addEventListener(video ? 'loadedmetadata' : 'load', function () {
+                var w = (video ? el.videoWidth : el.naturalWidth) || 1600, h = (video ? el.videoHeight : el.naturalHeight) || 1000;
                 URL.revokeObjectURL(url);
-                S.note = 'uploading ' + file.name + '…';
+                S.note = 'uploading ' + file.name + ' (' + mb.toFixed(1) + ' MB)…';
+                render();
                 api('POST', '/api/images/' + encodeURIComponent(S.savedSlug) + '?name=' + encodeURIComponent(file.name), undefined, file).then(function (r) {
                     var base = MH.slugify(file.name.replace(/\.[^.]+$/, '')) || 'fig';
                     var id = base, n = 2;
                     while (p.figures[id]) id = base + '-' + n++;
                     p.figures[id] = { src: r.src, w: w, h: h, title: file.name.replace(/\.[^.]+$/, ''), caption: '', alt: '', hotspots: [] };
+                    if (video) p.figures[id].loop = false;
                     p.body = p.body.replace(/\s*$/, '') + '\n\n::figure[' + id + ']\n';
                     S.fig = id;
-                    S.note = 'image uploaded — save to keep the figure';
+                    S.note = (video ? 'video' : 'image') + ' uploaded — save to keep the figure';
                     S.dirty = true;
                     render();
                 }).catch(function (e) { S.note = '✕ ' + e.message; render(); });
-            };
-            img.onerror = function () { URL.revokeObjectURL(url); S.note = '✕ that file isn’t an image the browser can read'; render(); };
-            img.src = url;
+            });
+            el.addEventListener('error', function () {
+                URL.revokeObjectURL(url);
+                S.note = '✕ that file isn’t ' + (video ? 'a video' : 'an image') + ' the browser can read';
+                render();
+            });
+            el.src = url;
         });
 
         var f = S.fig && p.figures[S.fig];
         if (!f) return;
+        rootEl.querySelectorAll('[data-figmeta]').forEach(function (el) {
+            el.addEventListener('input', function () { f[el.dataset.figmeta] = el.value; markDirty(); paintPreview(); });
+        });
+        rootEl.querySelectorAll('[data-figflag]').forEach(function (el) {
+            el.addEventListener('change', function () { f[el.dataset.figflag] = el.checked; markDirty(); paintPreview(); });
+        });
+        rootEl.querySelector('[data-act="insert-fig"]').addEventListener('click', function () {
+            var at = bodyEl.selectionStart || p.body.length;
+            var before = p.body.slice(0, at), after = p.body.slice(at);
+            p.body = before.replace(/\s*$/, '') + '\n\n::figure[' + S.fig + ']\n\n' + after.replace(/^\s*/, '');
+            S.dirty = true;
+            render();
+        });
+        rootEl.querySelector('[data-act="del-fig"]').addEventListener('click', function () {
+            if (!window.confirm('Remove figure ' + S.fig + ' from this write-up? (The file stays in content/img/.)')) return;
+            var id = S.fig;
+            delete p.figures[id];
+            p.body = p.body.split('\n').filter(function (l) { return l.trim() !== '::figure[' + id + ']'; }).join('\n');
+            S.fig = null; S.dirty = true;
+            render();
+        });
+
+        // pins: images only
         var canvas = rootEl.querySelector('[data-role="canvas"]');
+        if (!canvas) return;
         canvas.addEventListener('click', function (e) {
             if (e.target.closest('.pin')) return;
             var r = canvas.getBoundingClientRect();
@@ -478,24 +520,6 @@
         });
         rootEl.querySelectorAll('[data-del-pin]').forEach(function (b) {
             b.addEventListener('click', function () { f.hotspots.splice(+b.dataset.delPin, 1); S.dirty = true; render(); });
-        });
-        rootEl.querySelectorAll('[data-figmeta]').forEach(function (el) {
-            el.addEventListener('input', function () { f[el.dataset.figmeta] = el.value; markDirty(); paintPreview(); });
-        });
-        rootEl.querySelector('[data-act="insert-fig"]').addEventListener('click', function () {
-            var at = bodyEl.selectionStart || p.body.length;
-            var before = p.body.slice(0, at), after = p.body.slice(at);
-            p.body = before.replace(/\s*$/, '') + '\n\n::figure[' + S.fig + ']\n\n' + after.replace(/^\s*/, '');
-            S.dirty = true;
-            render();
-        });
-        rootEl.querySelector('[data-act="del-fig"]').addEventListener('click', function () {
-            if (!window.confirm('Remove figure ' + S.fig + ' from this write-up? (The image file stays in content/img/.)')) return;
-            var id = S.fig;
-            delete p.figures[id];
-            p.body = p.body.split('\n').filter(function (l) { return l.trim() !== '::figure[' + id + ']'; }).join('\n');
-            S.fig = null; S.dirty = true;
-            render();
         });
     }
 

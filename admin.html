@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +14,7 @@
     <script>
         (function () {
             var d = document.documentElement, g = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
-            d.dataset.theme = g('mh-theme') || 'dark';
+            d.dataset.theme = g('mh-theme') || 'light'; // light unless the visitor chose dark
             d.dataset.bg = g('mh-bg') || 'grid';
             d.dataset.scan = g('mh-scan') || 'on';
         })();
@@ -37,7 +37,7 @@
                 <span class="dot dot--yellow" aria-hidden="true"></span>
                 <span class="dot dot--green" aria-hidden="true"></span>
             </div>
-            <span class="terminal__path" id="terminal-path">mike@mikehadfield:~/admin</span>
+            <span class="terminal__path" id="terminal-path">mike<a class="path-host" href="index.html" title="Home" aria-label="mikehadfield — home">@mikehadfield</a>:~/admin</span>
             <div class="bar-right">
                 <nav class="bar-nav" id="bar-nav" aria-label="Sections">
                     <a href="index.html#/cv">cv</a>

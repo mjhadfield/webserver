@@ -25,17 +25,17 @@
         {
           "x": 24.2,
           "y": 20.3,
-          "note": "Taken from Last.FM"
+          "note": "Originally gathered from Last.FM"
         },
         {
           "x": 24.2,
           "y": 52.3,
-          "note": "Taken from Setlist.FM"
+          "note": "Originally gathered from Setlist.FM"
         },
         {
           "x": 23.5,
           "y": 85.5,
-          "note": "Taken from Discogs"
+          "note": "Originally gathered from Discogs"
         }
       ]
     },
@@ -88,7 +88,7 @@
       "w": 511,
       "h": 707,
       "title": "SQL",
-      "caption": "The front end statistics are all just SQL queries run locally in the browser. My most played songs if the 1980s. ",
+      "caption": "The front end statistics are all just SQL queries run locally in the browser. Shown: my most played songs of the 1980s.",
       "alt": "",
       "hotspots": []
     },

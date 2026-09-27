@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,7 +29,7 @@
     <script>
         (function () {
             var d = document.documentElement, g = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
-            d.dataset.theme = g('mh-theme') || 'dark';
+            d.dataset.theme = g('mh-theme') || 'light'; // light unless the visitor chose dark
             d.dataset.bg = g('mh-bg') || 'grid';
             d.dataset.scan = g('mh-scan') || 'on';
         })();
@@ -59,7 +59,7 @@
                 <span class="dot dot--yellow" aria-hidden="true"></span>
                 <span class="dot dot--green" aria-hidden="true"></span>
             </div>
-            <span class="terminal__path" id="terminal-path">visitor@mikehadfield:~</span>
+            <span class="terminal__path" id="terminal-path">visitor<a class="path-host" href="#/" title="Home" aria-label="mikehadfield — home">@mikehadfield</a>:~</span>
             <div class="bar-right">
                 <nav class="bar-nav" id="bar-nav" aria-label="Sections">
                     <a href="#/cv" data-route="cv">cv</a>
@@ -159,7 +159,7 @@ This site contains an interactive CV, and a list of my personal projects with Gi
         <div class="lb__bar">
             <span class="lb__count" id="lb-count"></span>
             <span class="lb__title" id="lb-title"></span>
-            <span class="lb__zoom" id="lb-zoom" aria-live="polite"></span>
+            <button class="lb__zoom" type="button" id="lb-zoom" aria-live="polite"></button>
             <button class="lb__close" type="button" id="lb-close" aria-label="Close">esc ✕</button>
         </div>
         <div class="lb__stage">

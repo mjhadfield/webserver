@@ -49,8 +49,8 @@ DEFAULT_PORT = 8700
 
 SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 FIG_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
-IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif", ".svg"}
-MAX_UPLOAD = 20 * 1024 * 1024
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif", ".svg", ".webm", ".mp4"}  # images and videos
+MAX_UPLOAD = 100 * 1024 * 1024  # GitHub's own per-file limit
 MAX_JSON = 4 * 1024 * 1024
 SESSION_HOURS = 12
 PBKDF2_ITERATIONS = 600_000
@@ -170,6 +170,8 @@ class Site:
             figures[fid] = {"src": src, "w": int(f.get("w") or 1600), "h": int(f.get("h") or 1000),
                             "title": str(f.get("title") or ""), "caption": str(f.get("caption") or ""),
                             "alt": str(f.get("alt") or ""), "hotspots": spots}
+            if re.search(r"\.(webm|mp4)$", src, re.I):
+                figures[fid]["loop"] = bool(f.get("loop"))  # a video: "play like a GIF"
         return {"slug": slug, "title": s("title"), "summary": s("summary"), "tags": [t.strip() for t in tags if t.strip()],
                 "repo": repo, "status": p["status"], "started": s("started"), "updated": date.today().isoformat(),
                 "body": str(p.get("body") or ""), "figures": figures}
@@ -231,7 +233,7 @@ class Site:
         stem, ext = os.path.splitext(os.path.basename(filename or ""))
         ext = ext.lower()
         if ext not in IMAGE_EXTS:
-            raise ApiError(f"images must be one of {', '.join(sorted(IMAGE_EXTS))}")
+            raise ApiError(f"images and videos must be one of {', '.join(sorted(IMAGE_EXTS))}")
         if not data:
             raise ApiError("empty file")
         stem = re.sub(r"[^a-z0-9]+", "-", stem.lower()).strip("-")[:60] or "image"
@@ -295,7 +297,43 @@ def make_handler(state: State):
 
         def end_headers(self):
             self.send_header("Cache-Control", "no-store")  # editing: always the file on disk
+            self.send_header("Accept-Ranges", "bytes")
             super().end_headers()
+
+        def send_range(self):
+            """Byte-range requests for static files, so a video in the admin preview can seek
+            (http.server only ever sends the whole file). Returns False to fall back to that."""
+            m = re.match(r"^bytes=(\d*)-(\d*)$", (self.headers.get("Range") or "").strip())
+            fs_path = self.translate_path(self.path)
+            if not m or not os.path.isfile(fs_path) or (not m.group(1) and not m.group(2)):
+                return False
+            size = os.path.getsize(fs_path)
+            if m.group(1):
+                start, end = int(m.group(1)), int(m.group(2)) if m.group(2) else size - 1
+            else:  # "bytes=-N": the last N bytes
+                start, end = max(0, size - int(m.group(2))), size - 1
+            end = min(end, size - 1)
+            if start >= size or start > end:
+                self.send_response(416)
+                self.send_header("Content-Range", f"bytes */{size}")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return True
+            self.send_response(206)
+            self.send_header("Content-Type", self.guess_type(fs_path))
+            self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+            self.send_header("Content-Length", str(end - start + 1))
+            self.end_headers()
+            with open(fs_path, "rb") as f:
+                f.seek(start)
+                left = end - start + 1
+                while left > 0:
+                    chunk = f.read(min(1 << 16, left))
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+                    left -= len(chunk)
+            return True
 
         # -- plumbing ------------------------------------------------------------------
         def reply(self, status, obj=None, headers=None):
@@ -346,6 +384,8 @@ def make_handler(state: State):
                 return self.api("GET", path)
             if any(part.startswith(".") for part in path.split("/") if part):
                 return self.reply(404, {"message": "not found"})
+            if self.headers.get("Range") and self.send_range():
+                return None
             return super().do_GET()
 
         def do_HEAD(self):

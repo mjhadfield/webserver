@@ -77,9 +77,24 @@
             : '<div class="terminal__body">' + MH.cdBtn('#/projects', 'cd ..') +
               '<p class="section-label"><span class="prompt">$</span> cat projects/' + esc(slug) + '/README.md</p>' +
               '<p class="tagline">' + (isDraft(slug) ? 'Permission denied — this write-up is still being written. Coming soon.' : 'No such project.') + '</p></div>';
-        views.article.querySelectorAll('.fig__frame').forEach(function (btn) {
-            btn.addEventListener('click', function () { openLightbox(p, btn.dataset.fig, btn); });
+        views.article.querySelectorAll('[data-open-fig]').forEach(function (btn) {
+            btn.addEventListener('click', function () { openLightbox(p, btn.dataset.openFig, btn); });
         });
+        watchLoopingVideos(views.article);
+    }
+
+    // "Play like a GIF" videos: muted loops that run only while on screen (no CPU spent on ones
+    // scrolled out of view), and not at all for visitors who've asked for reduced motion.
+    var loopWatcher = 'IntersectionObserver' in window ? new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+            if (en.isIntersecting && !REDUCED.matches) en.target.play().catch(function () { /* autoplay refused: stays on frame one */ });
+            else en.target.pause();
+        });
+    }, { threshold: 0.25 }) : null;
+    function watchLoopingVideos(root) {
+        if (!loopWatcher) return;
+        loopWatcher.disconnect();
+        root.querySelectorAll('video[data-autoplay]').forEach(function (v) { loopWatcher.observe(v); });
     }
 
     // ---------------------------------------------------------------------------------------
@@ -111,9 +126,12 @@
     var navSeq = 0;
     var cancelSwap = null;
 
+    var HOST_LINK = '<a class="path-host" href="#/" title="Home" aria-label="mikehadfield — home">@mikehadfield</a>';
+
     function paintChrome(route) {
         var segs = route.path.split('/').slice(1), href = '#';
-        pathEl.innerHTML = 'visitor@mikehadfield:' + (segs.length ? '<a href="#/">~</a>' : '~') + segs.map(function (seg, i) {
+        // "@mikehadfield" is always a link home, whatever the page
+        pathEl.innerHTML = 'visitor' + HOST_LINK + ':' + (segs.length ? '<a href="#/">~</a>' : '~') + segs.map(function (seg, i) {
             href += '/' + seg;
             return '/' + (i < segs.length - 1 ? '<a href="' + href + '">' + esc(seg) + '</a>' : esc(decodeURIComponent(seg)));
         }).join('');
@@ -227,6 +245,13 @@
     function openLightbox(project, figId, returnTo) {
         var ids = MH.figureIds(project.body, project.figures);
         lbState = { project: project, ids: ids, i: Math.max(0, ids.indexOf(figId)), returnTo: returnTo, zoomed: false };
+        // opened from a playing video: pause it and carry on from the same moment, full screen
+        var frame = returnTo && returnTo.closest('.fig__frame');
+        var inline = frame && frame.querySelector('video');
+        if (inline && !inline.hasAttribute('data-autoplay')) {
+            lbState.resume = { at: inline.currentTime, play: !inline.paused };
+            inline.pause();
+        }
         lb.showModal();
         paintLightbox();
     }
@@ -240,16 +265,26 @@
         document.getElementById('lb-count').textContent = 'fig.' + (s.i + 1) + ' / ' + s.ids.length;
         document.getElementById('lb-title').textContent = fig.title || '';
         document.getElementById('lb-caption').textContent = fig.caption || '';
-        lbFrame.innerHTML = '<img src="' + esc(fig.src) + '" alt="' + esc(fig.alt || fig.title) + '" width="' + s.w + '" height="' + s.h + '" draggable="false">' + MH.pinsHtml(fig.hotspots, true);
+        s.video = MH.isVideo(fig.src);
+        lbFrame.innerHTML = s.video
+            ? '<video src="' + esc(fig.src) + '" controls playsinline preload="auto"' + (fig.loop ? ' loop' : '') + ' aria-label="' + esc(fig.alt || fig.title) + '"></video>'
+            : '<img src="' + esc(fig.src) + '" alt="' + esc(fig.alt || fig.title) + '" width="' + s.w + '" height="' + s.h + '" draggable="false">' + MH.pinsHtml(fig.hotspots, true);
+        if (s.video) {
+            var vid = lbFrame.querySelector('video'), resume = s.resume;
+            s.resume = null;
+            if (resume) vid.currentTime = resume.at;
+            if (fig.loop || (resume && resume.play)) vid.play().catch(function () { /* autoplay refused: press play */ });
+        }
         chrome.hideTip();
         lb.querySelector('.lb__info').classList.toggle('is-empty', !fig.caption);
         document.getElementById('lb-prev').hidden = s.ids.length < 2;
         document.getElementById('lb-next').hidden = s.ids.length < 2;
         // trust the file over the stored size if they disagree (an image replaced outside the admin)
-        var img = lbFrame.querySelector('img');
-        img.addEventListener('load', function () {
-            if (img.naturalWidth && (img.naturalWidth !== s.w || img.naturalHeight !== s.h) && !/\.svg(\?|$)/i.test(fig.src)) {
-                s.w = img.naturalWidth; s.h = img.naturalHeight;
+        var media = lbFrame.querySelector('img, video');
+        media.addEventListener(s.video ? 'loadedmetadata' : 'load', function () {
+            var nw = s.video ? media.videoWidth : media.naturalWidth, nh = s.video ? media.videoHeight : media.naturalHeight;
+            if (nw && (nw !== s.w || nh !== s.h) && !/\.svg(\?|$)/i.test(fig.src)) {
+                s.w = nw; s.h = nh;
                 layoutLightbox();
             }
         });
@@ -268,11 +303,14 @@
         if (!s.canZoom) s.zoomed = false;
         var scale = s.zoomed ? 1 : fit;
         lb.classList.toggle('is-zoomed', s.zoomed);
-        lb.classList.toggle('can-zoom', s.canZoom && !s.zoomed);
+        lb.classList.toggle('can-zoom', s.canZoom && !s.zoomed && !s.video);
+        lb.classList.toggle('is-video', !!s.video);
         lbFrame.style.width = Math.round(s.w * scale) + 'px';
         lbFrame.style.height = Math.round(s.h * scale) + 'px';
-        lbZoom.textContent = s.zoomed ? '100% · drag to pan · click to fit'
-            : s.canZoom ? 'fit ' + Math.round(fit * 100) + '% · click image for 100%' : '100%';
+        // the bar's zoom button: also the way to 100% for a video, where a click belongs to its controls
+        lbZoom.textContent = s.zoomed ? (s.video ? '100% · scroll to pan · back to fit' : '100% · drag to pan · click to fit')
+            : s.canZoom ? 'fit ' + Math.round(fit * 100) + '% · ' + (s.video ? 'view at 100%' : 'click image for 100%') : '100%';
+        lbZoom.disabled = !s.canZoom;
         if (s.zoomed) {
             if (anchor) { // the spot that was clicked stays under the pointer
                 var r = lbScroll.getBoundingClientRect();
@@ -304,7 +342,7 @@
     var drag = null, dragged = false;
     lbScroll.addEventListener('pointerdown', function (e) {
         dragged = false;
-        if (!lbState || !lbState.zoomed || e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('.pin')) return;
+        if (!lbState || !lbState.zoomed || lbState.video || e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('.pin')) return;
         drag = { x: e.clientX, y: e.clientY, sl: lbScroll.scrollLeft, st: lbScroll.scrollTop, id: e.pointerId };
     });
     lbScroll.addEventListener('pointermove', function (e) {
@@ -323,8 +361,9 @@
     function endDrag() { drag = null; lbScroll.classList.remove('is-dragging'); }
     lbScroll.addEventListener('pointerup', endDrag);
     lbScroll.addEventListener('pointercancel', endDrag);
+    lbZoom.addEventListener('click', function () { toggleZoom(null); });
     lbScroll.addEventListener('click', function (e) {
-        if (dragged || e.target.closest('.pin')) return;
+        if (dragged || e.target.closest('.pin') || lbState.video) return; // a video's clicks belong to its controls
         if (!e.target.closest('.lb__frame') && !lbState.zoomed) return; // the empty stage around a fitted image
         toggleZoom(e);
     });
@@ -348,6 +387,7 @@
     });
     lb.addEventListener('close', function () {
         chrome.hideTip();
+        lbFrame.innerHTML = ''; // stops a video
         if (lbState && lbState.returnTo) lbState.returnTo.focus();
     });
     window.addEventListener('resize', function () { if (lb.open && lbState) layoutLightbox(); });

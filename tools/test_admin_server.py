@@ -188,6 +188,28 @@ class AdminServerTests(unittest.TestCase):
         self.assertIn(self.req("POST", "/api/images/..%2Fescape?name=a.png", raw=png)[0], (400, 404))
         self.assertFalse((self.tmp / "content" / "escape").exists())
 
+    def test_video_upload_loop_flag_and_ranges(self):
+        self.login()
+        webm = b"\x1a\x45\xdf\xa3" + bytes(range(256)) * 40
+        status, body, _ = self.req("POST", "/api/images/citadel?name=Demo%20Clip.webm", raw=webm)
+        self.assertEqual((status, body["src"]), (200, "content/img/citadel/demo-clip.webm"))
+        p = self.project(figures={"v": {"src": "content/img/test-proj/v.webm", "w": 1920, "h": 1080, "title": "V", "loop": True},
+                                  "i": {"src": "content/img/test-proj/i.png", "w": 10, "h": 10, "loop": True}})
+        saved = self.req("PUT", "/api/projects/test-proj", {"project": p})[1]["project"]["figures"]
+        self.assertIs(saved["v"]["loop"], True)
+        self.assertNotIn("loop", saved["i"])                     # only videos have it
+        c = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)  # byte ranges, for seeking
+        c.request("GET", "/content/img/citadel/demo-clip.webm", headers={"Host": f"127.0.0.1:{self.port}", "Range": "bytes=4-9"})
+        r = c.getresponse()
+        self.assertEqual((r.status, r.getheader("Content-Range"), r.read()), (206, f"bytes 4-9/{len(webm)}", webm[4:10]))
+        c.request("GET", "/content/img/citadel/demo-clip.webm", headers={"Host": f"127.0.0.1:{self.port}", "Range": "bytes=-4"})
+        r = c.getresponse()
+        self.assertEqual((r.status, r.read()), (206, webm[-4:]))
+        c.request("GET", "/content/img/citadel/demo-clip.webm", headers={"Host": f"127.0.0.1:{self.port}", "Range": "bytes=999999-"})
+        r = c.getresponse(); r.read()
+        self.assertEqual(r.status, 416)
+        c.close()
+
     # -- CV + home text ---------------------------------------------------------------------
     def test_cv_is_written_into_index_html(self):
         self.login()

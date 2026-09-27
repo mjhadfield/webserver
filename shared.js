@@ -17,7 +17,7 @@
 
     // ---------------------------------------------------------------------------------------
     // Markdown -- a deliberately small subset, no library: ## / ### headings, paragraphs, - and
-    // 1. lists, ``` code blocks, > quotes, **bold**, *italic*, `code`, [links](url), and
+    // 1. lists, ``` code blocks (```python / ```sql are colour-highlighted), > quotes, **bold**, *italic*, `code`, [links](url), and
     // "::figure[id]" on its own line to place one of the project's figures.
     // ---------------------------------------------------------------------------------------
     function inline(s) {
@@ -29,6 +29,77 @@
                 return href.charAt(0) === '#' ? '<a href="' + href + '">' + text + '</a>'
                     : '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + text + '</a>';
             });
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // Syntax highlighting for ```python and ```sql blocks -- a small tokenizer, no library.
+    // Colours are VS Code's (Dark+ / Light+, as --hl-* tokens in styles.css). Every token is
+    // escaped; anything unrecognised stays plain text.
+    // ---------------------------------------------------------------------------------------
+    function words(s) { var o = {}; s.split(' ').forEach(function (w) { o[w] = 1; }); return o; }
+    var PY_CTRL = words('if elif else for while try except finally with return yield raise break continue pass import from as async await match case');
+    var PY_KW = words('def class lambda and or not in is del global nonlocal assert True False None self cls');
+    var PY_TYPES = words('int str float bool bytes list dict set tuple object type frozenset complex bytearray range Exception ValueError TypeError KeyError IndexError RuntimeError OSError StopIteration');
+    var SQL_KW = words('select from where and or not null is in as on join left right inner outer full cross natural group by order having limit offset insert into values update set delete create table index view drop alter add column primary key foreign references unique default check constraint distinct union all exists case when then else end like glob between asc desc with recursive if begin commit rollback transaction trigger returning conflict do nothing replace over partition rows range window cast collate escape except intersect autoincrement temp temporary true false pragma explain using');
+    var SQL_NAME_AFTER = words('table into exists view index references update trigger from join'); // a name, even before "("
+    var SQL_TYPES = words('integer int text real blob varchar char numeric decimal boolean date datetime timestamp float double bigint smallint serial json');
+    var LANGS = { python: 'python', py: 'python', python3: 'python', sql: 'sql', sqlite: 'sql', mysql: 'sql', postgres: 'sql', postgresql: 'sql', tsql: 'sql', mssql: 'sql' };
+
+    var PY_RE = new RegExp([
+        '(#[^\\n]*)',                                                                         // 1 comment
+        "((?:[rRbBuUfF]{1,2})?(?:'''[\\s\\S]*?(?:'''|$)|\"\"\"[\\s\\S]*?(?:\"\"\"|$)|'(?:\\\\.|[^'\\\\\\n])*'?|\"(?:\\\\.|[^\"\\\\\\n])*\"?))", // 2 string
+        '(@[A-Za-z_][\\w.]*)',                                                                // 3 decorator
+        '(\\b0[xXbBoO][\\da-fA-F_]+\\b|\\b\\d[\\d_]*(?:\\.\\d[\\d_]*)?(?:[eE][+-]?\\d+)?[jJ]?\\b)', // 4 number
+        '([A-Za-z_]\\w*)'                                                                     // 5 name
+    ].join('|'), 'g');
+    var SQL_RE = new RegExp([
+        '(--[^\\n]*|/\\*[\\s\\S]*?(?:\\*/|$))',                    // 1 comment
+        "('(?:''|[^'])*'?)",                                       // 2 string
+        '("(?:""|[^"])*"?|`[^`]*`?|\\[[^\\]\\n]*\\]|[:@$?]\\w+)',  // 3 quoted name / parameter
+        '(\\b\\d+(?:\\.\\d+)?\\b)',                                // 4 number
+        '([A-Za-z_][\\w$]*)'                                       // 5 name
+    ].join('|'), 'g');
+
+    function span(cls, text) { return '<span class="hl-' + cls + '">' + esc(text) + '</span>'; }
+
+    function highlight(code, lang) {
+        var re = lang === 'python' ? PY_RE : SQL_RE, out = '', last = 0, prev = '', m;
+        re.lastIndex = 0;
+        while ((m = re.exec(code))) {
+            out += esc(code.slice(last, m.index));
+            last = re.lastIndex;
+            var t = m[0], cls = null;
+            if (m[1]) cls = 'com';
+            else if (m[2]) cls = 'str';
+            else if (m[3]) cls = lang === 'python' ? 'dec' : 'var';
+            else if (m[4]) cls = 'num';
+            else {
+                var next = code.slice(last).match(/^\s*(.)/);
+                var call = next && next[1] === '(';
+                if (lang === 'python') {
+                    cls = prev === 'def' ? 'fn' : prev === 'class' ? 'type'
+                        : PY_CTRL[t] ? 'ctrl' : PY_KW[t] ? 'kw' : PY_TYPES[t] ? 'type'
+                        : /^[A-Z][a-z]/.test(t) ? 'type' // CapWords: a class, as VS Code colours it
+                        : call ? 'fn' : 'var';
+                } else {
+                    var u = t.toLowerCase();
+                    cls = SQL_KW[u] ? 'kw' : SQL_TYPES[u] ? 'type' : call && !SQL_NAME_AFTER[prev.toLowerCase()] ? 'fn' : null;
+                }
+                prev = t;
+            }
+            out += cls ? span(cls, t) : esc(t);
+            if (!m[5]) prev = '';
+            if (!t.length) re.lastIndex++;  // never stall on an empty match
+        }
+        return out + esc(code.slice(last));
+    }
+
+    // a fenced block: ```python / ```sql get colours and a label; anything else stays plain
+    function codeBlock(code, tag) {
+        var lang = LANGS[String(tag || '').trim().toLowerCase()];
+        var body = lang ? highlight(code, lang) : esc(code);
+        return '<div class="code' + (lang ? ' code--' + lang : '') + '">' + (tag ? '<span class="code__lang">' + esc(String(tag).trim().toLowerCase()) + '</span>' : '') +
+            '<pre><code>' + body + '</code></pre></div>';
     }
 
     // the figures a body actually shows, in order (so numbering and the pop-out agree)
@@ -58,9 +129,12 @@
             var m;
             if (/^```/.test(line)) {
                 flushPara(); flushList();
-                var code = [];
+                // only the first word after ``` is the language; code typed on the same line
+                // (```python def f():) is the block's first line, not part of the label
+                var fence = line.slice(3).match(/^\s*(\S*)\s?(.*)$/);
+                var tag = fence[1], code = fence[2].trim() ? [fence[2]] : [];
                 while (++i < lines.length && !/^```/.test(lines[i])) code.push(lines[i]);
-                out.push('<pre><code>' + esc(code.join('\n')) + '</code></pre>');
+                out.push(codeBlock(code.join('\n'), tag));
             } else if ((m = line.match(/^::figure\[([\w-]+)\]\s*$/))) {
                 flushPara(); flushList();
                 var fig = figures && figures[m[1]];
@@ -100,15 +174,33 @@
         }).join('');
     }
 
+    function isVideo(src) { return /\.(webm|mp4)(\?|#|$)/i.test(String(src || '')); }
+
+    // A figure. Whatever opens it in the pop-out carries data-open-fig. An image: the whole frame is
+    // that button. A video: it has its own controls, so a small "expand" button opens it instead --
+    // unless it's set to play like a GIF (fig.loop), which behaves like a screenshot. Videos don't
+    // play on their own otherwise: decoding a 1440p video is heavy on a PC without a GPU.
     function figureHtml(id, fig, n) {
         var w = +fig.w || 1600, h = +fig.h || 1000;
+        // max-width: never stretched past its own pixel width -- a small image stays its real size
+        var box = ' data-fig="' + esc(id) + '" style="aspect-ratio:' + w + '/' + h + ';max-width:' + w + 'px"';
+        var label = ' aria-label="Expand figure ' + n + ': ' + esc(fig.title) + '"';
+        var caption = '<figcaption><b>fig.' + n + '</b><span><strong>' + esc(fig.title) + '</strong>' + (fig.caption ? ' — ' + esc(fig.caption) : '') + '</span></figcaption></figure>';
+        if (isVideo(fig.src)) {
+            if (fig.loop) {
+                return '<figure class="fig"><button type="button" class="fig__frame fig__frame--video" data-open-fig="' + esc(id) + '"' + box + label + '>' +
+                    '<video src="' + esc(fig.src) + '" muted loop playsinline preload="metadata" data-autoplay aria-label="' + esc(fig.alt || fig.title) + '"></video>' +
+                    '<span class="fig__zoom">click to expand</span></button>' + caption;
+            }
+            return '<figure class="fig"><div class="fig__frame fig__frame--video"' + box + '>' +
+                '<video src="' + esc(fig.src) + '" controls playsinline preload="metadata" aria-label="' + esc(fig.alt || fig.title) + '"></video>' +
+                '<button type="button" class="fig__expand" data-open-fig="' + esc(id) + '"' + label + '>⤢ expand</button></div>' + caption;
+        }
         return '<figure class="fig">' +
-            // max-width: never stretched past its own pixel width -- a small image stays its real size
-            '<button type="button" class="fig__frame" data-fig="' + esc(id) + '" style="aspect-ratio:' + w + '/' + h + ';max-width:' + w + 'px" aria-label="Expand figure ' + n + ': ' + esc(fig.title) + '">' +
+            '<button type="button" class="fig__frame" data-open-fig="' + esc(id) + '"' + box + label + '>' +
             '<img src="' + esc(fig.src) + '" alt="' + esc(fig.alt || fig.title) + '" width="' + w + '" height="' + h + '" loading="lazy" decoding="async">' +
             pinsHtml(fig.hotspots, false) +
-            '<span class="fig__zoom">click to expand</span></button>' +
-            '<figcaption><b>fig.' + n + '</b><span><strong>' + esc(fig.title) + '</strong>' + (fig.caption ? ' — ' + esc(fig.caption) : '') + '</span></figcaption></figure>';
+            '<span class="fig__zoom">click to expand</span></button>' + caption;
     }
 
     // ---------------------------------------------------------------------------------------
@@ -355,7 +447,7 @@
     }
 
     root.MH = {
-        esc: esc, slugify: slugify, inline: inline, md: md, figureIds: figureIds, pinsHtml: pinsHtml, figureHtml: figureHtml,
+        esc: esc, slugify: slugify, inline: inline, md: md, figureIds: figureIds, pinsHtml: pinsHtml, figureHtml: figureHtml, isVideo: isVideo,
         cdBtn: cdBtn, tagsHtml: tagsHtml, articleHtml: articleHtml,
         CV_SECTIONS: CV_SECTIONS, cvSection: cvSection, cvHtml: cvHtml,
         initChrome: initChrome

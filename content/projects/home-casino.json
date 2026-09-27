@@ -1,61 +1,63 @@
 {
   "slug": "home-casino",
-  "title": "Home Casino",
-  "summary": "A casino game written entirely in Python with no external assets. With a progression system, unlocks, themes, and detailed statistics.",
+  "title": "Hadfield Casino",
+  "summary": "Written entirely in Python with no other assets. A full progression system, unlocks, themes, and detailed statistics.",
   "tags": [
     "Python",
     "Tkinter"
   ],
-  "repo": "https://github.com/mjhadfield",
-  "status": "draft",
-  "started": "2025-11",
-  "updated": "2026-09-26",
-  "body": "## Why\nDonec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat.\n::figure[table]\n## Architecture\nAliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus. Phasellus ultrices nulla quis nibh.\n```\nhost  ──ws──▶  table state  ◀──ws──  phones\n```\n::figure[lobby]\nQuisque a lectus. Donec consectetuer ligula vulputate sem tristique cursus.",
+  "repo": "https://github.com/mjhadfield/Casino",
+  "status": "published",
+  "started": "2026-08",
+  "updated": "2026-09-27",
+  "body": "## Requirements\nWill run on literally anything that supports python. Even got it running on XP without much trouble. No pre-requisites! \n\n## Background\nWhen most people turn 18 they're most excited about finally being able to (legally) go to the pub. For me, it was being able to set foot in card rooms and casinos. \n\nI've been an avid poker player since I was 16, it's a beautiful game - the perfect mix of strategy and psychology. A byproduct of this hobby means spending a lot of time in Casinos, and being tempted by the table games, where the house always wins. \n\n## Goals\n\nWhile the house always wins in casino games, how much they win depends on how well you play. If you play blackjack perfectly the house edge is 0.5%, playing poorly? 5%. Hitting on 17 against a dealer 2? All the percent. \n\nWhat I wanted, was a place to learn the games and practice them. I had some requirements:\n- Common UK side bets\n- Configurable blackjack shoe size\n- Progressive jackpots\n- Accurate UK paytables\n\nI couldn't find anything on the internet that even got close, so I built my own.\n\n::figure[screenshot-20260927-130129]\n\n## Feature creep\nWhat started off as a handful of casino games I could practice with ballooned into a fully fledged single player game, introducing features such as: \n- Multiple users on the same install\n- Detailed player statistics\n- Achievements and unlocks (new games, themes, overlays, card styles)\n- A full progression system (optional)\n- Strategy overlays\n- Blackjack card counting\n- Global progressive jackpot\n\n## Statistics and achievements\n::figure[screenshot-20260927-133656]\n\n## How it works\n\nMost of the core logic is reusable across games, like the hand evaluation function. Even in non-poker games, often a lot of the side bets are evaluated using standard poker hand rankings. Blackjack's 21+3 sidebet is the same evaluation as a three card poker hand.\n\n\n```python\ndef evaluate_three_card_hand(cards) -> HandEval:\n    if len(cards) != 3:\n        raise ValueError(\"Three card poker hands must contain exactly 3 cards.\")\n\n    values = sorted((c.value for c in cards), reverse=True)\n    is_flush = len({c.suit for c in cards}) == 1\n    is_straight, straight_high = _check_straight(values)\n    counts = Counter(values)\n    count_sizes = sorted(counts.values(), reverse=True)\n\n    if is_straight and is_flush:\n        assert straight_high is not None  # _check_straight always pairs True with a value\n        return (STRAIGHT_FLUSH, HAND_NAMES[STRAIGHT_FLUSH], (straight_high,))\n    if count_sizes[0] == 3:\n        return (THREE_OF_A_KIND, HAND_NAMES[THREE_OF_A_KIND], (values[0],))\n    if is_straight:\n        assert straight_high is not None  # _check_straight always pairs True with a value\n        return (STRAIGHT, HAND_NAMES[STRAIGHT], (straight_high,))\n    if is_flush:\n        return (FLUSH, HAND_NAMES[FLUSH], tuple(values))\n    if count_sizes[0] == 2:\n        pair_value = next(v for v, c in counts.items() if c == 2)\n        kicker = next(v for v, c in counts.items() if c == 1)\n        return (PAIR, HAND_NAMES[PAIR], (pair_value, kicker))\n    return (HIGH_CARD, HAND_NAMES[HIGH_CARD], tuple(values))\n```\n##Settings\n\n\n## Sample Gameplay - Three Card Poker\n\nThe first game I made, very simple (optimal strategy is to play Q-6-4 or better, and fold everything else). The Prime sidebet pays out if all player cards are the same colour. There are instances where you would fold a hand that wins this bet, so I made an animation to place these cards under the bet as would typically be done in a casino.\n\n::figure[screencast-20260927-131758]\n\n## Sample Gameplay - Blackjack\n\nIncluding unlocked overlays for card counting, and optimal strategy. These can be turned on/off at will.\n\n::figure[screencast-20260927-132946-trimmed]\n\n::figure[screenshot-20260927-134735]\n",
   "figures": {
-    "table": {
-      "src": "content/img/home-casino/casino-table.svg",
-      "w": 1600,
-      "h": 1000,
-      "title": "The table",
-      "caption": "Donec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus.",
+    "screenshot-20260927-130129": {
+      "src": "content/img/home-casino/screenshot-20260927-130129.png",
+      "w": 1200,
+      "h": 820,
+      "title": "Casino Home",
+      "caption": "Game Selection Screen",
       "alt": "",
-      "hotspots": [
-        {
-          "x": 50.0,
-          "y": 17.0,
-          "note": "Neque id cursus faucibus — the player to act."
-        },
-        {
-          "x": 50.0,
-          "y": 49.0,
-          "note": "Tortor neque egestas augue, the community cards."
-        },
-        {
-          "x": 50.0,
-          "y": 61.5,
-          "note": "Eu vulputate magna eros eu erat — the pot."
-        }
-      ]
+      "hotspots": []
     },
-    "lobby": {
-      "src": "content/img/home-casino/casino-lobby.svg",
-      "w": 1600,
-      "h": 1000,
-      "title": "Lobby and history",
-      "caption": "Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor.",
+    "screenshot-20260927-133656": {
+      "src": "content/img/home-casino/screenshot-20260927-133656.png",
+      "w": 1200,
+      "h": 820,
+      "title": "Global Statistics",
+      "caption": "I have idly played this far too often. ",
       "alt": "",
-      "hotspots": [
-        {
-          "x": 42.0,
-          "y": 22.0,
-          "note": "Facilisis luctus, metus — join a table."
-        },
-        {
-          "x": 75.0,
-          "y": 45.0,
-          "note": "Phasellus ultrices nulla quis nibh, session results."
-        }
-      ]
+      "hotspots": []
+    },
+    "screencast-20260927-131758": {
+      "src": "content/img/home-casino/screencast-20260927-131758-2.webm",
+      "w": 1192,
+      "h": 815,
+      "title": "Three Card Poker",
+      "caption": "Not bad, not bad. ",
+      "alt": "",
+      "hotspots": [],
+      "loop": false
+    },
+    "screencast-20260927-132946-trimmed": {
+      "src": "content/img/home-casino/screencast-20260927-132946-trimmed.webm",
+      "w": 1193,
+      "h": 821,
+      "title": "Blackjack",
+      "caption": "Table selection and card counting overlay.",
+      "alt": "",
+      "hotspots": [],
+      "loop": false
+    },
+    "screenshot-20260927-134735": {
+      "src": "content/img/home-casino/screenshot-20260927-134735.png",
+      "w": 1200,
+      "h": 820,
+      "title": "Settings",
+      "caption": "User settings, overlays, styles, etc. ",
+      "alt": "",
+      "hotspots": []
     }
   }
 }

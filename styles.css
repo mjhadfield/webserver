@@ -44,6 +44,9 @@
     --glow-2: rgba(53, 120, 224, 0.05);
     --dot: rgba(53, 224, 160, 0.14);
     --swatch-line: rgba(53, 224, 160, 0.4);
+    /* code colours: VS Code Dark+ */
+    --hl-text: #d4d4d4; --hl-kw: #569cd6; --hl-ctrl: #c586c0; --hl-str: #ce9178; --hl-com: #6a9955;
+    --hl-num: #b5cea8; --hl-fn: #dcdcaa; --hl-type: #4ec9b0; --hl-var: #9cdcfe;
     color-scheme: dark;
 }
 
@@ -85,6 +88,9 @@
     --glow-2: rgba(13, 138, 106, 0.06);
     --dot: rgba(181, 84, 31, 0.16);
     --swatch-line: rgba(181, 84, 31, 0.4);
+    /* code colours: VS Code Light+ */
+    --hl-text: #1f1f1f; --hl-kw: #0000ff; --hl-ctrl: #af00db; --hl-str: #a31515; --hl-com: #008000;
+    --hl-num: #098658; --hl-fn: #795e26; --hl-type: #267f99; --hl-var: #001080;
     color-scheme: light;
 }
 
@@ -245,6 +251,15 @@ body {
 }
 
 .terminal__path a:hover { color: var(--accent); }
+
+/* "@mikehadfield": always a way home */
+.terminal__path a.path-host {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.terminal__path a.path-host:hover,
+.terminal__path a.path-host:focus-visible { color: var(--fg); }
 
 .terminal__path {
     font-size: 0.75rem;
@@ -1106,6 +1121,36 @@ body {
     color: inherit;
 }
 
+/* ```python / ```sql: VS Code's colours (Dark+ in dark mode, Light+ in light) */
+.code {
+    position: relative;
+    max-width: none; /* the full write-up width, like figures -- less sideways scrolling */
+}
+
+.code .code__lang {
+    position: absolute;
+    top: 7px;
+    right: 10px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--grey-btn-text);
+    pointer-events: none;
+}
+
+.code--python pre,
+.code--sql pre { color: var(--hl-text); }
+
+.hl-kw { color: var(--hl-kw); }
+.hl-ctrl { color: var(--hl-ctrl); }
+.hl-str { color: var(--hl-str); }
+.hl-com { color: var(--hl-com); font-style: italic; }
+.hl-num { color: var(--hl-num); }
+.hl-fn { color: var(--hl-fn); }
+.hl-type { color: var(--hl-type); }
+.hl-var { color: var(--hl-var); }
+.hl-dec { color: var(--hl-fn); }
+
 .prose blockquote {
     margin: 16px 0;
     padding: 4px 0 4px 16px;
@@ -1139,11 +1184,38 @@ body {
     outline: none;
 }
 
-.fig__frame img {
+.fig__frame img,
+.fig__frame video {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+/* a video with its own controls: the frame isn't a button, a small "expand" chip opens it */
+div.fig__frame--video { cursor: default; }
+.fig__frame video { background: #000; }
+
+.fig__expand {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.66rem;
+    color: var(--fg);
+    background: var(--chip-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.fig__expand:hover,
+.fig__expand:focus-visible {
+    opacity: 1;
+    border-color: var(--accent-dim);
+    outline: none;
 }
 
 .fig__zoom {
@@ -1261,10 +1333,20 @@ button.pin { cursor: pointer; }
 }
 
 .lb__zoom {
+    font-family: inherit;
     font-size: 0.7rem;
     color: var(--fg-dim);
     white-space: nowrap;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 3px 7px;
+    cursor: pointer;
 }
+
+.lb__zoom:hover:not(:disabled),
+.lb__zoom:focus-visible { color: var(--accent); border-color: var(--accent-dim); outline: none; }
+.lb__zoom:disabled { cursor: default; }
 
 .lb__close,
 .lb__nav {
@@ -1321,8 +1403,11 @@ button.pin { cursor: pointer; }
 
 .lb.can-zoom .lb__frame { cursor: zoom-in; }
 .lb.is-zoomed .lb__frame { cursor: inherit; }
+.lb.is-video .lb__scroll,
+.lb.is-video .lb__frame { cursor: default; } /* a video's clicks and drags belong to its controls */
 
-.lb__frame img {
+.lb__frame img,
+.lb__frame video {
     display: block;
     width: 100%;
     height: 100%;
@@ -1330,6 +1415,8 @@ button.pin { cursor: pointer; }
     user-select: none;
     -webkit-user-drag: none;
 }
+
+.lb__frame video { background: #000; }
 
 .lb.is-zoomed .lb__frame img { border-radius: 0; }
 

@@ -227,7 +227,8 @@
     color: var(--fg-dim);
 }
 
-.figman__thumb img { display: block; width: 100%; border-radius: 4px; margin-bottom: 4px; }
+.figman__thumb img,
+.figman__thumb video { display: block; width: 100%; border-radius: 4px; margin-bottom: 4px; background: #000; }
 .figman__thumb[aria-pressed="true"] { border-color: var(--accent); color: var(--fg); }
 
 .figman__canvas {
@@ -241,6 +242,20 @@
 }
 
 .figman__canvas img { display: block; width: 100%; user-select: none; }
+.figman__canvas--video { cursor: default; }
+.figman__canvas--video video { display: block; width: 100%; background: #000; }
+
+.field-check {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--fg);
+    cursor: pointer;
+}
+
+.field-check input { margin-top: 3px; accent-color: var(--accent); }
 
 /* pins on the editing image can be dragged to a new spot */
 .figman__canvas .pin {
