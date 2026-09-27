@@ -1,7 +1,7 @@
 {
   "slug": "home-casino",
   "title": "Hadfield Casino",
-  "summary": "Written entirely in Python with no other assets. A full progression system, unlocks, themes, and detailed statistics.",
+  "summary": "Written entirely in Python with no additional assets. Complete with progression system, unlocks, themes, and detailed statistics. Want to learn how to count cards? I've got you covered.",
   "tags": [
     "Python",
     "Tkinter"

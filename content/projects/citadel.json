@@ -1,7 +1,7 @@
 {
   "slug": "citadel",
   "title": "Citadel Hub",
-  "summary": "A way for me to manage my digital estate, with API integration for external services. Hosted locally, and served via a dashboard.",
+  "summary": "A way for me to manage my digital life, with API integration for external services. Hosted locally, and served via a dashboard.",
   "tags": [
     "FastAPI",
     "Python",

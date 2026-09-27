@@ -56,8 +56,7 @@
         views.projects.innerHTML =
             '<div class="proj-head">' + MH.cdBtn('#/', 'cd ~') +
             '<p class="section-label"><span class="prompt">$</span> ls -la ~/projects</p>' +
-            '<p class="tagline">' + (list ? live + ' write-up' + (live === 1 ? '' : 's') + (soon ? ' · ' + soon + ' coming soon' : '') + ' — how they work, why they exist, and what I learned'
-                : 'couldn’t load the project list — try again in a moment') + '<span class="cursor">_</span></p>' +
+            '<p class="tagline">A collection of personal projects and GitHub repos. I wish I could take all of the credit, but Claude co-wrote an awful lot (from my schema!). I am not a developer, just an integration guy obsessed with numbers.' + '<span class="cursor">_</span></p>' +
             '</div>' +
             (list ? '<div class="proj-grid">' + list.map(function (p) {
                 var draft = p.status === 'draft';

@@ -2,7 +2,7 @@
   {
     "slug": "citadel",
     "title": "Citadel Hub",
-    "summary": "A way for me to manage my digital estate, with API integration for external services. Hosted locally, and served via a dashboard.",
+    "summary": "A way for me to manage my digital life, with API integration for external services. Hosted locally, and served via a dashboard.",
     "tags": [
       "FastAPI",
       "Python",
@@ -17,7 +17,7 @@
   {
     "slug": "music-companion",
     "title": "Music Companion",
-    "summary": "A fully interactive archive of my history with music. Linking together my physical record collection, digital listening, and gig history.",
+    "summary": "A fully interactive archive of my obsession with music. Linking together my physical record collection, digital listening, and gig history.",
     "tags": [
       "SQLite",
       "MusicBrainz",
@@ -31,7 +31,7 @@
   {
     "slug": "home-casino",
     "title": "Hadfield Casino",
-    "summary": "Written entirely in Python with no other assets. A full progression system, unlocks, themes, and detailed statistics.",
+    "summary": "Written entirely in Python with no additional assets. Complete with progression system, unlocks, themes, and detailed statistics. Want to learn how to count cards? I've got you covered.",
     "tags": [
       "Python",
       "Tkinter"
@@ -43,15 +43,14 @@
   {
     "slug": "star-epr",
     "title": "Star EPR",
-    "summary": "An electronic patient record prototype exploring clean request and results workflows.",
+    "summary": "A practice ground for Mirth and MSSQL, hooked up to a web page front-end. Needs writing up, but doing this for 40-60 hours a week for my real job it's hard to find the drive to finish it.",
     "tags": [
-      "Python",
-      "Flask",
-      "HL7",
-      "SQL"
+      "MSSQL",
+      "MirthConnect",
+      "JavaScript"
     ],
     "status": "draft",
     "started": "2025-06",
-    "updated": "2026-09-26"
+    "updated": "2026-09-27"
   }
 ]
