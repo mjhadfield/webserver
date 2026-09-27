@@ -25,8 +25,8 @@
     }
   ],
   "profile": [
-    "I've spent the last 12 years working for the UK's largest independent provider of clinical pathology. During that time I've had the opportunity to work on a large-scale project to replace our existing LIMS with an in-house bespoke solution, overseen two major laboratory moves, and learned the infrastructure for both our virtual and physical estates.",
-    "In addition to my personal growth, I've also taken on management roles in both laboratory and IT environments. This experience has expanded my skills and honed my ability to lead teams effectively towards achieving our objectives."
+    "I've spent the last 12 years working for the UK's largest independent provider of clinical pathology. During that time I've overseen two major laboratory moves, and played a leading role in the implementation and rollout of a new bespoke in-house LIMS.",
+    "In addition to my personal growth, I've also taken on managerial roles in both laboratory and IT environments. This experience has expanded my skills and honed my ability to lead teams effectively towards achieving our objectives."
   ],
   "skills": [
     {
@@ -41,7 +41,7 @@
           "detail": ""
         },
         {
-          "name": "Mirth Connect",
+          "name": "MirthConnect",
           "detail": ""
         },
         {
@@ -50,6 +50,27 @@
         },
         {
           "name": "Analyser Support",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "label": "Leadership & Management",
+      "items": [
+        {
+          "name": "Team Leadership",
+          "detail": ""
+        },
+        {
+          "name": "SOP Documentation",
+          "detail": ""
+        },
+        {
+          "name": "Incident Management",
+          "detail": ""
+        },
+        {
+          "name": "Stakeholder Management",
           "detail": ""
         }
       ]
@@ -116,34 +137,13 @@
           "detail": ""
         }
       ]
-    },
-    {
-      "label": "Leadership & Process",
-      "items": [
-        {
-          "name": "Team Leadership",
-          "detail": ""
-        },
-        {
-          "name": "SOP Authoring",
-          "detail": ""
-        },
-        {
-          "name": "Incident Management",
-          "detail": ""
-        },
-        {
-          "name": "Stakeholder Management",
-          "detail": ""
-        }
-      ]
     }
   ],
   "experience": [
     {
       "role": "Laboratory Systems Specialist",
       "date": "Sep 2023 — Present",
-      "org": "TDL Manchester",
+      "org": "TDL Manchester / Hybrid Remote",
       "points": [
         "Configuration and implementation of a newly developed in-house LIMS system.",
         "2nd line analyser support for 100+ analysers across the country.",
@@ -218,11 +218,11 @@
   "interests": [
     {
       "title": "Web development",
-      "body": "After needing to understand the basics of JavaScript for LIMS integration, in my spare time I've rediscovered an enjoyment for website creation and front end development. You can see (some of) my pet projects on [GitHub](https://github.com/mjhadfield)."
+      "body": "After needing to understand the basics of JavaScript for LIMS integration, in my spare time I've rediscovered an enjoyment for website creation and front end development. Check out my projects page."
     },
     {
       "title": "Programming",
-      "body": "In the new age of LLMs and neural networks, learning and creating has never been easier. Currently dabbling in Python."
+      "body": "In the new age of LLMs and neural networks, learning and creating has never been easier. Currently exploring Python and C++"
     },
     {
       "title": "Poker",

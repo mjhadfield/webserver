@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +14,7 @@
     <script>
         (function () {
             var d = document.documentElement, g = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
-            d.dataset.theme = g('mh-theme') || 'light'; // light unless the visitor chose dark
+            d.dataset.theme = g('mh-theme') || 'dark'; // dark unless the visitor chose light
             d.dataset.bg = g('mh-bg') || 'grid';
             d.dataset.scan = g('mh-scan') || 'on';
         })();

@@ -1470,8 +1470,12 @@ button.pin { cursor: pointer; }
 @media (max-width: 600px) {
     html, body { height: auto; }
 
+    /* short pages (home, contact) sit in the middle of the screen, as on desktop; a page
+       taller than the screen just grows the body, so it starts at the top and scrolls */
     body {
-        justify-content: flex-start;
+        min-height: 100vh;
+        min-height: 100dvh;
+        justify-content: center;
         overflow: visible;
         padding: 16px 10px 24px;
     }
