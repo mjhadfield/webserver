@@ -19,17 +19,14 @@
     "title": "Music Companion",
     "summary": "A fully interactive archive of my history with music. Linking together my physical record collection, digital listening, and gig history.",
     "tags": [
-      "Python",
       "SQLite",
-      "FastAPI",
       "MusicBrainz",
       "Discogs",
-      "Spotify",
       "LastFM"
     ],
-    "status": "draft",
+    "status": "published",
     "started": "2026-06",
-    "updated": "2026-09-26"
+    "updated": "2026-09-27"
   },
   {
     "slug": "home-casino",

@@ -88,18 +88,23 @@
         return out.join('\n');
     }
 
+    // numbered pins; a pin's note shows as a tooltip (data-tip, see initChrome). Buttons in the
+    // pop-out (focusable, so the note is there by keyboard too); plain spans elsewhere.
     function pinsHtml(hotspots, asButtons) {
         return (hotspots || []).map(function (h, i) {
             var tag = asButtons ? 'button' : 'span';
+            var note = String(h.note || '').trim();
             return '<' + tag + (asButtons ? ' type="button"' : '') + ' class="pin" data-pin="' + i + '" style="left:' + (+h.x) + '%;top:' + (+h.y) + '%"' +
-                (asButtons ? ' aria-label="Note ' + (i + 1) + '"' : ' aria-hidden="true"') + '>' + (i + 1) + '</' + tag + '>';
+                (note ? ' data-tip="' + esc(note) + '" data-tip-cmd="$ pin ' + (i + 1) + '"' : '') +
+                (asButtons ? ' aria-label="Note ' + (i + 1) + (note ? ': ' + esc(note) : '') + '"' : ' aria-hidden="true"') + '>' + (i + 1) + '</' + tag + '>';
         }).join('');
     }
 
     function figureHtml(id, fig, n) {
         var w = +fig.w || 1600, h = +fig.h || 1000;
         return '<figure class="fig">' +
-            '<button type="button" class="fig__frame" data-fig="' + esc(id) + '" style="aspect-ratio:' + w + '/' + h + '" aria-label="Expand figure ' + n + ': ' + esc(fig.title) + '">' +
+            // max-width: never stretched past its own pixel width -- a small image stays its real size
+            '<button type="button" class="fig__frame" data-fig="' + esc(id) + '" style="aspect-ratio:' + w + '/' + h + ';max-width:' + w + 'px" aria-label="Expand figure ' + n + ': ' + esc(fig.title) + '">' +
             '<img src="' + esc(fig.src) + '" alt="' + esc(fig.alt || fig.title) + '" width="' + w + '" height="' + h + '" loading="lazy" decoding="async">' +
             pinsHtml(fig.hotspots, false) +
             '<span class="fig__zoom">click to expand</span></button>' +
@@ -293,15 +298,21 @@
         window.addEventListener('resize', function () { closeBgMenu(false); });
         paintBgMenu();
 
-        // skill notes: hover / focus / tap a bubble with a dot. One shared pop-up, placed below
-        // the bubble (above if there's no room), kept inside the window.
+        // tooltips: CV skill notes (li.has-note) and image pins ([data-tip]). Hover, focus or tap.
+        // One shared pop-up, placed below the thing (above if there's no room), kept inside the
+        // window. Inside the image pop-out -- a modal <dialog>, drawn above the whole page -- the
+        // pop-up moves into the dialog so it isn't hidden behind it.
         var tip = doc.getElementById('tip');
         var tipFor = null, tipAt = 0;
+        var TIP_TARGET = 'li.has-note, [data-tip]';
         function showTip(li) {
             if (tipFor !== li) tipAt = performance.now();
             if (tipFor && tipFor !== li) tipFor.classList.remove('is-open');
             tipFor = li;
-            tip.innerHTML = '<span class="tip__cmd">$ man ' + esc(li.dataset.man) + '</span>' + esc(li.dataset.note);
+            var host = li.closest('dialog[open]') || doc.body;
+            if (tip.parentNode !== host) host.appendChild(tip);
+            var cmd = li.dataset.tipCmd || '$ man ' + li.dataset.man;
+            tip.innerHTML = '<span class="tip__cmd">' + esc(cmd) + '</span>' + esc(li.dataset.tip || li.dataset.note);
             tip.hidden = false;
             li.classList.add('is-open');
             li.setAttribute('aria-describedby', 'tip');
@@ -318,16 +329,18 @@
             return true;
         }
         doc.addEventListener('mouseover', function (e) {
-            var li = e.target.closest && e.target.closest('li.has-note');
+            var li = e.target.closest && e.target.closest(TIP_TARGET);
             if (li && li !== tipFor) showTip(li);
             else if (!li && tipFor && !tipFor.contains(doc.activeElement)) hideTip();
         });
         doc.addEventListener('focusin', function (e) {
-            var li = e.target.closest && e.target.closest('li.has-note');
+            var li = e.target.closest && e.target.closest(TIP_TARGET);
             if (li) showTip(li); else hideTip();
         });
         doc.addEventListener('click', function (e) { // touch: tap to open, tap elsewhere to close
-            var li = e.target.closest && e.target.closest('li.has-note');
+            // a write-up image opens the pop-out when clicked (pins included): no tooltip left behind it
+            if (e.target.closest && e.target.closest('.fig__frame')) { hideTip(); return; }
+            var li = e.target.closest && e.target.closest(TIP_TARGET);
             // a tap focuses the bubble (which opens it) and then clicks it -- don't let that click close it again
             if (li) { if (tipFor === li && performance.now() - tipAt > 400) hideTip(); else showTip(li); } else hideTip();
         });

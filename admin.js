@@ -322,7 +322,7 @@
             '<textarea class="md" data-meta="body" spellcheck="true">' + esc(p.body) + '</textarea></label>' +
             '</div><div class="editor__preview"><p class="editor__label">live preview</p><div data-role="preview"></div></div></div>' +
             '<div class="figman"><h3>Figures</h3>' +
-            '<p class="figman__hint">' + (S.savedSlug ? 'Add an image, then click on it to drop numbered pins and describe each one. “insert” puts the figure at the cursor in the write-up.'
+            '<p class="figman__hint">' + (S.savedSlug ? 'Add an image, then click on it to drop numbered pins and describe each one. Drag a pin to move it. “insert” puts the figure at the cursor in the write-up.'
                 : 'Save the project once to start adding images.') + '</p>' +
             '<div class="figman__body"><div class="figman__list">' +
             figIds.map(function (id) {
@@ -422,6 +422,55 @@
             var inputs = rootEl.querySelectorAll('[data-note-i]');
             if (inputs.length) inputs[inputs.length - 1].focus();
         });
+        // drag a pin to move it (mouse, pen or touch); a click without moving jumps to its note
+        var drag = null, justDragged = false;
+        function pct(e) {
+            var r = canvas.getBoundingClientRect();
+            var clamp = function (v) { return Math.min(100, Math.max(0, v)); };
+            return { x: +clamp((e.clientX - r.left) / r.width * 100).toFixed(1), y: +clamp((e.clientY - r.top) / r.height * 100).toFixed(1) };
+        }
+        canvas.addEventListener('pointerdown', function (e) {
+            var pin = e.target.closest('.pin');
+            if (!pin || e.button !== 0) return;
+            e.preventDefault(); // no text selection / image drag
+            drag = { pin: pin, i: +pin.dataset.pin, x: e.clientX, y: e.clientY, moved: false };
+            pin.setPointerCapture(e.pointerId);
+        });
+        canvas.addEventListener('pointermove', function (e) {
+            if (!drag) return;
+            if (!drag.moved && Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) < 4) return;
+            if (!drag.moved) { drag.moved = true; drag.pin.classList.add('is-dragging'); chrome.hideTip(); }
+            var at = pct(e);
+            drag.pin.style.left = at.x + '%';
+            drag.pin.style.top = at.y + '%';
+        });
+        function endDrag(e) {
+            if (!drag) return;
+            var d = drag;
+            drag = null;
+            d.pin.classList.remove('is-dragging');
+            if (d.moved && e.type === 'pointerup') {
+                var at = pct(e);
+                f.hotspots[d.i].x = at.x;
+                f.hotspots[d.i].y = at.y;
+                justDragged = true;
+                markDirty();
+                paintPreview();
+            } else if (d.moved) { // cancelled: put it back
+                d.pin.style.left = f.hotspots[d.i].x + '%';
+                d.pin.style.top = f.hotspots[d.i].y + '%';
+            } else {
+                var input = rootEl.querySelector('[data-note-i="' + d.i + '"]');
+                if (input) input.focus();
+            }
+        }
+        canvas.addEventListener('pointerup', endDrag);
+        canvas.addEventListener('pointercancel', endDrag);
+        // the click that ends a drag mustn't drop a new pin or open the pin's tooltip
+        canvas.addEventListener('click', function (e) {
+            if (justDragged) { justDragged = false; e.stopPropagation(); }
+        }, true);
+
         rootEl.querySelectorAll('[data-note-i]').forEach(function (el) {
             el.addEventListener('input', function () { f.hotspots[+el.dataset.noteI].note = el.value; markDirty(); });
             el.addEventListener('focus', function () { canvas.querySelectorAll('.pin').forEach(function (pin, i) { pin.classList.toggle('is-hot', i === +el.dataset.noteI); }); });

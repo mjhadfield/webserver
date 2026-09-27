@@ -242,6 +242,19 @@
 
 .figman__canvas img { display: block; width: 100%; user-select: none; }
 
+/* pins on the editing image can be dragged to a new spot */
+.figman__canvas .pin {
+    cursor: grab;
+    touch-action: none;
+}
+
+.figman__canvas .pin.is-dragging {
+    cursor: grabbing;
+    transform: scale(1.25);
+    background: var(--fg);
+    transition: none;
+}
+
 .figman__notes {
     display: flex;
     flex-direction: column;

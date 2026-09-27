@@ -13,14 +13,101 @@
   "status": "published",
   "started": "2026-08",
   "updated": "2026-09-27",
-  "body": "::figure[screenshot-20260927-084846]\n\n## Why I built it\nI was sick of going to my council website every week to see which bins I needed to put out, surely I could automate that? It escalated from there. \n\nThe GitHub repo is currently private, while my secrets and API keys are .gitignored, I'm sill nervous about making this public without a thorough vetting. \n\n## How it works\nHosted locally on a linux server, and open to any device on my network. It includes IP whitelisting and MAC address filtering so settings and sensitive information are only available from dedicated devices. Guest devices only have access to the media server.\n\nEach tile can be expanded to show a detailed view. Upcoming vinyl pre-orders show price comparisons, local services show activity logs, etc. \n\nThe music radar is tailored to me, showing information only about artists that have either 100 plays on Spotify, are already part of my physical collection, or are explicitly defined. \n\n## What it contains\nDashboard:\n- Google calendar integration (Google API)\n- Upcoming music releases (MusicBrainz API)\n- Upcoming vinyl preorders (Web scraping)\n- Gig radar of upcoming concerts (Ticketmaster API)\n- System monitoring for temperatures and disk space\n- A launchpad for local applications \n- Services monitoring and logging\n\nMedia server:\n- Hosted on a dedicated JellyFin install\n- Digitised TV and Film library\n- Extensive live concert archive\n\nMusic Companion:\n- Fully integrated Music Companion\n- See the project page for full details\n\nSettings:\n- Device enrolment and activity logs\n- Backups update schedule\n- Easy adding of new stores, news feeds, and local applications.",
+  "body": "::figure[screenshot-20260927-084846]\n\n## Why I built it\nI was sick of going to my council website every week to see which bins I needed to put out, surely I could automate that? Then I bought a record I already had on pre-order, relying on flagged emails just doesn't cut it in 2026. \n\nThe GitHub repo is currently private, while my secrets and API keys are .gitignored, I'm sill nervous about making this public without a thorough vetting. \n\n## How it works\nHosted locally on a linux server, it's open to any device on my network. It includes IP whitelisting and MAC address filtering so settings and sensitive information are only available from dedicated devices, while guest devices can have access to the media server. \n\nEach tile can be expanded to show a detailed view. Upcoming vinyl pre-orders show price comparisons, local services show activity logs, etc. \n\nThe music radar is tailored to me, fully integrated with my Music Companion project to only show information about artists I care about. \n\n## What it contains\nDashboard:\n- Google calendar integration (Google API)\n- Upcoming music releases (MusicBrainz API)\n- Upcoming vinyl preorders (Web scraping)\n- Gig radar of upcoming concerts (Ticketmaster API)\n- System monitoring for temperatures and disk space\n- A launchpad for local applications \n- Services monitoring and logging\n\nMedia server:\n- Hosted on a dedicated JellyFin install\n- Digitised TV and Film library\n- Extensive live concert archive\n\nMusic Companion:\n- Fully integrated Music Companion\n- See the project page for full details\n\nSettings:\n- Device enrolment and activity logs\n- Backups update schedule\n- Easy adding of new stores, news feeds, and local applications.\n\n## Vinyl\n::figure[screenshot-20260927-100449]\n\n## Settings\n::figure[screenshot-20260927-094827]\n\nI won't detail everything in here (there's a lot) but every aspect of the front page is customisable and maintainable through the settings page. Highlights include the below. \n\n::figure[screenshot-20260927-095815]\n\n::figure[screenshot-20260927-095945]\n",
   "figures": {
     "screenshot-20260927-084846": {
       "src": "content/img/citadel/screenshot-20260927-084846.png",
       "w": 2560,
       "h": 1440,
       "title": "Citadel Home Screen",
+      "caption": "Each tile can be clicked on to show a full screen variant with additional information, pinning, filtering, etc. ",
+      "alt": "",
+      "hotspots": [
+        {
+          "x": 16.3,
+          "y": 12.9,
+          "note": "Daily overview with an API link to my local council's website."
+        },
+        {
+          "x": 40.7,
+          "y": 13.2,
+          "note": "My next live concert, hooked into ticketmaster"
+        },
+        {
+          "x": 63.0,
+          "y": 13.1,
+          "note": "Google calendar integration"
+        },
+        {
+          "x": 86.9,
+          "y": 12.9,
+          "note": "Management of all scripts running locally, monitoring uptime and quick start/stop. Expanding this panel shows logs"
+        },
+        {
+          "x": 20.9,
+          "y": 45.3,
+          "note": "Upcoming album releases based on my top 200 artists, information gathered from MusicBrainz and updated nightly."
+        },
+        {
+          "x": 52.0,
+          "y": 45.2,
+          "note": "Dual purpose showing both upcoming vinyl releases (updated nightly) and tracking purchases with release countdowns."
+        },
+        {
+          "x": 83.3,
+          "y": 45.6,
+          "note": "Ticketmaster integration for upcoming shows, clicking an event takes you directly to the ticket purchase page. "
+        },
+        {
+          "x": 21.0,
+          "y": 73.3,
+          "note": "Temperature and resource monitoring for my primary desktop"
+        },
+        {
+          "x": 53.1,
+          "y": 73.9,
+          "note": "Quickly launch applications and settings"
+        },
+        {
+          "x": 83.5,
+          "y": 75.2,
+          "note": "Local/Network storage warnings. A notification will be shown when a disk reaches 10% capacity remaining."
+        }
+      ]
+    },
+    "screenshot-20260927-094827": {
+      "src": "content/img/citadel/screenshot-20260927-094827.png",
+      "w": 1543,
+      "h": 825,
+      "title": "Settings page",
       "caption": "",
+      "alt": "",
+      "hotspots": []
+    },
+    "screenshot-20260927-095815": {
+      "src": "content/img/citadel/screenshot-20260927-095815.png",
+      "w": 1205,
+      "h": 1058,
+      "title": "Event Logging",
+      "caption": "Each time a service is run it generates a log file, application errors are also logged for review. ",
+      "alt": "",
+      "hotspots": []
+    },
+    "screenshot-20260927-095945": {
+      "src": "content/img/citadel/screenshot-20260927-095945.png",
+      "w": 1205,
+      "h": 941,
+      "title": "Device management",
+      "caption": "Owner devices which have full access and can enrol new devices.",
+      "alt": "",
+      "hotspots": []
+    },
+    "screenshot-20260927-100449": {
+      "src": "content/img/citadel/screenshot-20260927-100449.png",
+      "w": 2309,
+      "h": 1188,
+      "title": "Vinyl Radar",
+      "caption": "This has two sections, one for notification of new releases (with price comparisons, links take you directly to the store page). Anything purchased is added to the confirmed orders screen, with a countdown to release day. ",
       "alt": "",
       "hotspots": []
     }

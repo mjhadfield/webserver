@@ -1194,46 +1194,56 @@ body {
     transition: transform 0.15s ease, background 0.15s ease;
 }
 
-.pin.is-hot {
+.pin.is-hot,
+.pin.is-open {
     background: var(--fg);
     transform: scale(1.2);
 }
 
 button.pin { cursor: pointer; }
+.pin[data-tip] { cursor: help; }
 
-/* ---------- lightbox ---------- */
+/* ---------- image pop-out: full screen; click the image for 100% ---------- */
+/* Fit: the frame is sized in JS to the largest that fits the stage. 100%: the frame is the
+   image's own pixel size and the stage scrolls -- drag, wheel or touch to pan. Panning is plain
+   scrolling, so it stays cheap without a GPU. The frame is the image's exact shape at either size,
+   so the % pins stay on their spots. */
 
 .lb {
-    width: min(1440px, 96vw);
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
     max-width: none;
-    max-height: 94vh;
-    margin: auto;
+    max-height: none;
+    margin: 0;
     padding: 0;
     background: var(--bg-elevated);
     color: var(--fg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border: none;
     overflow: hidden;
 }
 
 .lb[open] {
     display: flex;
     flex-direction: column;
-    animation: lb-in 0.2s var(--ease);
+    animation: lb-in 0.16s ease;
 }
 
 .lb::backdrop { background: var(--overlay); }
 
 @keyframes lb-in {
-    from { opacity: 0; transform: scale(0.985); }
-    to { opacity: 1; transform: none; }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .lb__bar {
+    flex: none;
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 10px 16px;
+    padding: 9px 16px;
     border-bottom: 1px solid var(--border-soft);
     font-size: 0.75rem;
 }
@@ -1242,8 +1252,18 @@ button.pin { cursor: pointer; }
 
 .lb__title {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--fg);
     font-weight: 700;
+}
+
+.lb__zoom {
+    font-size: 0.7rem;
+    color: var(--fg-dim);
+    white-space: nowrap;
 }
 
 .lb__close,
@@ -1267,30 +1287,55 @@ button.pin { cursor: pointer; }
 
 .lb__stage {
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    flex: 1 1 auto;
     min-height: 0;
-    padding: 16px 64px;
     background: var(--inset);
+}
+
+.lb__scroll {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    overflow: hidden;
+    padding: 14px 64px;
+}
+
+.lb.is-zoomed .lb__scroll {
+    overflow: auto;
+    padding: 0;
+    cursor: grab;
+    overscroll-behavior: contain;
+}
+
+.lb.is-zoomed .lb__scroll.is-dragging {
+    cursor: grabbing;
+    user-select: none;
 }
 
 .lb__frame {
     position: relative;
+    flex: none;
+    margin: auto; /* centred when smaller than the stage, scrollable to every edge when bigger */
     line-height: 0;
 }
 
+.lb.can-zoom .lb__frame { cursor: zoom-in; }
+.lb.is-zoomed .lb__frame { cursor: inherit; }
+
 .lb__frame img {
     display: block;
-    width: auto;
-    height: auto; /* keep the box the picture's shape, so % pins land on it */
-    max-width: 100%;
-    max-height: calc(94vh - 250px);
-    border-radius: 6px;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    user-select: none;
+    -webkit-user-drag: none;
 }
+
+.lb.is-zoomed .lb__frame img { border-radius: 0; }
 
 .lb__nav {
     position: absolute;
+    z-index: 2;
     top: 50%;
     width: 38px;
     height: 38px;
@@ -1303,57 +1348,20 @@ button.pin { cursor: pointer; }
 .lb__nav[hidden] { display: none; }
 
 .lb__info {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-    gap: 14px 28px;
-    padding: 14px 20px 18px;
+    flex: none;
+    padding: 10px 20px 12px;
     border-top: 1px solid var(--border-soft);
-    max-height: 190px;
+    max-height: 150px;
     overflow-y: auto;
 }
+
+.lb__info:empty,
+.lb__info.is-empty { display: none; }
 
 .lb__caption {
     font-size: 0.8rem;
     line-height: 1.6;
     color: var(--fg-dim);
-}
-
-.lb__notes {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.lb__notes li {
-    display: flex;
-    gap: 10px;
-    align-items: baseline;
-    font-size: 0.78rem;
-    line-height: 1.5;
-    color: var(--fg-dim);
-    padding: 3px 6px;
-    border-radius: 5px;
-    cursor: default;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-
-.lb__notes li.is-hot {
-    background: var(--wash-2);
-    color: var(--fg);
-}
-
-.lb__notes .num {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: var(--on-accent);
-    font-size: 0.64rem;
-    font-weight: 700;
 }
 
 /* ---------- footer ---------- */
@@ -1416,18 +1424,10 @@ button.pin { cursor: pointer; }
     .proj-grid { grid-template-columns: 1fr; padding: 18px; }
     .prose { padding: 4px 18px 32px; }
 
-    .lb {
-        width: 100vw;
-        height: 100%;
-        max-height: none;
-        border-radius: 0;
-        border: none;
-    }
-
-    .lb__stage { flex: 1; padding: 10px; }
-    .lb__frame img { max-height: 52vh; }
+    .lb__scroll { padding: 10px; }
+    .lb__zoom { display: none; }
     .lb__nav { top: auto; bottom: 8px; margin-top: 0; }
-    .lb__info { grid-template-columns: 1fr; max-height: none; flex: none; }
+    .lb__info { max-height: 34vh; }
 
 }
 

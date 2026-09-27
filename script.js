@@ -212,35 +212,122 @@
     });
 
     // ---------------------------------------------------------------------------------------
-    // Image pop-out: the figure large, its caption and numbered notes underneath, ←/→ through
-    // the write-up's figures, Esc / backdrop to close. A pin and its note light up together.
+    // Image pop-out, full screen: the figure fitted to the window, its caption underneath, and
+    // each numbered pin's note as a tooltip on hover / focus / tap. ←/→ through the figures. Click the image (or press Z) for 100% --
+    // its real pixels, e.g. a 1440p screenshot on a 1080p screen -- then drag, scroll or swipe
+    // to pan; click again to fit. Esc goes back to fit first, then closes. Pins sit in % of the
+    // frame, which is always the image's exact shape, so they stay on their spots at any size.
     // ---------------------------------------------------------------------------------------
     var lb = document.getElementById('lightbox');
+    var lbScroll = document.getElementById('lb-scroll');
     var lbFrame = document.getElementById('lb-frame');
-    var lbNotes = document.getElementById('lb-notes');
+    var lbZoom = document.getElementById('lb-zoom');
     var lbState = null;
 
     function openLightbox(project, figId, returnTo) {
         var ids = MH.figureIds(project.body, project.figures);
-        lbState = { project: project, ids: ids, i: Math.max(0, ids.indexOf(figId)), returnTo: returnTo };
-        paintLightbox();
+        lbState = { project: project, ids: ids, i: Math.max(0, ids.indexOf(figId)), returnTo: returnTo, zoomed: false };
         lb.showModal();
+        paintLightbox();
     }
 
     function paintLightbox() {
         var s = lbState;
         var fig = s.project.figures[s.ids[s.i]];
+        s.w = +fig.w || 1600;
+        s.h = +fig.h || 1000;
+        s.zoomed = false;
         document.getElementById('lb-count').textContent = 'fig.' + (s.i + 1) + ' / ' + s.ids.length;
         document.getElementById('lb-title').textContent = fig.title || '';
         document.getElementById('lb-caption').textContent = fig.caption || '';
-        lbFrame.innerHTML = '<img src="' + esc(fig.src) + '" alt="' + esc(fig.alt || fig.title) + '" width="' + (+fig.w || 1600) + '" height="' + (+fig.h || 1000) + '">' + MH.pinsHtml(fig.hotspots, true);
-        lbNotes.innerHTML = (fig.hotspots || []).map(function (h, i) {
-            return '<li data-note="' + i + '" tabindex="0"><span class="num">' + (i + 1) + '</span><span>' + esc(h.note) + '</span></li>';
-        }).join('');
-        lbNotes.hidden = !(fig.hotspots || []).length;
+        lbFrame.innerHTML = '<img src="' + esc(fig.src) + '" alt="' + esc(fig.alt || fig.title) + '" width="' + s.w + '" height="' + s.h + '" draggable="false">' + MH.pinsHtml(fig.hotspots, true);
+        chrome.hideTip();
+        lb.querySelector('.lb__info').classList.toggle('is-empty', !fig.caption);
         document.getElementById('lb-prev').hidden = s.ids.length < 2;
         document.getElementById('lb-next').hidden = s.ids.length < 2;
+        // trust the file over the stored size if they disagree (an image replaced outside the admin)
+        var img = lbFrame.querySelector('img');
+        img.addEventListener('load', function () {
+            if (img.naturalWidth && (img.naturalWidth !== s.w || img.naturalHeight !== s.h) && !/\.svg(\?|$)/i.test(fig.src)) {
+                s.w = img.naturalWidth; s.h = img.naturalHeight;
+                layoutLightbox();
+            }
+        });
+        layoutLightbox();
     }
+
+    // size the frame: fitted to the stage, or 1:1 (then optionally keep a point under the pointer)
+    function layoutLightbox(anchor) {
+        var s = lbState;
+        lb.classList.remove('is-zoomed');
+        var cs = getComputedStyle(lbScroll);
+        var availW = lbScroll.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        var availH = lbScroll.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+        var fit = Math.min(availW / s.w, availH / s.h, 1);
+        s.canZoom = fit < 0.995;
+        if (!s.canZoom) s.zoomed = false;
+        var scale = s.zoomed ? 1 : fit;
+        lb.classList.toggle('is-zoomed', s.zoomed);
+        lb.classList.toggle('can-zoom', s.canZoom && !s.zoomed);
+        lbFrame.style.width = Math.round(s.w * scale) + 'px';
+        lbFrame.style.height = Math.round(s.h * scale) + 'px';
+        lbZoom.textContent = s.zoomed ? '100% · drag to pan · click to fit'
+            : s.canZoom ? 'fit ' + Math.round(fit * 100) + '% · click image for 100%' : '100%';
+        if (s.zoomed) {
+            if (anchor) { // the spot that was clicked stays under the pointer
+                var r = lbScroll.getBoundingClientRect();
+                lbScroll.scrollLeft = anchor.fx * s.w - (anchor.x - r.left);
+                lbScroll.scrollTop = anchor.fy * s.h - (anchor.y - r.top);
+            } else {
+                lbScroll.scrollLeft = (s.w - lbScroll.clientWidth) / 2;
+                lbScroll.scrollTop = (s.h - lbScroll.clientHeight) / 2;
+            }
+        } else {
+            lbScroll.scrollLeft = 0;
+            lbScroll.scrollTop = 0;
+        }
+    }
+
+    function toggleZoom(e) {
+        var s = lbState;
+        if (!s || (!s.canZoom && !s.zoomed)) return;
+        var anchor = null;
+        if (e && !s.zoomed) {
+            var r = lbFrame.getBoundingClientRect();
+            anchor = { x: e.clientX, y: e.clientY, fx: (e.clientX - r.left) / r.width, fy: (e.clientY - r.top) / r.height };
+        }
+        s.zoomed = !s.zoomed;
+        layoutLightbox(anchor);
+    }
+
+    // drag to pan at 100% (mouse; touch and wheel just scroll). A drag isn't a click.
+    var drag = null, dragged = false;
+    lbScroll.addEventListener('pointerdown', function (e) {
+        dragged = false;
+        if (!lbState || !lbState.zoomed || e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('.pin')) return;
+        drag = { x: e.clientX, y: e.clientY, sl: lbScroll.scrollLeft, st: lbScroll.scrollTop, id: e.pointerId };
+    });
+    lbScroll.addEventListener('pointermove', function (e) {
+        if (!drag) return;
+        var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+        if (!dragged && Math.abs(dx) + Math.abs(dy) > 4) {
+            dragged = true;
+            lbScroll.classList.add('is-dragging');
+            lbScroll.setPointerCapture(drag.id);
+        }
+        if (dragged) {
+            lbScroll.scrollLeft = drag.sl - dx;
+            lbScroll.scrollTop = drag.st - dy;
+        }
+    });
+    function endDrag() { drag = null; lbScroll.classList.remove('is-dragging'); }
+    lbScroll.addEventListener('pointerup', endDrag);
+    lbScroll.addEventListener('pointercancel', endDrag);
+    lbScroll.addEventListener('click', function (e) {
+        if (dragged || e.target.closest('.pin')) return;
+        if (!e.target.closest('.lb__frame') && !lbState.zoomed) return; // the empty stage around a fitted image
+        toggleZoom(e);
+    });
 
     function step(d) {
         if (!lbState || lbState.ids.length < 2) return;
@@ -248,39 +335,22 @@
         paintLightbox();
     }
 
-    function hot(i, on) {
-        lb.querySelectorAll('[data-pin="' + i + '"], [data-note="' + i + '"]').forEach(function (el) { el.classList.toggle('is-hot', on); });
-    }
-    ['mouseover', 'focusin'].forEach(function (ev) {
-        lb.addEventListener(ev, function (e) {
-            var t = e.target.closest('[data-pin], [data-note]');
-            if (t) hot(t.dataset.pin || t.dataset.note, true);
-        });
-    });
-    ['mouseout', 'focusout'].forEach(function (ev) {
-        lb.addEventListener(ev, function (e) {
-            var t = e.target.closest('[data-pin], [data-note]');
-            if (t) hot(t.dataset.pin || t.dataset.note, false);
-        });
-    });
-    lb.addEventListener('click', function (e) {
-        var pin = e.target.closest('[data-pin]');
-        if (pin) {
-            var note = lbNotes.querySelector('[data-note="' + pin.dataset.pin + '"]');
-            if (note) { note.focus(); note.scrollIntoView({ block: 'nearest' }); }
-        }
-        if (e.target === lb) lb.close(); // click on the backdrop
-    });
     document.getElementById('lb-prev').addEventListener('click', function () { step(-1); });
     document.getElementById('lb-next').addEventListener('click', function () { step(1); });
     document.getElementById('lb-close').addEventListener('click', function () { lb.close(); });
     lb.addEventListener('keydown', function (e) {
         if (e.key === 'ArrowLeft') { step(-1); e.preventDefault(); }
         if (e.key === 'ArrowRight') { step(1); e.preventDefault(); }
+        if (e.key === 'z' || e.key === 'Z') { toggleZoom(null); e.preventDefault(); }
+    });
+    lb.addEventListener('cancel', function (e) { // Esc: back to fit first, then close
+        if (lbState && lbState.zoomed) { e.preventDefault(); toggleZoom(null); }
     });
     lb.addEventListener('close', function () {
+        chrome.hideTip();
         if (lbState && lbState.returnTo) lbState.returnTo.focus();
     });
+    window.addEventListener('resize', function () { if (lb.open && lbState) layoutLightbox(); });
 
     // ---------------------------------------------------------------------------------------
     // Contact form (Formspree). Validates on blur, re-checks as you type once flagged.

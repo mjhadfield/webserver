@@ -3,62 +3,155 @@
   "title": "Music Companion",
   "summary": "A fully interactive archive of my history with music. Linking together my physical record collection, digital listening, and gig history.",
   "tags": [
-    "Python",
     "SQLite",
-    "FastAPI",
     "MusicBrainz",
     "Discogs",
-    "Spotify",
     "LastFM"
   ],
-  "repo": "https://github.com/mjhadfield",
-  "status": "draft",
+  "repo": "https://github.com/mjhadfield/music-companion",
+  "status": "published",
   "started": "2026-06",
-  "updated": "2026-09-26",
-  "body": "## The problem\nPellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, *ultricies eget*, tempor sit amet, ante.\n::figure[wall]\n## Data model\nDonec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo:\n1. Quisque sit amet est et sapien ullamcorper pharetra\n2. Vestibulum erat wisi, condimentum sed\n3. Commodo vitae, ornare sit amet, wisi\n::figure[maint]\n## Next steps\nAenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui.",
+  "updated": "2026-09-27",
+  "body": "## View Live\nHosted on a static GitHub page. Mobile friendly. \n\n[https://mjhadfield.github.io/music-companion/](https://mjhadfield.github.io/music-companion/)\n\n## Background\nMusic has been a fundamental part of my life for as long as I can remember, and I've always been a stats junkie. The goal was simple, an interactive rabbit hole of unified data. \n\nI've used a lot of services in the past, but datasets are incredibly messy. \"Remastered\" vs \"Special Edition\" vs \"Anniversary Edition\" makes this a real challenge when you have a dozens of variations of the same release. \n\nWorking top down, Artists have a unique ID, albums have a *release* ID and an *edition* ID, songs have a *master* ID and a *version* ID. \n\nOne SQL database, ~120k rows, infinite filtering. My digital statistics only go back to 2018, everything before that is lost to time.\n\n::figure[screenshot-20260927-110614]\n\n## Stats at a glance\nEvery number on every page can be clicked on to drill down deeper.\n\n::figure[screenshot-20260927-103556]\n\n::figure[screenshot-20260927-104242]\n\n## Harmonised Data\nPick a physical album off the shelf to get associated digital and live stats.\n\n::figure[screenshot-20260927-115316]\n\n::figure[screenshot-20260927-105039]\n\n::figure[screenshot-20260927-105620]\n\n## Data imports and maintenance\nI started out this project doing a lot of this by hand with SQL inserts, but it was a complete nightmare. I created tools automate almost everything. One click updates to pull the latest additions, match and lookup missing IDs, merging duplicate entries. \n\nEverything is then put into lists for human review before being committed to the database. \n\n::figure[screenshot-20260927-112145]\n\n::figure[screenshot-20260927-113155]\n\n::figure[screenshot-20260927-113649]\n",
   "figures": {
-    "wall": {
-      "src": "content/img/music-companion/music-wall.svg",
-      "w": 1600,
-      "h": 1000,
-      "title": "The vinyl wall",
-      "caption": "Nam nec ante. Sed lacinia, urna non tincidunt mattis, tortor neque adipiscing diam.",
+    "screenshot-20260927-103556": {
+      "src": "content/img/music-companion/screenshot-20260927-103556.png",
+      "w": 1199,
+      "h": 578,
+      "title": "Global Statistics",
+      "caption": "Digital (Spotify/LastFM), Live (SetlistFM), Physical (Discogs)",
       "alt": "",
       "hotspots": [
         {
-          "x": 8.0,
-          "y": 17.0,
-          "note": "Pellentesque habitant — covers fetched automatically."
+          "x": 24.2,
+          "y": 20.3,
+          "note": "Taken from Last.FM"
         },
         {
-          "x": 83.0,
-          "y": 19.0,
-          "note": "Morbi tristique senectus, yearly totals."
+          "x": 24.2,
+          "y": 52.3,
+          "note": "Taken from Setlist.FM"
         },
         {
-          "x": 83.0,
-          "y": 66.0,
-          "note": "Et netus et malesuada, top artists."
+          "x": 23.5,
+          "y": 85.5,
+          "note": "Taken from Discogs"
         }
       ]
     },
-    "maint": {
-      "src": "content/img/music-companion/music-tracklists.svg",
-      "w": 1600,
-      "h": 1000,
-      "title": "Maintenance: tracklist review",
-      "caption": "Fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget.",
+    "screenshot-20260927-104242": {
+      "src": "content/img/music-companion/screenshot-20260927-104242.png",
+      "w": 969,
+      "h": 353,
+      "title": "Activity",
+      "caption": "Drill down into listening habits",
+      "alt": "",
+      "hotspots": []
+    },
+    "screenshot-20260927-105039": {
+      "src": "content/img/music-companion/screenshot-20260927-105039.png",
+      "w": 545,
+      "h": 554,
+      "title": "Album Overview",
+      "caption": "As you can see from \"Evil Woman\" - there's still some data harmonisation left to do in merging duplicate tracks. Clicking on a song gives you a further breakdown.",
       "alt": "",
       "hotspots": [
         {
-          "x": 50.0,
-          "y": 22.0,
-          "note": "Tempor sit amet — the song rows behind each track."
+          "x": 82.4,
+          "y": 31.9,
+          "note": "Green dots indicate this song is featured on a live show I've previously seen"
+        }
+      ]
+    },
+    "screenshot-20260927-105620": {
+      "src": "content/img/music-companion/screenshot-20260927-105620.png",
+      "w": 962,
+      "h": 592,
+      "title": "Song breakdown",
+      "caption": "Clicking on one of the live setlists produces the setlist for that show, clicking on the scrobble count shows you the datetimestamp of listens. ",
+      "alt": "",
+      "hotspots": [
+        {
+          "x": 47.0,
+          "y": 17.1,
+          "note": "These buttons will take you to the artist's record / digital / live pages respectively. "
         },
         {
-          "x": 88.0,
-          "y": 21.0,
-          "note": "Ante donec eu libero — put a stray song on its track."
+          "x": 14.6,
+          "y": 37.5,
+          "note": "Clicking on a live performance will take you to the setlist"
+        }
+      ]
+    },
+    "screenshot-20260927-110614": {
+      "src": "content/img/music-companion/screenshot-20260927-110614.png",
+      "w": 511,
+      "h": 707,
+      "title": "SQL",
+      "caption": "The front end statistics are all just SQL queries run locally in the browser. My most played songs if the 1980s. ",
+      "alt": "",
+      "hotspots": []
+    },
+    "screenshot-20260927-112145": {
+      "src": "content/img/music-companion/screenshot-20260927-112145.png",
+      "w": 1269,
+      "h": 873,
+      "title": "Screenshot_20260927_112145",
+      "caption": "Pulling updates",
+      "alt": "LastFM and SetlistFM both have public APIs, and Discogs has a CSV export function. ",
+      "hotspots": []
+    },
+    "screenshot-20260927-113155": {
+      "src": "content/img/music-companion/screenshot-20260927-113155.png",
+      "w": 1154,
+      "h": 792,
+      "title": "Import",
+      "caption": "All imports match on ID, anything it can't figure out is sent to the inbox for review.",
+      "alt": "",
+      "hotspots": []
+    },
+    "screenshot-20260927-113649": {
+      "src": "content/img/music-companion/screenshot-20260927-113649.png",
+      "w": 1654,
+      "h": 1072,
+      "title": "Song management",
+      "caption": "Additional tools to harmonise data. Everything is automated with manual review and overrides. ",
+      "alt": "",
+      "hotspots": [
+        {
+          "x": 58.7,
+          "y": 60.6,
+          "note": "Lookup has matched the setlist.FM version of the track to the studio listing. "
+        },
+        {
+          "x": 57.6,
+          "y": 78.3,
+          "note": "Correctly identified that this is a cover, but released on a studio album rather than a live-only cover. "
+        },
+        {
+          "x": 70.7,
+          "y": 96.2,
+          "note": "Correctly identified that this isn't a genuine \"song\" that was played that needs to be counted to any statistics. "
+        }
+      ]
+    },
+    "screenshot-20260927-115316": {
+      "src": "content/img/music-companion/screenshot-20260927-115316.png",
+      "w": 687,
+      "h": 851,
+      "title": "Record shelf",
+      "caption": "Vinyl can be browsed by genre, artist, year, label, you name it. ",
+      "alt": "",
+      "hotspots": [
+        {
+          "x": 44.8,
+          "y": 16.8,
+          "note": "This is a bit \"extra\" but in the record management settings you can create a design for albums which aren't standard black wax. Completely unnecessary, but it brought me joy. "
+        },
+        {
+          "x": 39.9,
+          "y": 76.4,
+          "note": "Pressing information, runouts and genres pulled from MusicBrainz and Discogs. "
         }
       ]
     }
