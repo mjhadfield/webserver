@@ -30,9 +30,7 @@
     var SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 
     // The public copy has no server, so its log-in can only be checked here in the browser: a gate,
-    // not security (the public admin is read-only anyway -- nothing can be saved without the local
-    // server). Mike's choice: the password is "admin". Kept as a SHA-256 hash so it isn't sitting
-    // in the source as plain text; a guessable password is guessable either way, which is the idea.
+    // not security. The password is hashed, but it's also "admin", and you should have guessed that without needing to check the source code.
     var DEMO_PASSWORD_SHA256 = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918';
     var DEMO_KEY = 'mh-admin-demo'; // sessionStorage: logged in until the tab closes
     function demoSession(on) {
@@ -211,8 +209,7 @@
         pw.focus();
     }
 
-    // first run: no password yet -- choose one here (the server only accepts this PC, and only
-    // until a password exists)
+    // first run: set an admin password if there isn't one
     function renderSetup() {
         rootEl.innerHTML =
             '<div class="login">' + MH.cdBtn('index.html', 'cd ~') +

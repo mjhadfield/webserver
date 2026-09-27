@@ -234,6 +234,7 @@
     // its real pixels, e.g. a 1440p screenshot on a 1080p screen -- then drag, scroll or swipe
     // to pan; click again to fit. Esc goes back to fit first, then closes. Pins sit in % of the
     // frame, which is always the image's exact shape, so they stay on their spots at any size.
+    // Honestly it looks a bit janky on 1080p, but serves you right for living in 2010. 
     // ---------------------------------------------------------------------------------------
     var lb = document.getElementById('lightbox');
     var lbScroll = document.getElementById('lb-scroll');
@@ -392,7 +393,7 @@
     window.addEventListener('resize', function () { if (lb.open && lbState) layoutLightbox(); });
 
     // ---------------------------------------------------------------------------------------
-    // Contact form (Formspree). Validates on blur, re-checks as you type once flagged.
+    // Contact form (Formspree). Honestly an amazing service. 
     // ---------------------------------------------------------------------------------------
     (function contact() {
         var form = document.getElementById('contact-form');
