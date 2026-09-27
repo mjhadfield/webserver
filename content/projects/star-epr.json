@@ -1,7 +1,7 @@
 {
   "slug": "star-epr",
   "title": "Star EPR",
-  "summary": "A practice ground for Mirth and MSSQL, hooked up to a web page front-end. Needs writing up, but doing this for 40-60 hours a week for my real job it's hard to find the drive to finish it.",
+  "summary": "A practice ground for Mirth and MSSQL, hooked up to a web page front-end. Needs writing up, but after doing this for 40-60 hours a week for my real job it's hard to find the drive to work on it.",
   "tags": [
     "MSSQL",
     "MirthConnect",
