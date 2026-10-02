@@ -10,6 +10,7 @@
     var viewport = document.getElementById('viewport');
     var pathEl = document.getElementById('terminal-path');
     var barNav = document.getElementById('bar-nav');
+    var closeBtn = document.getElementById('close-dot');
     var views = {};
     document.querySelectorAll('[data-view]').forEach(function (v) { views[v.dataset.view] = v; });
 
@@ -135,6 +136,8 @@
             return '/' + (i < segs.length - 1 ? '<a href="' + href + '">' + esc(seg) + '</a>' : esc(decodeURIComponent(seg)));
         }).join('');
         document.title = route.title;
+        closeBtn.disabled = !route.up;   // the home page has nowhere further up to go
+        windowLabels();
         barNav.querySelectorAll('a').forEach(function (a) {
             var on = a.dataset.route === route.view || (a.dataset.route === 'projects' && route.view === 'article');
             a.classList.toggle('is-current', on);
@@ -227,6 +230,136 @@
     document.getElementById('close-dot').addEventListener('click', function () {
         if (current && current.up) location.hash = current.up;
     });
+
+    // ---------------------------------------------------------------------------------------
+    // Window controls. Yellow: minimise -- the window flies down to a tab docked at the bottom,
+    // leaving an empty desk ("There's nothing else here..."); it stays minimised on every page
+    // until the tab is clicked. Green, or a double-click on the title bar: maximise to the whole
+    // browser window, with a tmux-style status line along the bottom. Both last for the visit.
+    //
+    // The movement is drawn as "zoom rectangles" -- a few bare outlines flying between the two
+    // places, like the old Mac Finder -- rather than by moving the window itself: outlines are
+    // cheap without a GPU, and the real window never gets a compositor layer of its own (that's
+    // what drew the dark halo the terminal's load animation used to have; see .terminal).
+    // ---------------------------------------------------------------------------------------
+    var minDot = document.getElementById('min-dot');
+    var maxDot = document.getElementById('max-dot');
+    var dock = document.getElementById('dock');
+    var dockTitle = document.getElementById('dock-title');
+    var deskNote = document.getElementById('desk-note');
+    var statusWin = document.getElementById('status-win');
+    var statusClock = document.getElementById('status-clock');
+    var WIN_KEY = 'mh-window';
+    var winBusy = false;
+
+    function isMin() { return document.body.classList.contains('is-min'); }
+    function isMax() { return terminal.classList.contains('is-max'); }
+    function saveWin() {
+        try { sessionStorage.setItem(WIN_KEY, isMin() ? 'min' : isMax() ? 'max' : ''); } catch (e) { /* private mode: just this page */ }
+    }
+
+    // the dock tab and the status line name the current page, like the title bar does
+    function windowLabels() {
+        if (!dockTitle) return; // first paint happens before this block runs
+        var path = pathEl.textContent;
+        dockTitle.textContent = path;
+        statusWin.textContent = '0:' + path.slice(path.indexOf(':') + 1) + '*';
+    }
+    function tickClock() {
+        var d = new Date();
+        statusClock.textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+    setInterval(function () { if (isMax()) tickClock(); }, 15000);
+
+    function zoom(from, to, count, duration) {
+        if (REDUCED.matches || !document.body.animate) return Promise.resolve();
+        var box = function (r) { return { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }; };
+        var runs = [];
+        for (var i = 0; i < count; i++) {
+            var el = document.createElement('div');
+            el.className = 'zoomrect';
+            document.body.appendChild(el);
+            var a = el.animate([Object.assign({ opacity: 0.9 }, box(from)), Object.assign({ opacity: 0.15 }, box(to))],
+                { duration: duration, delay: i * 45, easing: 'cubic-bezier(0.45, 0, 0.2, 1)', fill: 'both' });
+            runs.push(a.finished.then(function (anim) { return anim; }).finally(el.remove.bind(el)));
+        }
+        return Promise.all(runs).catch(function () { /* interrupted: nothing to tidy */ });
+    }
+
+    function setMax(on) {
+        terminal.classList.toggle('is-max', on);
+        document.body.classList.toggle('is-max', on);
+        maxDot.setAttribute('aria-pressed', String(on));
+        maxDot.title = on ? 'Restore size' : 'Maximise';
+        maxDot.setAttribute('aria-label', on ? 'Restore the window size' : 'Maximise the window');
+        if (on) tickClock();
+    }
+    function setMin(on) {
+        document.body.classList.toggle('is-min', on);
+        dock.hidden = !on;
+        deskNote.hidden = !on;
+    }
+
+    function minimise() {
+        if (winBusy || isMin()) return;
+        winBusy = true;
+        chrome.hideTip();
+        chrome.closeBgMenu(false);
+        var from = terminal.getBoundingClientRect();
+        setMin(true);
+        dock.style.visibility = 'hidden';
+        dock.classList.remove('dock--arrived');
+        zoom(from, dock.getBoundingClientRect(), 4, 340).then(function () {
+            dock.style.visibility = '';
+            dock.classList.add('dock--arrived');
+            dock.focus({ preventScroll: true });
+            winBusy = false;
+        });
+        saveWin();
+    }
+    function restore() {
+        if (winBusy || !isMin()) return;
+        winBusy = true;
+        var from = dock.getBoundingClientRect();
+        setMin(false);
+        terminal.style.visibility = 'hidden';
+        zoom(from, terminal.getBoundingClientRect(), 4, 340).then(function () {
+            terminal.style.visibility = '';
+            minDot.focus({ preventScroll: true });
+            winBusy = false;
+        });
+        saveWin();
+    }
+    function toggleMax() {
+        if (winBusy || isMin()) return;
+        winBusy = true;
+        chrome.hideTip();
+        chrome.closeBgMenu(false);
+        var from = terminal.getBoundingClientRect();
+        setMax(!isMax());
+        terminal.style.visibility = 'hidden';
+        zoom(from, terminal.getBoundingClientRect(), 3, 240).then(function () {
+            terminal.style.visibility = '';
+            winBusy = false;
+        });
+        saveWin();
+    }
+
+    minDot.addEventListener('click', minimise);
+    maxDot.addEventListener('click', toggleMax);
+    dock.addEventListener('click', restore);
+    document.querySelector('.terminal__bar').addEventListener('dblclick', function (e) {
+        if (e.target.closest('a, button, nav')) return; // a double-click on a link or button is just that
+        window.getSelection().removeAllRanges();
+        toggleMax();
+    });
+
+    // carry on how the visit left it, without animating
+    try {
+        var savedWin = sessionStorage.getItem(WIN_KEY);
+        if (savedWin === 'max') setMax(true);
+        if (savedWin === 'min') setMin(true);
+    } catch (e) { /* private mode */ }
 
     // ---------------------------------------------------------------------------------------
     // Image pop-out, full screen: the figure fitted to the window, its caption underneath, and

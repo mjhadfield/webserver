@@ -355,7 +355,7 @@
             bgMenu.hidden = false;
             var r = bgBtn.getBoundingClientRect();
             bgMenu.style.top = (r.bottom + 8) + 'px';
-            bgMenu.style.left = Math.max(8, Math.min(r.right - bgMenu.offsetWidth, window.innerWidth - bgMenu.offsetWidth - 8)) + 'px';
+            bgMenu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - bgMenu.offsetWidth - 8)) + 'px';   // the button sits at the left of the title bar
             bgBtn.setAttribute('aria-expanded', 'true');
             (bgMenu.querySelector('[aria-checked="true"]') || options()[0]).focus();
         }
