@@ -1,4 +1,5 @@
-// The site: one terminal, hash routes (#/, #/cv, #/contact, #/projects, #/projects/<slug>).
+// The site: one terminal, hash routes (#/, #/cv, #/contact, #/projects, #/projects/<slug>,
+// #/projects/<slug>/live).
 // Home, CV and contact are static HTML in index.html (the CV and bio are baked in by the admin
 // server); projects come from content/projects/*.json. Needs shared.js first.
 (function () {
@@ -83,6 +84,31 @@
         watchLoopingVideos(views.article);
     }
 
+    // A project's live app (its "live" field) in a frame filling the terminal. The frame is made
+    // once and kept while the visitor goes back to the write-up, so launching again carries on
+    // where they left off instead of loading the app (Music Companion: a ~155 MB database) again.
+    // It opens in the site's theme: framed, Music Companion takes ?theme= for its first paint.
+    var appSlug = null;
+    function renderApp(slug, p) {
+        var frameHost = document.getElementById('app-frame');
+        document.getElementById('app-back').href = '#/projects/' + encodeURIComponent(slug);
+        document.getElementById('app-cmd').textContent = './' + slug;
+        var live = p && /^https?:\/\//.test(String(p.live || '')) ? p.live : '';
+        document.getElementById('app-newtab').innerHTML = live ? MH.newTabHtml(live) : '';
+        if (!live) {
+            appSlug = null;
+            frameHost.innerHTML = '<p class="tagline app-missing">' + (p ? 'This project has no live app to run.' : 'No such project.') + '</p>';
+            return;
+        }
+        if (appSlug === slug) return;
+        appSlug = slug;
+        var frame = document.createElement('iframe');
+        frame.src = live + (live.indexOf('?') < 0 ? '?' : '&') + 'theme=' + encodeURIComponent(document.documentElement.dataset.theme || 'dark');
+        frame.title = p.title;
+        frame.allow = 'fullscreen';
+        frameHost.replaceChildren(frame);
+    }
+
     // "Play like a GIF" videos: muted loops that run only while on screen (no CPU spent on ones
     // scrolled out of view), and not at all for visitors who've asked for reduced motion.
     var loopWatcher = 'IntersectionObserver' in window ? new IntersectionObserver(function (entries) {
@@ -102,6 +128,9 @@
     // ---------------------------------------------------------------------------------------
     function parse(hash) {
         var parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+        if (parts[0] === 'projects' && parts[1] && parts[2] === 'live') {
+            return { view: 'app', slug: decodeURIComponent(parts[1]), path: '~/projects/' + parts[1] + '/live', up: '#/projects/' + parts[1] };
+        }
         if (parts[0] === 'projects' && parts[1]) {
             return { view: 'article', slug: decodeURIComponent(parts[1]), path: '~/projects/' + parts[1], up: '#/projects' };
         }
@@ -117,6 +146,12 @@
             return loadProject(route.slug).then(function (p) {
                 route.title = (p ? p.title : isDraft(route.slug) ? 'Coming soon' : 'Not found') + ' — Mike Hadfield';
                 renderArticle(route.slug, p);
+            });
+        }
+        if (route.view === 'app') {
+            return loadProject(route.slug).then(function (p) {
+                route.title = (p ? p.title : 'Not found') + ' — Mike Hadfield';
+                renderApp(route.slug, p);
             });
         }
         return Promise.resolve();
@@ -139,7 +174,7 @@
         closeBtn.disabled = !route.up;   // the home page has nowhere further up to go
         windowLabels();
         barNav.querySelectorAll('a').forEach(function (a) {
-            var on = a.dataset.route === route.view || (a.dataset.route === 'projects' && route.view === 'article');
+            var on = a.dataset.route === route.view || (a.dataset.route === 'projects' && (route.view === 'article' || route.view === 'app'));
             a.classList.toggle('is-current', on);
             if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
         });

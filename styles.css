@@ -201,6 +201,7 @@ body {
 .terminal[data-size="projects"] { --tw: 980px; }
 .terminal[data-size="article"] { --tw: 1040px; }
 .terminal[data-size="admin"] { --tw: 1280px; }
+.terminal[data-size="app"] { --tw: 1440px; height: calc(100vh - 92px); }   /* a live app: as big as the screen allows */
 
 .terminal__bar {
     flex: none;
@@ -1036,6 +1037,30 @@ body {
 
 .repo-btn svg { width: 15px; height: 15px; }
 
+/* "launch": the project's live app, in the terminal -- the accent button, the way in */
+.launch-btn,
+.prose .launch-btn {   /* .prose a would paint the label accent-on-accent */
+    color: var(--on-accent);
+    text-decoration: none;
+    background: var(--accent);
+    border-color: var(--accent);
+    font-weight: 700;
+}
+.launch-btn:hover,
+.prose .launch-btn:hover {
+    color: var(--on-accent);
+    background: var(--accent);
+    border-color: var(--accent);
+    filter: brightness(1.08);
+}
+.launch-btn svg { width: 12px; height: 12px; }
+
+.launch-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.newtab-link,
+.prose .newtab-link { font-size: 0.72rem; color: var(--fg-dim); }
+.newtab-link:hover,
+.prose .newtab-link:hover { color: var(--accent); }
+
 /* repo field says "private": same button, inactive */
 .repo-btn--private,
 .repo-btn--private:hover {
@@ -1449,6 +1474,26 @@ button.pin { cursor: pointer; }
     color: var(--fg-dim);
 }
 
+/* ---------- a project's live app (#/projects/<slug>/live), framed in the terminal ---------- */
+
+.terminal[data-size="app"] .terminal__viewport { display: flex; flex-direction: column; overflow: hidden; }
+.view--app { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.app-strip {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px 18px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 0.72rem;
+}
+.app-strip .cd-btn,
+.app-strip .newtab-link { flex: none; margin-bottom: 0; white-space: nowrap; }
+.app-strip__cmd { flex: 1 1 auto; min-width: 0; color: var(--fg-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app-frame { position: relative; flex: 1 1 auto; min-height: 0; background: var(--bg); }
+.app-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.app-missing { padding: 32px clamp(24px, 5vw, 48px); }
+
 /* ---------- footer ---------- */
 
 .footer {
@@ -1525,6 +1570,7 @@ body.is-max .footer { display: none; }
 .terminal.is-max .terminal__viewport { display: flex; flex-direction: column; }
 /* centred both ways: a short page (home, contact) sits in the middle as it does un-maximised; a long one fills from the top and scrolls */
 .terminal.is-max .view { width: 100%; max-width: calc(var(--tw) + 160px); margin: auto; }
+.terminal.is-max .view--app { max-width: none; margin: 0; }   /* a live app takes the whole window */
 
 .terminal__status { display: none; }
 .terminal.is-max .terminal__status {
@@ -1611,6 +1657,10 @@ body.is-max .footer { display: none; }
     .dock { bottom: 56px; }
     body.is-max { padding: 6px; }
     .terminal.is-max { height: auto !important; min-height: calc(100dvh - 12px); }
+    /* a live app fills the phone's screen (less the page padding); the page itself doesn't scroll */
+    .terminal[data-size="app"] { height: calc(100vh - 40px); height: calc(100dvh - 40px); }
+    .terminal.is-max[data-size="app"] { height: calc(100dvh - 12px) !important; }
+    .app-strip { padding: 8px 12px; }
     .status__hint { display: none; }
 
 }

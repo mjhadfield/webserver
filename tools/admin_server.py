@@ -153,6 +153,9 @@ class Site:
             repo = "private"  # shown on the site as an inactive "Private repo" button
         elif repo and not re.match(r"^https?://", repo):
             raise ApiError("the repo link must start with http:// or https:// (or just say private)")
+        live = s("live")  # the project's live app: "launch" opens it in the terminal (#/projects/<slug>/live)
+        if live and not re.match(r"^https?://", live):
+            raise ApiError("the live app link must start with http:// or https://")
         figures = {}
         for fid, f in (p.get("figures") or {}).items():
             if not FIG_ID_RE.match(fid) or not isinstance(f, dict):
@@ -172,9 +175,12 @@ class Site:
                             "alt": str(f.get("alt") or ""), "hotspots": spots}
             if re.search(r"\.(webm|mp4)$", src, re.I):
                 figures[fid]["loop"] = bool(f.get("loop"))  # a video: "play like a GIF"
-        return {"slug": slug, "title": s("title"), "summary": s("summary"), "tags": [t.strip() for t in tags if t.strip()],
-                "repo": repo, "status": p["status"], "started": s("started"), "updated": date.today().isoformat(),
-                "body": str(p.get("body") or ""), "figures": figures}
+        out = {"slug": slug, "title": s("title"), "summary": s("summary"), "tags": [t.strip() for t in tags if t.strip()],
+               "repo": repo, "status": p["status"], "started": s("started"), "updated": date.today().isoformat(),
+               "body": str(p.get("body") or ""), "figures": figures}
+        if live:
+            out = {**{k: v for k, v in out.items() if k != "status"}, "live": live, "status": out["status"]}  # beside repo
+        return out
 
     def save_project(self, slug: str, project: dict, old_slug: str | None) -> dict:
         with self.lock:

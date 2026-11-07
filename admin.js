@@ -312,10 +312,11 @@
             field('title', 'title', p.title) + field('slug (the address: #/projects/…)', 'slug', p.slug) +
             field('summary (shown on the card)', 'summary', p.summary, true) +
             field('tags (comma separated)', 'tags', (p.tags || []).join(', ')) + field('github repo — a link, or “private”', 'repo', p.repo, false, 'text', 'https://github.com/… or private') +
+            field('live app — “launch” opens it inside the terminal', 'live', p.live, false, 'text', 'https://… (blank: no launch button)') +
             '<label class="field"><span class="field__label">status</span><select data-meta="status"><option value="draft"' + (p.status === 'draft' ? ' selected' : '') + '>draft — shown as coming soon</option><option value="published"' + (p.status === 'published' ? ' selected' : '') + '>published</option></select></label>' +
             field('started', 'started', p.started, false, 'text', '2026-03') +
             '</div>' +
-            '<label class="field"><span class="field__label">write-up — markdown: ## heading · **bold** · *italic* · `code` · [link](https://…) · - list · ``` code block (```python or ```sql for colours) · ::figure[id] places an image</span>' +
+            '<label class="field"><span class="field__label">write-up — markdown: ## heading · **bold** · *italic* · `code` · [link](https://…) · - list · ``` code block (```python or ```sql for colours) · ::figure[id] places an image · ::launch places the launch button</span>' +
             '<textarea class="md" data-meta="body" spellcheck="true">' + esc(p.body) + '</textarea></label>' +
             '</div><div class="editor__preview"><p class="editor__label">live preview</p><div data-role="preview"></div></div></div>' +
             '<div class="figman"><h3>Figures</h3>' +

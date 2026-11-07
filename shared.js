@@ -112,7 +112,7 @@
         return ids;
     }
 
-    function md(text, figures) {
+    function md(text, figures, project) {
         var lines = String(text || '').split('\n');
         var out = [];
         var para = [];
@@ -139,6 +139,10 @@
                 flushPara(); flushList();
                 var fig = figures && figures[m[1]];
                 out.push(fig ? figureHtml(m[1], fig, ++figNo) : '<p><code>missing figure: ' + esc(m[1]) + '</code></p>');
+            } else if (/^::launch\s*$/.test(line)) {
+                flushPara(); flushList();
+                // the project's live app: a launch button (opens it in the terminal) and a new-tab link
+                if (project && project.live) out.push('<p class="launch-row">' + launchHtml(project) + newTabHtml(project.live) + '</p>');
             } else if ((m = line.match(/^(#{2,3})\s+(.*)$/))) {
                 flushPara(); flushList();
                 out.push('<h' + m[1].length + '>' + inline(m[2]) + '</h' + m[1].length + '>');
@@ -228,6 +232,16 @@
         return '<a class="repo-btn" href="' + esc(repo) + '" target="_blank" rel="noopener noreferrer">' + GH_ICON + 'view on GitHub</a>';
     }
 
+    // a project's live app (the "live" field): opens inside the terminal at #/projects/<slug>/live
+    var PLAY_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>';
+    function launchHtml(p) {
+        if (!p || !/^https?:\/\//.test(String(p.live || ''))) return '';
+        return '<a class="repo-btn launch-btn" href="#/projects/' + esc(p.slug) + '/live">' + PLAY_ICON + 'launch</a>';
+    }
+    function newTabHtml(url) {
+        return '<a class="newtab-link" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">open in a new tab &#8599;</a>';
+    }
+
     // a project write-up; backHref null leaves the "cd .." chip off (the admin preview)
     function articleHtml(p, backHref) {
         var dates = [p.started && 'started ' + p.started, p.updated && 'updated ' + p.updated].filter(Boolean).join(' · ');
@@ -238,9 +252,9 @@
             (p.summary ? '<p class="article__summary">' + esc(p.summary) + '</p>' : '') +
             '<div class="article__meta">' + tagsHtml(p.tags) +
             (dates ? '<span>' + esc(dates) + '</span>' : '') +
-            repoHtml(p.repo) +
+            launchHtml(p) + repoHtml(p.repo) +
             '</div></div>' +
-            '<article class="prose">' + md(p.body, p.figures) + '</article>';
+            '<article class="prose">' + md(p.body, p.figures, p) + '</article>';
     }
 
     // ---------------------------------------------------------------------------------------
@@ -448,7 +462,7 @@
 
     root.MH = {
         esc: esc, slugify: slugify, inline: inline, md: md, figureIds: figureIds, pinsHtml: pinsHtml, figureHtml: figureHtml, isVideo: isVideo,
-        cdBtn: cdBtn, tagsHtml: tagsHtml, articleHtml: articleHtml,
+        cdBtn: cdBtn, tagsHtml: tagsHtml, articleHtml: articleHtml, newTabHtml: newTabHtml,
         CV_SECTIONS: CV_SECTIONS, cvSection: cvSection, cvHtml: cvHtml,
         initChrome: initChrome
     };

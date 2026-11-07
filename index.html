@@ -145,6 +145,15 @@
             <!-- projects list / write-up: rendered by script.js from content/projects/ -->
             <section class="view" data-view="projects" hidden></section>
             <section class="view" data-view="article" hidden></section>
+            <!-- a project's live app (its "live" field), framed: #/projects/<slug>/live -->
+            <section class="view view--app" data-view="app" hidden>
+                <div class="app-strip">
+                    <a class="cd-btn" id="app-back" href="#/projects"><span class="prompt">$</span>cd ..<kbd>esc</kbd></a>
+                    <p class="app-strip__cmd"><span class="prompt">$</span> <span id="app-cmd">./app</span></p>
+                    <span id="app-newtab"></span>
+                </div>
+                <div class="app-frame" id="app-frame"></div>
+            </section>
         </div>
 
         <!-- maximised only: a tmux-style status line -->
