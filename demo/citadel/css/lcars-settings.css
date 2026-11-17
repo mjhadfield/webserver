@@ -1,0 +1,93 @@
+/* ==========================================================================
+   LCARS on the Settings page (html[data-skin="lcars"], linked from settings.html only). lcars.css brings the palette,
+   the Antonio face and the card shape (three rounded corners, the cut top right, a lit left edge); this adds Settings'
+   own pieces in the dashboard's manner: the section list as a column of LCARS keys (one colour each, the current one
+   lit solid), cards in a colour each with a rule after the title, pill buttons, rounded fields, and labels in Antonio.
+   Every rule is scoped under the attribute, so Citadel's Settings is untouched.
+   ========================================================================== */
+
+/* ---- the page and its own header (shown when Settings is opened on its own, not in the dashboard) ---------------- */
+html[data-skin="lcars"] .sx__top .hud { font: 500 15px var(--lc-font); letter-spacing: .14em; color: var(--lc-2); }
+html[data-skin="lcars"] .sx__top .btn { --lc-t: var(--lc-2); }
+
+/* ---- section list: LCARS keys, a rounded left end, the label right-aligned ---------------------------------------- */
+html[data-skin="lcars"] .sx__tabs { gap: 5px; }
+html[data-skin="lcars"] .sx__tabs button { --lc-t: var(--lc-2); justify-content: flex-end; gap: 10px; height: 40px; padding: 0 16px 0 14px;
+  border: 0; border-radius: 20px 4px 4px 20px; font: 500 15px/1 var(--lc-font); letter-spacing: .1em; color: var(--silver);
+  background: color-mix(in srgb, var(--lc-t) 12%, transparent); transition: color .2s, background-color .2s, transform .12s; }
+html[data-skin="lcars"] .sx__tabs button .i { order: 1; width: 17px; height: 17px; color: var(--lc-t); }
+html[data-skin="lcars"] .sx__tabs button:nth-child(6n+2) { --lc-t: var(--lc-5); }
+html[data-skin="lcars"] .sx__tabs button:nth-child(6n+3) { --lc-t: var(--lc-4); }
+html[data-skin="lcars"] .sx__tabs button:nth-child(6n+4) { --lc-t: var(--lc-3); }
+html[data-skin="lcars"] .sx__tabs button:nth-child(6n+5) { --lc-t: var(--lc-1); }
+html[data-skin="lcars"] .sx__tabs button:nth-child(6n+6) { --lc-t: var(--lc-6); }
+html[data-skin="lcars"] .sx__tabs button:hover { color: var(--silver-hi); background: color-mix(in srgb, var(--lc-t) 26%, transparent); }
+html[data-skin="lcars"] .sx__tabs button[aria-selected="true"] { color: var(--lc-on); background: var(--lc-t); }
+html[data-skin="lcars"] .sx__tabs button[aria-selected="true"] .i { color: var(--lc-on); }
+html[data-skin="lcars"] .sx__tabs button:active { transform: scale(.97); }
+html[data-skin="lcars"] .sx__tabs button.has-attn::after { order: -1; margin: 0 auto 0 0; background: var(--lc-red); box-shadow: none; }
+
+/* ---- cards: a colour each, the title then a fading rule to the tools ---------------------------------------------- */
+html[data-skin="lcars"] .sx__card { --lc-c: var(--lc-2); }
+html[data-skin="lcars"] .sx__panel > .sx__card:nth-child(5n+2) { --lc-c: var(--lc-5); }
+html[data-skin="lcars"] .sx__panel > .sx__card:nth-child(5n+3) { --lc-c: var(--lc-3); }
+html[data-skin="lcars"] .sx__panel > .sx__card:nth-child(5n+4) { --lc-c: var(--lc-1); }
+html[data-skin="lcars"] .sx__panel > .sx__card:nth-child(5n+5) { --lc-c: var(--lc-4); }
+html[data-skin="lcars"] .sx__card .card__head { gap: 12px; }
+html[data-skin="lcars"] .sx__card .card__tools { flex: 1; justify-content: flex-end; }
+html[data-skin="lcars"] .sx__card .card__tools::before { content: ""; flex: 1; min-width: 12px; height: 1px; order: -1;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--lc-c) 50%, transparent), transparent); }
+html[data-skin="lcars"] .sx__sub { border-top-color: color-mix(in srgb, var(--lc-c) 25%, var(--edge)); }
+
+/* ---- buttons: pills; the main action of a form is solid ----------------------------------------------------------- */
+html[data-skin="lcars"] .sx .btn { --lc-t: var(--lc-c, var(--lc-2)); height: 30px; padding: 0 14px; border: 0; border-radius: 999px;
+  font: 500 14px/1 var(--lc-font); letter-spacing: .08em; color: var(--silver);
+  background: color-mix(in srgb, var(--lc-t) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lc-t) 34%, transparent);
+  transition: color .2s, background-color .2s, box-shadow .2s, transform .12s; }
+html[data-skin="lcars"] .sx .btn .i { width: 15px; height: 15px; }
+html[data-skin="lcars"] .sx .btn:hover:not([disabled]) { color: var(--silver-hi); background: color-mix(in srgb, var(--lc-t) 28%, transparent); }
+html[data-skin="lcars"] .sx .btn:active:not([disabled]) { transform: scale(.95); }
+html[data-skin="lcars"] .sx .btn--go { color: var(--lc-t); }
+html[data-skin="lcars"] .sx .btn--solid, html[data-skin="lcars"] .sx .btn--solid:hover:not([disabled]) { color: var(--lc-on); background: var(--lc-t); box-shadow: none; }
+html[data-skin="lcars"] .sx .btn--solid:hover:not([disabled]) { background: color-mix(in srgb, var(--lc-t) 82%, var(--silver-hi)); }
+html[data-skin="lcars"] .sx .btn--danger:hover:not([disabled]) { color: var(--lc-on); background: var(--lc-red); box-shadow: none; }
+html[data-skin="lcars"] .sx .btn.is-on, html[data-skin="lcars"] .sx .btn.is-pinned, html[data-skin="lcars"] .sx .btn--toggle.is-on,
+html[data-skin="lcars"] .sx .btn[aria-pressed="true"] { color: var(--lc-on); background: var(--lc-t); box-shadow: none; }
+html[data-skin="lcars"] .sx .btn.is-on .i, html[data-skin="lcars"] .sx .btn.is-pinned .i { color: var(--lc-on); }
+html[data-skin="lcars"] .sx .btn--icon { width: 30px; padding: 0; justify-content: center; }
+
+/* ---- fields ------------------------------------------------------------------------------------------------------- */
+html[data-skin="lcars"] .field__l, html[data-skin="lcars"] .sched__head { font: 500 13px var(--lc-font); letter-spacing: .12em; color: var(--silver-mute); }
+html[data-skin="lcars"] .sx .input { border: 0; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--edge); transition: box-shadow .2s; }
+html[data-skin="lcars"] .sx .input:focus { box-shadow: inset 0 0 0 2px var(--lc-c, var(--lc-2)); }
+html[data-skin="lcars"] .namebox, html[data-skin="lcars"] .sc-row__preview { border-radius: 6px; }
+html[data-skin="lcars"] .check input { border-radius: 5px; }
+html[data-skin="lcars"] .check input:checked { background: var(--lc-c, var(--lc-2)); border-color: transparent; }
+html[data-skin="lcars"] .check input:checked::after { border-color: var(--lc-on); }
+html[data-skin="lcars"] .status-line { font: 400 14px var(--lc-font); letter-spacing: .04em; }
+
+/* ---- list rows: the icon sits in a small key block in the card's colour ------------------------------------------- */
+html[data-skin="lcars"] .item__icon { border: 0; border-radius: 19px 4px 4px 19px; color: var(--lc-c); background: color-mix(in srgb, var(--lc-c) 18%, transparent); }
+html[data-skin="lcars"] .item--edit { background: linear-gradient(90deg, color-mix(in srgb, var(--lc-c) 12%, transparent), transparent 70%); box-shadow: inset 4px 0 0 var(--lc-c); }
+html[data-skin="lcars"] .item__sub { font: 400 13px var(--lc-font); letter-spacing: .04em; }
+
+/* ---- Appearance: theme pictures and a custom theme's two halves --------------------------------------------------- */
+html[data-skin="lcars"] .themepick { border: 0; border-radius: 14px 4px 14px 14px; box-shadow: inset 0 0 0 1px var(--edge); }
+html[data-skin="lcars"] .themepick:hover, html[data-skin="lcars"] .themepick:focus-visible { background: color-mix(in srgb, var(--lc-c) 12%, transparent); }
+html[data-skin="lcars"] .themepick.is-current { box-shadow: inset 0 0 0 2px var(--lc-c); }
+html[data-skin="lcars"] .themepick__name { font: 500 17px var(--lc-font); letter-spacing: .06em; }
+html[data-skin="lcars"] .themepick__name small { font: 500 12px var(--lc-font); color: var(--lc-c); }
+html[data-skin="lcars"] .tp { border-radius: 8px; }
+html[data-skin="lcars"] .half { border: 0; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--edge); }
+html[data-skin="lcars"] .half legend { font: 500 14px var(--lc-font); letter-spacing: .12em; color: var(--lc-c); }
+
+/* ---- Maintenance & logs ------------------------------------------------------------------------------------------- */
+html[data-skin="lcars"] .logrow__t, html[data-skin="lcars"] .logrow__s { font: 400 13px var(--lc-font); letter-spacing: .04em; }
+html[data-skin="lcars"] .logrow summary { font: 500 12px var(--lc-font); }
+html[data-skin="lcars"] .logrow pre { border: 0; border-radius: 6px; }
+
+/* ---- phones: the section list is a row of pills ------------------------------------------------------------------- */
+@media (max-width: 860px) {
+  html[data-skin="lcars"] .sx__tabs button { height: 34px; border-radius: 999px; padding: 0 14px 0 12px; font-size: 14px; }
+  html[data-skin="lcars"] .sx__tabs button .i { order: 0; }
+}

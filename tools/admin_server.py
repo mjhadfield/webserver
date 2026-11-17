@@ -154,8 +154,9 @@ class Site:
         elif repo and not re.match(r"^https?://", repo):
             raise ApiError("the repo link must start with http:// or https:// (or just say private)")
         live = s("live")  # the project's live app: "launch" opens it in the terminal (#/projects/<slug>/live)
-        if live and not re.match(r"^https?://", live):
-            raise ApiError("the live app link must start with http:// or https://")
+        # an http(s) address, or a path on this site (e.g. demo/citadel/); same rule as liveUrl in shared.js
+        if live and not (re.match(r"^https?://", live) or (re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._~/-]*", live) and ".." not in live)):
+            raise ApiError("the live app link must start with http:// or https://, or be a path on this site such as demo/citadel/")
         figures = {}
         for fid, f in (p.get("figures") or {}).items():
             if not FIG_ID_RE.match(fid) or not isinstance(f, dict):
@@ -179,7 +180,10 @@ class Site:
                "repo": repo, "status": p["status"], "started": s("started"), "updated": date.today().isoformat(),
                "body": str(p.get("body") or ""), "figures": figures}
         if live:
-            out = {**{k: v for k, v in out.items() if k != "status"}, "live": live, "status": out["status"]}  # beside repo
+            label = re.sub(r"\s+", " ", s("live_label"))[:24]  # the button's word ("demo"); blank or "launch" is the default
+            extra = {"live": live, **({"live_label": label} if label and label.lower() != "launch" else {}),
+                     **({"live_max": True} if p.get("live_max") is True else {})}  # launch → maximised window
+            out = {**{k: v for k, v in out.items() if k != "status"}, **extra, "status": out["status"]}  # beside repo
         return out
 
     def save_project(self, slug: str, project: dict, old_slug: str | None) -> dict:

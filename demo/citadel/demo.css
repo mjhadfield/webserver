@@ -1,0 +1,41 @@
+/* Citadel online demo (tools/build_demo.py): the snapshot chip in the header and the "not available" pages. */
+
+.demo-chip { margin-left: 10px; white-space: nowrap; }
+.top__right .badge-role { display: none; }   /* "Owner device" means nothing here; the snapshot chip takes its room */
+
+/* Media, Odysseus and House keep their (never-loaded) iframes so app.js still finds them; the notice takes their place. */
+.frame-shell[hidden] { display: none !important; }
+.demo-na {
+  flex: 1; height: 100%; min-height: 320px; box-sizing: border-box;
+  display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px 16px;
+  border: 1px solid var(--edge); background: var(--surface); color: var(--silver);
+}
+.demo-na .i { width: 40px; height: 40px; color: var(--accent); opacity: .8; }
+.demo-na b { font-size: 1.15rem; color: var(--silver-hi); letter-spacing: .04em; }
+.demo-na span { max-width: 46ch; color: var(--silver-mute); }
+
+@media (max-width: 700px) {
+  .demo-chip { display: none; }
+}
+
+/* Remote Access's "not available" notice (demo.js popup) */
+.demo-pop { max-width: min(420px, calc(100vw - 32px)); padding: 22px 24px 18px; border: 1px solid var(--edge-strong); color: var(--silver);
+  background: var(--surface-2); box-shadow: 0 24px 60px var(--vignette); font-family: var(--font-display); }
+.demo-pop::backdrop { background: rgba(0, 0, 0, .45); }
+.demo-pop b { display: block; margin-bottom: 8px; color: var(--silver-hi); font-size: 1.05rem; letter-spacing: .04em; }
+.demo-pop p { margin: 0 0 18px; line-height: 1.5; }
+.demo-pop .btn { float: right; }
+html[data-skin="lcars"] .demo-pop { border: 0; border-radius: 20px 0 20px 20px; box-shadow: inset 4px 0 0 var(--lc-frame), 0 24px 60px var(--vignette); }
+html[data-skin="lcars"] .demo-pop b { font: 500 20px var(--lc-font); letter-spacing: .08em; text-transform: uppercase; color: var(--lc-frame); }
+html[data-skin="lcars"] .demo-pop .btn { border: 0; border-radius: 999px; padding: 0 18px; height: 30px; background: var(--lc-frame); color: var(--lc-on); font: 500 14px var(--lc-font); letter-spacing: .1em; }
+html[data-skin="lcars"] .demo-na { border: 0; background: none; }   /* the page's elbow is the frame: no second box inside it */
+html[data-skin="lcars"] .demo-na .i { color: var(--lc-frame); }
+
+/* Settings (settings.html): the read-only notice across the top */
+.demo-banner { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 0 0 16px; padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--warn) 55%, transparent); border-left-width: 4px;
+  background: color-mix(in srgb, var(--warn) 12%, var(--surface)); color: var(--silver); }
+.demo-banner b { color: var(--warn); font-size: 1.1rem; letter-spacing: .08em; text-transform: uppercase; }
+html[data-skin="lcars"] .demo-banner { border: 0; border-radius: 20px 0 20px 20px; box-shadow: inset 6px 0 0 var(--lc-7);
+  background: color-mix(in srgb, var(--lc-7) 14%, var(--surface)); }
+html[data-skin="lcars"] .demo-banner b { font: 500 22px/1 var(--lc-font); letter-spacing: .1em; color: var(--lc-7); }

@@ -140,7 +140,10 @@ class AdminServerTests(unittest.TestCase):
         self.assertEqual(self.req("PUT", "/api/projects/ok", {"project": self.project(repo="javascript:alert(1)")})[0], 400)
         status, body, _ = self.req("PUT", "/api/projects/ok2", {"project": self.project(repo=" Private ")})
         self.assertEqual((status, body["project"]["repo"]), (200, "private"))   # the inactive "Private repo" button
-        self.assertEqual(self.req("PUT", "/api/projects/ok", {"project": self.project(live="javascript:alert(1)")})[0], 400)
+        for bad in ("javascript:alert(1)", "//evil.example/", "../demo/", "/demo/citadel/", "demo/../x"):
+            self.assertEqual(self.req("PUT", "/api/projects/ok", {"project": self.project(live=bad)})[0], 400, bad)
+        status, body, _ = self.req("PUT", "/api/projects/ok3", {"project": self.project(live="demo/citadel/")})
+        self.assertEqual((status, body["project"]["live"]), (200, "demo/citadel/"))   # a path on this site
         bad_fig = self.project(figures={"a": {"src": "../../etc/passwd"}})
         self.assertEqual(self.req("PUT", "/api/projects/ok", {"project": bad_fig})[0], 400)
         self.assertFalse((self.tmp / "content/projects/ok.json").exists())
@@ -154,6 +157,27 @@ class AdminServerTests(unittest.TestCase):
         self.assertTrue(all("live" not in e for e in json.loads((self.tmp / "content/projects/index.json").read_text())))  # write-up only
         status, body, _ = self.req("PUT", "/api/projects/plain", {"project": self.project()})
         self.assertNotIn("live", body["project"])   # no link, no field
+
+    def test_live_max_flag(self):
+        self.login()
+        status, body, _ = self.req("PUT", "/api/projects/full", {"project": self.project(live="demo/citadel/", live_max=True)})
+        self.assertEqual((status, body["project"].get("live_max")), (200, True))
+        self.assertNotIn("live_max", json.loads((self.tmp / "content/projects/index.json").read_text())[0])   # write-up only
+        for off in (False, "yes", None):
+            status, body, _ = self.req("PUT", "/api/projects/full", {"project": self.project(live="demo/citadel/", live_max=off)})
+            self.assertNotIn("live_max", body["project"], off)   # only a real true switches it on
+        status, body, _ = self.req("PUT", "/api/projects/nolive", {"project": self.project(live_max=True)})
+        self.assertNotIn("live_max", body["project"])   # nothing to launch, no flag
+
+    def test_live_label(self):
+        self.login()
+        status, body, _ = self.req("PUT", "/api/projects/full", {"project": self.project(live="demo/citadel/", live_label="  demo ")})
+        self.assertEqual((status, body["project"].get("live_label")), (200, "demo"))
+        for default in ("", "Launch", None):
+            status, body, _ = self.req("PUT", "/api/projects/full", {"project": self.project(live="demo/citadel/", live_label=default)})
+            self.assertNotIn("live_label", body["project"], default)   # the default isn't stored
+        status, body, _ = self.req("PUT", "/api/projects/nolive", {"project": self.project(live_label="demo")})
+        self.assertNotIn("live_label", body["project"])   # no button, no label
 
     def test_rename_moves_json_images_and_keeps_order(self):
         self.login()

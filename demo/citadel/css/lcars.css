@@ -1,0 +1,596 @@
+/* ==========================================================================
+   The LCARS theme (header Theme menu → LCARS; html[data-skin="lcars"], set by theme.js / theme-init.js)
+
+   Citadel's layout and cards, given an LCARS feel: hairline elbows joining the nav rail to the header and the page,
+   condensed Antonio type for labels and numbers, pill buttons, coloured "key blocks", segmented gauges, cards rounded
+   on three corners with Citadel's cut kept top right and a lit, card-coloured left edge, and an expanded card that
+   opens as an LCARS console.
+
+   Every rule is scoped under html[data-skin="lcars"], so Citadel is untouched, and this file is only linked from the
+   dashboard (index.html): Settings, guest and pairing follow Day/Night only, and the TV stays Citadel.
+   Day/Night is the usual [data-theme="light"]. New variables are --lc-* (--gap, --sw, --bc already mean things here).
+   ========================================================================== */
+
+@font-face { font-family: "Antonio"; src: url("../fonts/Antonio-VF.ttf") format("truetype"); font-weight: 100 700; font-display: swap; }
+
+/* ---- Palette: Citadel's night and day colours as a run of LCARS bars ------------------------------------------- */
+html[data-skin="lcars"] {
+  --lc-1: #a78bfa;   /* violet: the frame */
+  --lc-2: #c4b5fd;   /* lilac */
+  --lc-3: #8577e0;   /* indigo */
+  --lc-4: #c9ced6;   /* silver */
+  --lc-5: #d3a4ea;   /* orchid: music */
+  --lc-6: #8f96a3;   /* steel */
+  --lc-7: #f2b45a;   /* amber: attention and "you are here" only */
+  --lc-red: #f43f5e;
+  --lc-frame: var(--lc-3);   /* the elbows and segmented bars, and any card or button with no colour of its own */
+  --lc-gig: #b03c64;         /* claret: Next gig's own darker red-purple (orchid read as pink) */
+  --lc-gig-on: #f6e9ee;      /* text on it: dark text is too faint on a colour this deep */
+  --lc-diary: #9a5bb5;       /* plum: Diary's own, between the claret and Now's violet (lilac read as pink) */
+  --lc-on: #07060a;  /* text on a coloured block */
+  --lc-font: "Antonio", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --lc-ease: cubic-bezier(.2, .8, .2, 1);
+  --lc-rail: 94px;   /* a touch wider than Citadel's 88px, for the pill shapes */
+  --lc-gut: 30px;    /* main column's left padding: the frame's vertical hairline runs down its left edge */
+  --lc-line: 3px;
+  --lc-r: 24px;      /* elbow radius */
+  --lc-row: 46px;    /* the header's first row (bookmarks, readout, buttons, wordmark) */
+  --lc-pad-top: 10px; /* page edge to the header (Citadel uses 20px) */
+  --lc-body-gap: 14px; /* the body's frame bar to the cards below it */
+}
+/* Day: parchment with three colours, burnt orange (the frame), oxblood and one slate-blue accent, plus sepia neutrals.
+   Colours stay solid here: mixed thin over parchment they turn pastel. */
+html[data-skin="lcars"][data-theme="light"] {
+  --lc-1: #b5541f;   /* burnt orange: the frame */
+  --lc-2: #a8652f;   /* toasted orange */
+  --lc-3: #3d5a73;   /* slate blue: the accent */
+  --lc-4: #7d6b52;   /* sepia */
+  --lc-5: #8a2e2e;   /* oxblood: Next gig, music */
+  --lc-6: #5c4a3a;   /* umber */
+  --lc-7: #c25a17;   /* bright burnt orange: attention and "you are here" only */
+  --lc-red: #a3302a; --lc-on: #fdf8ee;
+  --lc-frame: var(--lc-1);
+  --lc-gig: var(--lc-5); --lc-gig-on: var(--lc-on); --lc-diary: var(--lc-2);
+}
+
+/* each card and each nav destination keeps its own colour */
+html[data-skin="lcars"] .a-now { --lc-c: var(--lc-1); }
+html[data-skin="lcars"] .a-gig { --lc-c: var(--lc-gig); --lc-on: var(--lc-gig-on); }
+html[data-skin="lcars"] .a-diary { --lc-c: var(--lc-diary); }
+html[data-skin="lcars"] .a-remote { --lc-c: var(--lc-4); }
+html[data-skin="lcars"] .a-proj { --lc-c: var(--lc-4); }
+html[data-skin="lcars"] .a-rel { --lc-c: var(--lc-5); }
+html[data-skin="lcars"] .a-vin { --lc-c: var(--lc-2); }
+html[data-skin="lcars"] .a-radar { --lc-c: var(--lc-3); }
+html[data-skin="lcars"] .a-mon { --lc-c: var(--lc-2); }           /* Monitoring: opened from the header readout */
+html[data-skin="lcars"] .a-launch { --lc-c: var(--lc-3); }
+html[data-skin="lcars"] .a-sys { --lc-c: var(--lc-6); }
+html[data-skin="lcars"] .rail [data-view="home"] { --lc-c: var(--lc-2); }
+html[data-skin="lcars"] .rail [data-view="news"] { --lc-c: var(--lc-3); }
+html[data-skin="lcars"] .rail [data-view="media"] { --lc-c: var(--lc-4); }
+html[data-skin="lcars"] .rail [data-view="music"] { --lc-c: var(--lc-5); }
+html[data-skin="lcars"] .rail [data-view="listen"] { --lc-c: var(--lc-1); }
+html[data-skin="lcars"] .rail [data-view="ai"] { --lc-c: var(--lc-6); }
+html[data-skin="lcars"] .rail [data-view="house"] { --lc-c: var(--lc-3); }
+html[data-skin="lcars"] .rail [data-view="curate"] { --lc-c: var(--lc-2); }
+html[data-skin="lcars"] .rail .rail__settings { --lc-c: var(--lc-5); }
+
+/* ==========================================================================
+   Frame: hairline elbows (desktop only). The upper one runs down the rail's right edge and curves under the header into
+   a segmented bar; the lower one leaves a bar along the top of the page and curves down the rail edge to the bottom.
+   ========================================================================== */
+@media (min-width: 761px) {
+  html[data-skin="lcars"] .shell { grid-template-columns: var(--lc-rail) 1fr; }
+  html[data-skin="lcars"] .main { --main-pl: var(--lc-gut); --main-pr: 14px; padding-left: var(--main-pl); padding-top: var(--lc-pad-top); padding-right: var(--main-pr); }   /* tighter page edges than Citadel's */
+  html[data-skin="lcars"] .rail { border-right: 0; background: none; }
+  html[data-skin="lcars"] .top::before, html[data-skin="lcars"] .view.is-active::before {
+    content: ""; position: absolute; left: calc(-1 * var(--lc-gut)); width: calc(var(--lc-r) + var(--lc-line)); pointer-events: none;
+    border: 0 solid var(--lc-frame); border-left-width: var(--lc-line); }
+  html[data-skin="lcars"] .top::before { top: calc(-1 * var(--lc-pad-top)); bottom: -5px; border-bottom-width: var(--lc-line); border-bottom-left-radius: var(--lc-r); }
+  html[data-skin="lcars"] .view.is-active { position: relative; }
+  html[data-skin="lcars"] .view.is-active::before { top: calc(-1 * var(--lc-body-gap)); bottom: 0; border-top-width: var(--lc-line); border-top-left-radius: var(--lc-r);
+    border-left-color: color-mix(in srgb, var(--lc-frame) 45%, transparent); border-top-color: var(--lc-frame); }
+  /* the segmented bars: coloured runs with page-coloured gaps */
+  html[data-skin="lcars"] .top::after, html[data-skin="lcars"] .view.is-active::after {
+    content: ""; position: absolute; left: calc(var(--lc-r) - var(--lc-gut) + var(--lc-line)); right: 0; height: var(--lc-line); pointer-events: none; border-radius: 0 3px 3px 0;
+    background: linear-gradient(90deg,
+      color-mix(in srgb, var(--lc-1) 60%, transparent) 0 22%, transparent 0 calc(22% + 5px),
+      color-mix(in srgb, var(--lc-4) 55%, transparent) 0 27%, transparent 0 calc(27% + 5px),
+      color-mix(in srgb, var(--lc-3) 55%, transparent) 0 78%, transparent 0 calc(78% + 5px),
+      color-mix(in srgb, var(--lc-5) 55%, transparent) 0 82%, transparent 0 calc(82% + 5px),
+      color-mix(in srgb, var(--lc-2) 55%, transparent) 0); }
+  html[data-skin="lcars"] .top::after { bottom: -5px; }
+  /* the body's bar is a variable so the page-change sweep (Motion, below) can lay a light over it */
+  html[data-skin="lcars"] { --lc-segs-body: linear-gradient(90deg,
+      color-mix(in srgb, var(--lc-1) 60%, transparent) 0 10%, transparent 0 calc(10% + 5px),
+      color-mix(in srgb, var(--lc-2) 55%, transparent) 0 58%, transparent 0 calc(58% + 5px),
+      color-mix(in srgb, var(--lc-4) 55%, transparent) 0 62%, transparent 0 calc(62% + 5px),
+      color-mix(in srgb, var(--lc-3) 55%, transparent) 0 86%, transparent 0 calc(86% + 5px),
+      color-mix(in srgb, var(--lc-5) 55%, transparent) 0); }
+  html[data-skin="lcars"] .view.is-active::after { top: calc(-1 * var(--lc-body-gap)); background: var(--lc-segs-body); }
+  /* Day: the bars are mostly the frame's burnt orange, with short oxblood and slate runs, at full strength */
+  html[data-skin="lcars"][data-theme="light"] .top::after { background: linear-gradient(90deg,
+      var(--lc-frame) 0 22%, transparent 0 calc(22% + 5px),
+      var(--lc-5) 0 27%, transparent 0 calc(27% + 5px),
+      color-mix(in srgb, var(--lc-frame) 70%, transparent) 0 78%, transparent 0 calc(78% + 5px),
+      var(--lc-3) 0 82%, transparent 0 calc(82% + 5px),
+      var(--lc-frame) 0); }
+  html[data-skin="lcars"][data-theme="light"] { --lc-segs-body: linear-gradient(90deg,
+      var(--lc-frame) 0 10%, transparent 0 calc(10% + 5px),
+      color-mix(in srgb, var(--lc-frame) 70%, transparent) 0 58%, transparent 0 calc(58% + 5px),
+      var(--lc-5) 0 62%, transparent 0 calc(62% + 5px),
+      color-mix(in srgb, var(--lc-frame) 70%, transparent) 0 86%, transparent 0 calc(86% + 5px),
+      var(--lc-3) 0); }
+  html[data-skin="lcars"][data-theme="light"] .view.is-active::before { border-left-color: color-mix(in srgb, var(--lc-frame) 70%, transparent); }
+
+  /* An embedded page (Media, Companion, Odysseus, House) fills the body's elbow: flush against the vertical line and
+     the bar, out to the screen's right and bottom edges, with its top-left corner rounded to the elbow's inner curve
+     (the elbow's radius less the line). The bar runs on to the screen edge with it. dashboard.css gives the page its
+     full height; the frame has no border of its own here, the elbow is its border. Corners are cut with a mask, never
+     clip-path (an iframe under a clip-path flickers while it scrolls). */
+  html[data-skin="lcars"] .frame-shell {
+    --lc-in: calc(var(--lc-r) - var(--lc-line));
+    inset: calc(var(--lc-line) - var(--lc-body-gap)) calc(-1 * var(--main-pr)) 0 calc(var(--lc-line) - var(--lc-gut));
+    padding: 0; background: none;
+    mask:
+      radial-gradient(circle at 100% 100%, #000 calc(var(--lc-in) - .5px), transparent var(--lc-in)) top left / var(--lc-in) var(--lc-in) no-repeat,
+      linear-gradient(#000 0 0) top right / calc(100% - var(--lc-in)) var(--lc-in) no-repeat,
+      linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--lc-in)) no-repeat;
+  }
+  html[data-skin="lcars"] .view.is-active:has(> .frame-shell)::after { right: calc(-1 * var(--main-pr)); border-radius: 0; }
+}
+
+/* ==========================================================================
+   Nav rail: idle items stay bare; a hovered or current one becomes a small card in its page's colour (three rounded
+   corners, a 6px cut top right, hairline border, lit left edge). The shape is on ::after so it can fade and slide in.
+   ========================================================================== */
+html[data-skin="lcars"] .rail a[data-view], html[data-skin="lcars"] .rail a.rail__settings {
+  isolation: isolate; width: calc(var(--lc-rail) - 22px); min-height: 58px; padding: 8px 4px; margin-left: 2px;
+  font: 500 12.5px/1.1 var(--lc-font); letter-spacing: .12em; --c: 6px; --r: 16px; }
+html[data-skin="lcars"] .rail a[data-view] .i, html[data-skin="lcars"] .rail a.rail__settings .i { width: 22px; height: 22px; }
+html[data-skin="lcars"] .rail a::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  --lit: color-mix(in srgb, var(--lc-c) 62%, transparent);
+  --hl: color-mix(in srgb, var(--silver) 24%, transparent);
+  --fill: color-mix(in srgb, var(--lc-c) 10%, var(--surface));
+  border: 1px solid transparent; border-left-width: 3px; border-radius: var(--r) 0 var(--r) var(--r);
+  background:
+    linear-gradient(to bottom left, transparent calc(50% - .7px), var(--hl) calc(50% - .7px) calc(50% + .7px), transparent calc(50% + .7px)) top right / var(--c) var(--c) no-repeat border-box,
+    linear-gradient(var(--fill), var(--fill)) padding-box,
+    linear-gradient(90deg, var(--lit) 0, var(--lit) var(--r), var(--hl) calc(var(--r) + 36px)) border-box;
+  clip-path: polygon(0 0, calc(100% - var(--c)) 0, 100% var(--c), 100% 100%, 0 100%);
+  opacity: 0; transform: scaleX(.9); transform-origin: left center; transition: opacity .2s var(--lc-ease), transform .28s var(--lc-ease); }
+html[data-skin="lcars"] .rail a:is(:hover, :focus-visible, [aria-current])::after { opacity: 1; transform: none; }
+html[data-skin="lcars"] .rail a[aria-current]::after { --lit: var(--lc-c); --fill: color-mix(in srgb, var(--lc-c) 18%, var(--surface)); }
+html[data-skin="lcars"] .rail a:active::after { --fill: color-mix(in srgb, var(--lc-c) 32%, var(--surface)); }
+html[data-skin="lcars"] .rail a:hover { color: var(--silver-hi); }
+html[data-skin="lcars"] .rail a[aria-current] { color: var(--lc-c); }
+html[data-skin="lcars"] .rail a[aria-current]::before { left: -11px; top: 14px; bottom: 14px; width: 4px; background: var(--lc-c); box-shadow: none; border-radius: 0 4px 4px 0; }
+/* No separate logo: Home wears the Citadel mark (app.js swaps the icon) and sits level with the middle of the header;
+   the other pages start where the page body does. app.js measures both and sets --lc-home-top / --lc-body-top. */
+html[data-skin="lcars"] .rail__logo { display: none; }
+@media (min-width: 761px) {
+  html[data-skin="lcars"] .rail { padding-top: 0; }
+  html[data-skin="lcars"] .rail a[data-view="home"] { position: absolute; top: var(--lc-home-top, 40px); left: 0; right: 0; margin: 0 auto; }
+  html[data-skin="lcars"] .rail a[data-view="home"] .i { width: 26px; height: 26px; }
+  html[data-skin="lcars"] .rail a[data-view="news"] { margin-top: var(--lc-body-top, 160px); }
+}
+
+/* phones: the bottom tab bar keeps its layout; the current page gets its colour */
+html[data-skin="lcars"] .tabbar a { font: 500 11px/1.1 var(--lc-font); letter-spacing: .12em; }
+html[data-skin="lcars"] .tabbar a[aria-current] { color: var(--lc-7); }
+
+/* ==========================================================================
+   Header: bookmarks on the left, the live readout in the middle (Home only), then Day/Night, Theme, the device badge
+   and the wordmark on the right. The reminders form a second row inside the same frame (app.js moves the strip into
+   .top when LCARS is on), as evenly sized boxes.
+   ========================================================================== */
+html[data-skin="lcars"] .top { flex-wrap: wrap; column-gap: 24px; row-gap: 12px; padding-bottom: 12px; margin-bottom: calc(var(--lc-body-gap) + 16px); }   /* room between the header's bar and the body's bar */
+html[data-skin="lcars"] .top__mid { order: 1; gap: 24px; }
+html[data-skin="lcars"] .top__right { order: 3; gap: 12px; }
+html[data-skin="lcars"] .top__brand { order: 4; align-items: center; }
+html[data-skin="lcars"] .top__brand .hud { display: none; }      /* the address is in the readout; the name is the wordmark */
+html[data-skin="lcars"] .top__brand .wordmark { font-size: 24px; }
+html[data-skin="lcars"] .top > .alerts { order: 5; flex: 1 0 100%; min-width: 0; margin: 0; gap: 10px; }
+/* The reminders show on every page in LCARS (a status row), so the header is the same shape everywhere and the rail
+   (Home level with the header's middle, the rest from the body's top) doesn't jump about between pages. */
+html[data-skin="lcars"] .top .alert { flex: 1 1 260px; }
+html[data-skin="lcars"] .sc, html[data-skin="lcars"] .look-btn {
+  height: 32px; border-radius: 999px; clip-path: none; border: 0; padding: 0 14px 0 12px;
+  font: 500 15px/1 var(--lc-font); letter-spacing: .06em; text-transform: uppercase; color: var(--silver);
+  background: color-mix(in srgb, var(--lc-c, var(--lc-2)) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lc-c, var(--lc-2)) 40%, transparent); }
+html[data-skin="lcars"] .sc .sc__label { font: inherit; letter-spacing: inherit; }
+html[data-skin="lcars"] .sc .i { color: var(--lc-c, var(--lc-2)); }
+html[data-skin="lcars"] .sc:hover, html[data-skin="lcars"] .look-btn:hover { color: var(--silver-hi); background: color-mix(in srgb, var(--lc-c, var(--lc-2)) 24%, transparent); }
+html[data-skin="lcars"] .shortcuts .sc:nth-child(2) { --lc-c: var(--lc-5); }
+html[data-skin="lcars"] .shortcuts .sc:nth-child(3) { --lc-c: var(--lc-4); }
+html[data-skin="lcars"] .shortcuts .sc:nth-child(4) { --lc-c: var(--lc-3); }
+html[data-skin="lcars"] .shortcuts .sc:nth-child(5) { --lc-c: var(--lc-6); }
+html[data-skin="lcars"] .sc--menu[aria-expanded="true"], html[data-skin="lcars"] .look-btn[aria-expanded="true"] { background: var(--lc-2); color: var(--lc-on); box-shadow: none; }
+html[data-skin="lcars"] .sc--menu[aria-expanded="true"] .i, html[data-skin="lcars"] .look-btn[aria-expanded="true"] .i { color: var(--lc-on); }
+html[data-skin="lcars"] .look-btn { --lc-c: var(--lc-6); gap: 8px; padding: 0 12px; }
+html[data-skin="lcars"] .look-btn .i { color: var(--lc-c); }
+html[data-skin="lcars"] .badge-role { font: 500 13px var(--lc-font); letter-spacing: .12em; }
+
+/* the bookmarks panel */
+/* the bookmarks panel: one LCARS bracket with the button. The open button (solid lilac) is its cap, a lilac line runs down
+   both sides, and Edit in Settings is the solid base. On desktop the button's lower corners square off to join it. */
+html[data-skin="lcars"] .bmbar { clip-path: none; border: 0; padding: 8px 8px 0; background: var(--surface-2);
+  border-radius: 16px; box-shadow: inset 0 0 0 2px var(--lc-2), 0 20px 44px var(--vignette); }
+html[data-skin="lcars"] .bmbar__edit { width: auto; margin: 10px -8px 0; height: 28px; padding: 0 16px; border-radius: 0 0 16px 16px; text-align: right;
+  background: var(--lc-2); color: var(--lc-on); font: 500 14px/28px var(--lc-font); letter-spacing: .1em; transition: background-color .2s; }
+html[data-skin="lcars"] .bmbar__edit:hover, html[data-skin="lcars"] .bmbar__edit:focus-visible { background: var(--silver-hi); color: var(--lc-on); }
+@media (min-width: 761px) {
+  html[data-skin="lcars"] .sc--menu[aria-expanded="true"] { border-radius: 16px 16px 0 0; }
+  html[data-skin="lcars"] .bmbar { border-radius: 0 0 16px 16px; }
+  html[data-skin="lcars"] .bmbar__list:not(:has(.bm:not(.bm--top))) + .bmbar__edit { margin-top: -8px; }   /* nothing above it: the base sits under the cap */
+}
+html[data-skin="lcars"] .bm { clip-path: none; border: 0; height: 48px; padding: 0 12px 0 0; border-radius: 24px 4px 4px 24px;
+  background: color-mix(in srgb, var(--lc-c, var(--lc-frame)) 10%, transparent); }
+html[data-skin="lcars"] .bm:nth-child(4n+2) { --lc-c: var(--lc-5); }
+html[data-skin="lcars"] .bm:nth-child(4n+3) { --lc-c: var(--lc-1); }
+html[data-skin="lcars"] .bm:nth-child(4n+4) { --lc-c: var(--lc-4); }
+html[data-skin="lcars"] .bm:hover { background: color-mix(in srgb, var(--lc-c, var(--lc-frame)) 24%, transparent); }
+html[data-skin="lcars"] .bm > .i, html[data-skin="lcars"] .bm > .sc__img, html[data-skin="lcars"] .bm > .sc__letter {
+  align-self: stretch; width: 44px; height: 100%; padding: 0 10px 0 14px; object-fit: contain; border-radius: 24px 0 0 24px;
+  background: color-mix(in srgb, var(--lc-c, var(--lc-frame)) 30%, transparent); color: var(--silver-hi); }
+html[data-skin="lcars"] .bm > .sc__letter { display: grid; place-items: center; border: 0; }
+
+/* the readout: live numbers in the LCARS data-cascade manner, every one of them real */
+html[data-skin="lcars"][data-page="home"] .readout { display: flex; gap: 22px; order: 2; margin: 0 auto; flex: none; font-family: var(--lc-font); }
+html[data-skin="lcars"] .readout div { display: grid; gap: 1px; }
+html[data-skin="lcars"] .readout dt { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--silver-dim); }
+html[data-skin="lcars"] .readout dd { margin: 0; font-size: 20px; line-height: 1; color: var(--lc-2); font-variant-numeric: tabular-nums; }
+/* Day: a calm number is plain ink, so the copper of this palette isn't mistaken for the amber heat level */
+html[data-skin="lcars"][data-theme="light"] .readout dd { color: var(--silver-hi); }
+/* On the desk layout (the one-screen grid, where the header is wide) the readout sits on the header's own centre line,
+   level with the bookmarks row. Elsewhere it flows between the bookmarks and the buttons, dropping cells as room runs out. */
+@media (min-width: 1800px) and (min-height: 860px) {
+  html[data-skin="lcars"] .top__mid, html[data-skin="lcars"] .top__right, html[data-skin="lcars"] .top__brand { min-height: var(--lc-row); }
+  html[data-skin="lcars"][data-page="home"] .top > .readout { position: absolute; top: 0; left: 50%; height: var(--lc-row); align-items: center; margin: 0; transform: translateX(-50%); }
+}
+@media (max-width: 1500px) { html[data-skin="lcars"] .readout div:nth-child(n+4) { display: none; } }
+/* with the whole readout showing, Monitoring is opened from it and has no tile of its own */
+@media (min-width: 1501px) { html[data-skin="lcars"] .card--popout:not(.is-max) { display: none; } }
+html[data-skin="lcars"] .readout { border-radius: 999px; padding-inline: 14px; }
+@media (max-width: 1100px) { html[data-skin="lcars"] .readout { display: none !important; } }
+
+/* ==========================================================================
+   Reminders strip: a coloured end cap carries the chip's word (Tonight, Down…); the "Down" ones flash twice
+   ========================================================================== */
+html[data-skin="lcars"] .alerts { gap: 8px; }
+html[data-skin="lcars"] .alert { --ac: var(--lc-2); clip-path: none; border: 0; min-height: 36px; min-width: 0; padding: 0 4px 0 0; gap: 12px;
+  background: color-mix(in srgb, var(--ac) 12%, transparent); border-radius: 18px 4px 4px 18px; }
+html[data-skin="lcars"] .alert::before, html[data-skin="lcars"] .alert::after { content: none; }
+html[data-skin="lcars"] .alert--now { --ac: var(--lc-red); }
+html[data-skin="lcars"] .alert--soon { --ac: var(--lc-7); }
+html[data-skin="lcars"] .alert > .i { display: none; }
+html[data-skin="lcars"] .alert__when { order: -1; align-self: stretch; display: grid; place-items: center; min-width: 96px; margin: 0; padding: 0 14px; height: auto;
+  border: 0; border-radius: 18px 0 0 18px; background: var(--ac); color: var(--lc-on); box-shadow: none; font: 600 14px/1 var(--lc-font); letter-spacing: .12em; }
+html[data-skin="lcars"] .alert__text { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html[data-skin="lcars"] .alert__x { margin: 0 0 0 auto; border-radius: 999px; border: 0; opacity: .7; }
+html[data-skin="lcars"] .alert__x:hover { background: var(--ac); color: var(--lc-on); opacity: 1; }
+html[data-skin="lcars"] .alert--now .alert__when { animation: lc-alert 1s 2 .9s; }
+html[data-skin="lcars"] .alert--undo { background: none; border: 1px dashed var(--edge); border-radius: 18px; padding: 0 6px 0 14px; }
+html[data-skin="lcars"] .alert--undo .btn, html[data-skin="lcars"] .alerts__more { border-radius: 999px; font: 500 13px var(--lc-font); letter-spacing: .1em; }
+@keyframes lc-alert { 0%, 100% { background-color: var(--ac); } 12%, 40% { background-color: var(--silver-hi); } 62% { background-color: var(--ac); } }
+
+/* ==========================================================================
+   Cards. Every card gets the shape; Home's cards (#grid) get the full LCARS treatment.
+   Shape: rounded top-left, bottom-left and bottom-right; Citadel's 14px cut kept top right; the 1px padding + gradient
+   background is the hairline border, and the lit edge (card-coloured, solid across the corner radius) wraps both left
+   corners and fades out along the top and bottom borders.
+   ========================================================================== */
+/* a card with no colour of its own (News, Music) takes the frame colour; :where() keeps this below the per-card colours above */
+:where(html[data-skin="lcars"]) .card { --lc-c: var(--lc-frame); }
+html[data-skin="lcars"] .card { --c: 14px; --r: 20px; --lw: 4px;
+  --hair: linear-gradient(135deg, color-mix(in srgb, var(--silver) 30%, transparent), color-mix(in srgb, var(--lc-c) 30%, transparent) 45%, color-mix(in srgb, var(--silver) 9%, transparent));
+  --lit: color-mix(in srgb, var(--lc-c) 62%, transparent);
+  padding: 1px 1px 1px var(--lw); border-radius: var(--r) 0 var(--r) var(--r);
+  background: linear-gradient(90deg, var(--lit) 0, var(--lit) var(--r), transparent calc(var(--r) + 140px)), var(--hair);
+  clip-path: polygon(0 0, calc(100% - var(--c)) 0, 100% var(--c), 100% 100%, 0 100%); }
+html[data-skin="lcars"] .card:hover { --lit: var(--lc-c); }
+html[data-skin="lcars"][data-theme="light"] .card:not(:hover) { --lit: color-mix(in srgb, var(--lc-c) 85%, transparent); }   /* 62% goes pastel on parchment */
+html[data-skin="lcars"] .card__in { border-radius: calc(var(--r) - var(--lw)) 0 calc(var(--r) - 1px) calc(var(--r) - var(--lw)) / calc(var(--r) - 1px) 0 calc(var(--r) - 1px) calc(var(--r) - 1px);
+  clip-path: polygon(0 0, calc(100% - var(--c) + .4px) 0, 100% calc(var(--c) - .4px), 100% 100%, 0 100%); }
+html[data-skin="lcars"] .card__in::before { display: none; }
+html[data-skin="lcars"] .card .card__head .hud, html[data-skin="lcars"] .card .mh .hud { font: 500 19px/1 var(--lc-font); letter-spacing: .08em; color: var(--lc-c); }
+html[data-skin="lcars"] .card .card__head .hud::before, html[data-skin="lcars"] .card .mh .hud::before { content: none; }
+html[data-skin="lcars"] .card .card__head .meta, html[data-skin="lcars"] .card .mh .meta { font: 400 13px var(--lc-font); letter-spacing: .06em; text-transform: uppercase; }
+
+/* Home card header: number badge (CSS counter, 01–10, the same order keys 1–0 open), label, a rule, the meta, round buttons */
+html[data-skin="lcars"] #grid { counter-reset: lc-card; }
+html[data-skin="lcars"] #grid > .card:not(.ph) { counter-increment: lc-card; }
+html[data-skin="lcars"] #grid > .card--popout { counter-increment: none; }      /* Monitoring: not one of the numbered tiles */
+html[data-skin="lcars"] #grid > .card--popout .card__head::before { display: none; }
+html[data-skin="lcars"] #grid .card__head { justify-content: flex-start; gap: 10px; padding: 12px 14px 0; }
+html[data-skin="lcars"] #grid .card__head::before { content: counter(lc-card, decimal-leading-zero); flex: none; padding: 4px 9px; border-radius: 999px;
+  background: var(--lc-c); color: var(--lc-on); font: 500 12px/1 var(--lc-font); letter-spacing: .06em; }
+html[data-skin="lcars"] #grid .card__tools { flex: 1; }
+html[data-skin="lcars"] #grid .card__tools::before { content: ""; flex: 1; min-width: 12px; height: 1px; order: -1;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--lc-c) 50%, transparent), transparent); }
+html[data-skin="lcars"] .hud__seg + .hud__seg::before { content: "\00a0/\00a0"; color: inherit; opacity: .6; }
+html[data-skin="lcars"] .hud__seg[aria-pressed="true"] { color: inherit; }
+html[data-skin="lcars"] .hud__seg[aria-pressed="false"] { opacity: .5; }
+html[data-skin="lcars"] .card .btn--icon { border-radius: 999px; width: 28px; height: 28px; justify-content: center; border-color: var(--edge); }
+html[data-skin="lcars"] .card .btn--icon:hover { background: var(--lc-c); border-color: var(--lc-c); color: var(--lc-on); }
+
+/* staggered arrival, once per page load (and when switching to LCARS) */
+/* (the cards' staggered arrival is part of the boot sequence: see Motion, at the end) */
+
+/* filters (expanded only): pills */
+html[data-skin="lcars"] .fchip { border-radius: 999px; font: 500 13px var(--lc-font); letter-spacing: .08em; padding: 6px 14px; color: var(--lc-c, var(--silver-mute));
+  border-color: color-mix(in srgb, var(--lc-c, var(--silver)) 50%, transparent); }
+html[data-skin="lcars"] .fchip[aria-pressed="true"] { background: var(--lc-c, var(--lc-2)); color: var(--lc-on); border-color: transparent; }
+html[data-skin="lcars"] .card .search { border-radius: 999px; padding: 6px 14px; }
+
+/* ==========================================================================
+   An expanded Home card opens as an LCARS console: a thick coloured top bar carrying the header, a side bar and a thin
+   bottom bar, their inside corners curving on their own (border radii bigger than the border widths). The header text
+   is laid over the top border. Shell's View Transition still does the morph.
+   ========================================================================== */
+html[data-skin="lcars"] #grid > .card.is-max { padding: 0; background: none; border-radius: 0; clip-path: none; animation: none; }
+html[data-skin="lcars"] #grid > .card.is-max .card__in { position: relative; border: solid var(--lc-c); border-width: 30px 0 6px 14px; background: var(--surface);
+  border-radius: 46px 15px 4px 26px / 40px 15px 4px 20px; clip-path: none; }
+html[data-skin="lcars"] #grid > .card.is-max .card__head { position: absolute; left: 22px; right: 0; top: -30px; height: 30px; padding: 0; gap: 0; color: var(--lc-on); }
+html[data-skin="lcars"] #grid > .card.is-max .card__head::before { background: none; color: inherit; opacity: .7; padding: 0 10px 0 0; font-size: 13px; }
+html[data-skin="lcars"] #grid > .card.is-max .card__head .hud { color: inherit; font-weight: 600; font-size: 21px; }
+html[data-skin="lcars"] #grid > .card.is-max .card__tools { align-self: stretch; gap: 0; margin-left: 14px; }
+html[data-skin="lcars"] #grid > .card.is-max .card__tools::before { height: auto; align-self: stretch; border-left: 5px solid var(--bg); background: color-mix(in srgb, var(--lc-c) 72%, var(--bg)); }
+html[data-skin="lcars"] #grid > .card.is-max .meta { align-self: stretch; display: flex; align-items: center; padding: 0 12px; border-left: 5px solid var(--bg); color: inherit; font-size: 14px; }
+html[data-skin="lcars"] #grid > .card.is-max .card__tools .btn { align-self: stretch; width: 38px; height: auto; border: 0; border-left: 5px solid var(--bg); border-radius: 0; color: inherit; background: none; }
+html[data-skin="lcars"] #grid > .card.is-max .card__tools .btn:last-child { border-radius: 0 15px 15px 0; }
+html[data-skin="lcars"] #grid > .card.is-max .card__tools .btn:hover { background: var(--silver-hi); color: var(--lc-on); }
+html[data-skin="lcars"] #grid > .card.is-max .card__body { padding-left: 14px; }
+html[data-skin="lcars"] #grid > .card.is-max .card__body--flush { padding-left: 0; }
+html[data-skin="lcars"] #grid > .card.is-max .maxbar { padding: 14px 16px 4px; }
+
+/* ==========================================================================
+   Inside the Home cards
+   ========================================================================== */
+/* Now: an LCARS clock and bin key blocks */
+html[data-skin="lcars"] .now .clock__time { font: 400 84px/.85 var(--lc-font); letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+html[data-skin="lcars"] .clock__time small { font-size: 30px; color: var(--lc-c); margin-left: 6px; }
+html[data-skin="lcars"] .clock__date [data-dow] { font: 400 13px var(--lc-font); letter-spacing: .18em; }
+html[data-skin="lcars"] .clock__date [data-dmy] { font: 400 26px var(--lc-font); }
+html[data-skin="lcars"] .card.is-max .clock__time { font-size: 110px; }
+html[data-skin="lcars"] .now__label { display: flex; align-items: center; gap: 10px; border-top: 0; font: 500 13px var(--lc-font); letter-spacing: .16em; color: var(--lc-c); }
+html[data-skin="lcars"] .now__label::before { content: none; }
+html[data-skin="lcars"] .now__label::after { content: ""; flex: 1; height: 3px; border-radius: 0 3px 3px 0; background: color-mix(in srgb, var(--lc-c) 35%, transparent); }
+html[data-skin="lcars"] .now .rows > li.bin { border-top: 0; padding-block: 4px; }
+html[data-skin="lcars"] .bin__swatch { width: 30px; border-radius: 24px 0 0 24px; box-shadow: none; }
+html[data-skin="lcars"] .bin__when { font: 400 15px/1.15 var(--lc-font); letter-spacing: .03em; }
+html[data-skin="lcars"] .chip { border-radius: 999px; font: 500 11px/1.4 var(--lc-font); letter-spacing: .12em; padding: 1px 9px; }
+html[data-skin="lcars"] .chip--today, html[data-skin="lcars"] .chip--fresh, html[data-skin="lcars"] .chip--new { background: var(--lc-7); color: var(--lc-on); border-color: transparent; box-shadow: none; }
+html[data-skin="lcars"] .cd--today { border-color: var(--lc-7); box-shadow: none; }
+
+/* Next gig: a big Antonio countdown with ticking hours, and the other gigs as key-block rows (date | artist | venue) */
+html[data-skin="lcars"] .hero { align-items: baseline; gap: 12px; }
+html[data-skin="lcars"] .hero__count { font: 500 92px/.85 var(--lc-font); background: none; color: var(--lc-c); }
+html[data-skin="lcars"] .hero__unit { font: 400 28px var(--lc-font); letter-spacing: .12em; color: var(--lc-c); padding: 0; }
+html[data-skin="lcars"] .hero__tick { display: inline; font: 400 28px var(--lc-font); color: var(--silver-mute); font-variant-numeric: tabular-nums; }
+html[data-skin="lcars"] .hero__name { font: 500 30px/1.1 var(--lc-font); letter-spacing: .04em; margin-top: 8px; }
+html[data-skin="lcars"] .card.is-max .hero__count { font-size: 120px; }
+html[data-skin="lcars"] .subrow { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 10px; min-height: 30px; padding: 0; margin-top: 4px; border-top: 0; font-size: 16px; color: var(--silver-hi); }
+html[data-skin="lcars"] .subrow:first-of-type { margin-top: 14px; }
+html[data-skin="lcars"] .subrow > .i { display: none; }
+html[data-skin="lcars"] .subrow .mono { order: -1; align-self: stretch; display: flex; align-items: center; justify-content: flex-end; margin: 0; padding: 0 10px;
+  border-radius: 15px 0 0 15px; background: var(--lc-c); color: var(--lc-on); font: 500 14px/1 var(--lc-font); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+html[data-skin="lcars"] .subrow__venue { display: block; color: var(--silver-mute); font: 400 15px var(--lc-font); letter-spacing: .04em; white-space: nowrap; }
+
+/* Diary: the time becomes a coloured key block (in the calendar's colour) */
+html[data-skin="lcars"] .day { border-top: 0; padding: 10px 16px 5px; font: 500 13px/1 var(--lc-font); letter-spacing: .16em; }
+html[data-skin="lcars"] .day--next { color: var(--lc-c); }
+html[data-skin="lcars"] .ev { align-items: center; gap: 10px; padding: 2px 16px; }
+html[data-skin="lcars"] .ev__t { align-self: stretch; display: flex; align-items: center; justify-content: flex-end; width: 84px; min-height: 30px; padding: 0 10px;
+  border-radius: 15px 0 0 15px; background: var(--cal, var(--lc-c)); color: var(--lc-on); font: 500 14px/1 var(--lc-font); letter-spacing: .06em; text-transform: uppercase; }
+html[data-skin="lcars"] .ev__bar { display: none; }
+html[data-skin="lcars"] .card.is-max .ev { padding: 3px 0; }
+
+/* Projects: pill Start/Stop buttons */
+html[data-skin="lcars"] .proj__desc { font: 400 13px var(--lc-font); letter-spacing: .04em; }
+html[data-skin="lcars"] .proj__act .btn:not(.btn--icon) { height: 30px; min-width: 88px; justify-content: center; border-radius: 999px; font: 500 14px/1 var(--lc-font); letter-spacing: .1em; }
+html[data-skin="lcars"] .proj__act .btn--go { background: var(--lc-c); color: var(--lc-on); border-color: transparent; }
+html[data-skin="lcars"] .proj__act .btn--go:hover { filter: brightness(1.12); box-shadow: none; }
+html[data-skin="lcars"] .proj__act .btn--stop { border-color: color-mix(in srgb, var(--lc-c) 55%, transparent); }
+html[data-skin="lcars"] .proj__act .btn--stop:hover { background: var(--lc-red); border-color: var(--lc-red); color: #fff; }
+html[data-skin="lcars"] .pinbtn { border-radius: 999px; }
+html[data-skin="lcars"] .proj.is-selected { background: linear-gradient(90deg, color-mix(in srgb, var(--lc-c) 16%, transparent), transparent); }
+
+/* Feed rows (releases, vinyl, radar, pre-orders): round action buttons, lit end caps for new and pinned */
+html[data-skin="lcars"] .feed { position: relative; }
+html[data-skin="lcars"] .feed--new { box-shadow: none; background: linear-gradient(90deg, color-mix(in srgb, var(--lc-7) 14%, transparent), transparent 60%); }
+html[data-skin="lcars"] .feed--pinned { box-shadow: none; background: linear-gradient(90deg, color-mix(in srgb, var(--lc-c) 10%, transparent), transparent 45%); }
+html[data-skin="lcars"] .feed--new::before, html[data-skin="lcars"] .feed--pinned::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 5px; border-radius: 0 5px 5px 0; background: var(--lc-7); }
+html[data-skin="lcars"] .feed--pinned::before { background: var(--lc-c); }
+html[data-skin="lcars"] .feed__date, html[data-skin="lcars"] .vin__when, html[data-skin="lcars"] .gigline__d { font-family: var(--lc-font); font-size: 14px; letter-spacing: .04em; }
+html[data-skin="lcars"] .vin__when small { font-size: 10.5px; }
+html[data-skin="lcars"] .cover { border-radius: 12px 2px 2px 12px; clip-path: none; }
+html[data-skin="lcars"] .feed__acts .btn.is-pinned { color: var(--lc-c); border-color: var(--lc-c); background: none; box-shadow: none; }
+html[data-skin="lcars"] .preorder-date { border-radius: 999px; padding: 4px 10px; }
+html[data-skin="lcars"] .feed--preorder .preorder__row .btn:not(.btn--icon) { border-radius: 999px; font: 500 13px var(--lc-font); letter-spacing: .08em; }
+
+/* Monitoring and System: segmented gauges. The track and the fill share one 14px rhythm (11px lit, 3px gap) from
+   their left edge, so the lit blocks always sit over the track's blocks. */
+html[data-skin="lcars"] .bar__top { font: 400 14px var(--lc-font); letter-spacing: .06em; text-transform: uppercase; }
+html[data-skin="lcars"] .bar__top b { font-size: 15px; letter-spacing: .02em; text-transform: none; }
+html[data-skin="lcars"] .bar__track { height: 10px; border-radius: 5px;
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--silver-dim) 24%, transparent) 0 11px, transparent 11px 14px); }
+html[data-skin="lcars"] .bar__fill { border-radius: 5px 0 0 5px; background: var(--lc-c, var(--lc-frame));
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 11px, transparent 11px 14px); mask: repeating-linear-gradient(90deg, #000 0 11px, transparent 11px 14px); }
+html[data-skin="lcars"] .bar__fill--hot { background: var(--lc-7); }
+html[data-skin="lcars"] .mon-col__label { font: 500 14px var(--lc-font); letter-spacing: .16em; }
+html[data-skin="lcars"] .mon-temp { font: 400 40px/1 var(--lc-font); font-variant-numeric: tabular-nums; }
+html[data-skin="lcars"] .mon-temp small { font: 400 12px var(--lc-font); letter-spacing: .14em; }
+html[data-skin="lcars"] .mon-temp--warm { color: var(--warn); } html[data-skin="lcars"] .mon-temp--hot { color: var(--bad); }
+html[data-skin="lcars"] .kv { font: 400 14px var(--lc-font); letter-spacing: .04em; }
+html[data-skin="lcars"] .kv dt { text-transform: uppercase; letter-spacing: .1em; }
+
+/* Launchpad: LCARS buttons, a coloured icon block on a rounded left end */
+html[data-skin="lcars"] .tilewrap:nth-child(5n+1) { --lc-t: var(--lc-2); }
+html[data-skin="lcars"] .tilewrap:nth-child(5n+2) { --lc-t: var(--lc-5); }
+html[data-skin="lcars"] .tilewrap:nth-child(5n+3) { --lc-t: var(--lc-4); }
+html[data-skin="lcars"] .tilewrap:nth-child(5n+4) { --lc-t: var(--lc-1); }
+html[data-skin="lcars"] .tilewrap:nth-child(5n+5) { --lc-t: var(--lc-6); }
+html[data-skin="lcars"] .tile { clip-path: none; border: 0; padding: 0 12px 0 0; height: 52px; border-radius: 26px 4px 4px 26px;
+  background: color-mix(in srgb, var(--lc-t, var(--lc-frame)) 10%, transparent); }
+html[data-skin="lcars"] .tile:hover { transform: none; background: color-mix(in srgb, var(--lc-t, var(--lc-frame)) 24%, transparent); }
+/* an SVG's "auto" height is 150px, so the icon block takes the tile's height explicitly */
+html[data-skin="lcars"] .tile > .i { align-self: stretch; width: 46px; height: 100%; padding: 0 12px 0 15px; border-radius: 26px 0 0 26px;
+  background: color-mix(in srgb, var(--lc-t, var(--lc-frame)) 30%, transparent); color: var(--silver-hi); }
+html[data-skin="lcars"] .tile small { font: 400 13px var(--lc-font); letter-spacing: .04em; }
+html[data-skin="lcars"] .tile--primary { background: color-mix(in srgb, var(--lc-t, var(--lc-frame)) 20%, transparent); }
+html[data-skin="lcars"] .tile--pinned { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lc-t, var(--lc-frame)) 45%, transparent); }
+html[data-skin="lcars"] .a-launch .tile { padding: 0 14px 0 0; }
+/* Day: tinted washes go peach/pink on parchment, so the tiles are neutral sepia and only the icon carries the colour */
+html[data-skin="lcars"][data-theme="light"] .tile { background: color-mix(in srgb, var(--silver-dim) 11%, transparent); }
+html[data-skin="lcars"][data-theme="light"] .tile:hover { background: color-mix(in srgb, var(--silver-dim) 20%, transparent); }
+html[data-skin="lcars"][data-theme="light"] .tile > .i { background: color-mix(in srgb, var(--silver-dim) 22%, transparent); color: var(--lc-t, var(--lc-frame)); }
+html[data-skin="lcars"][data-theme="light"] .tile--primary { background: color-mix(in srgb, var(--silver-dim) 17%, transparent); }
+
+/* ==========================================================================
+   Phones: no frame lines (the rail is the bottom tab bar there)
+   ========================================================================== */
+@media (max-width: 760px) {
+  /* the reminders drawer (dashboard.css): framed like the bookmarks panel, in the attention colour */
+  html[data-skin="lcars"] .top > .alerts { border: 0; border-radius: 16px; background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--lc-7), 0 20px 44px var(--vignette); }
+  html[data-skin="lcars"] .top__logo { color: var(--lc-2); filter: none; }
+  html[data-skin="lcars"] .top__badge { background: var(--lc-7); color: var(--lc-on); font: 500 13px/18px var(--lc-font); }
+  html[data-skin="lcars"] .now .clock__time { font-size: 64px; }
+  html[data-skin="lcars"] .hero__count { font-size: 72px; }
+  html[data-skin="lcars"] .sc, html[data-skin="lcars"] .look-btn { padding: 0 10px; }
+  html[data-skin="lcars"] .alert, html[data-skin="lcars"] .top .alert { flex-basis: 100%; }
+  html[data-skin="lcars"] .top__brand { order: 0; }                   /* phones: the wordmark stays first, there's no room on the right */
+  html[data-skin="lcars"] .top__brand .wordmark { font-size: 18px; }
+  html[data-skin="lcars"] .mon-temp { font-size: 28px; }
+  html[data-skin="lcars"] #grid .card__head { flex-wrap: wrap; row-gap: 6px; }
+  html[data-skin="lcars"] #grid .card__tools { flex: 1 0 auto; }      /* keeps its buttons' width: wraps under a long title rather than spilling out */
+  html[data-skin="lcars"] #grid .card__head .hud { font-size: 17px; white-space: normal; }
+  html[data-skin="lcars"] .alert__when { min-width: 0; }
+}
+
+/* ==========================================================================
+   Motion: short grows on a snappy ease-out, staggered. All of it switches off with prefers-reduced-motion (tokens.css).
+   Boot: html.lc-boot is set by theme-init.js from the first paint (app.js takes it off once the page has filled), and by
+   app.js for a moment when a device switches to LCARS. The frame
+   draws itself, the header and rail pieces grow in one after another, then the cards arrive, their headers draw left
+   to right and the gauges light up block by block. The wordmark flickers on.
+   ========================================================================== */
+@keyframes lc-grow-x { from { transform: scaleX(0); } }
+@keyframes lc-grow-y { from { transform: scaleY(0); } }
+@keyframes lc-shrink-x { to { transform: scaleX(0); opacity: 0; } }
+@keyframes lc-in { from { opacity: 0; transform: scale(.94); } }
+@keyframes lc-fade { from { opacity: 0; } }
+@keyframes lc-fill { from { clip-path: inset(0 100% 0 0); } }
+@keyframes lc-bump { from { transform: scale(1.07); } }
+@keyframes lc-blink { 50% { opacity: .35; } }
+@keyframes lc-tick { 0% { color: var(--silver-hi); } }
+@keyframes lc-sweep { to { background-position: 140% 0, 0 0; } }
+
+/* the frame */
+html.lc-boot[data-skin="lcars"] .top::before, html.lc-boot[data-skin="lcars"] .view.is-active::before { animation: lc-grow-y .34s var(--lc-ease) both; transform-origin: top; }
+html.lc-boot[data-skin="lcars"] .view.is-active::before { animation-delay: 160ms; }
+html.lc-boot[data-skin="lcars"] .top::after, html.lc-boot[data-skin="lcars"] .view.is-active::after { animation: lc-grow-x .34s var(--lc-ease) both 120ms; transform-origin: left; }
+html.lc-boot[data-skin="lcars"] .view.is-active::after { animation-delay: 240ms; }
+/* header: bookmarks, buttons, readout, reminders, wordmark */
+html.lc-boot[data-skin="lcars"] .shortcuts .sc, html.lc-boot[data-skin="lcars"] .look-btn, html.lc-boot[data-skin="lcars"] .top .alert { animation: lc-grow-x .34s var(--lc-ease) both; animation-delay: var(--lc-d, 0ms); transform-origin: left center; }
+html.lc-boot[data-skin="lcars"] .shortcuts .sc:nth-child(2) { --lc-d: 30ms; } html.lc-boot[data-skin="lcars"] .shortcuts .sc:nth-child(3) { --lc-d: 60ms; }
+html.lc-boot[data-skin="lcars"] .shortcuts .sc:nth-child(4) { --lc-d: 90ms; } html.lc-boot[data-skin="lcars"] .shortcuts .sc:nth-child(5) { --lc-d: 120ms; }
+html.lc-boot[data-skin="lcars"] .look-btn { --lc-d: 140ms; }
+html.lc-boot[data-skin="lcars"] .top .alert { --lc-d: 220ms; }
+html.lc-boot[data-skin="lcars"] .top .alert:nth-child(2) { --lc-d: 280ms; } html.lc-boot[data-skin="lcars"] .top .alert:nth-child(3) { --lc-d: 340ms; }
+/* on the readout as a whole, not each number: its numbers are rebuilt every refresh, which would replay it */
+html.lc-boot[data-skin="lcars"] .readout { animation: lc-fade .5s steps(3) both 200ms; }
+html.lc-boot[data-skin="lcars"] .wordmark { animation: lc-fade .6s steps(4) both 350ms; }
+/* rail: each button grows down from its top, one after another */
+html.lc-boot[data-skin="lcars"] .rail a { animation: lc-grow-y .34s var(--lc-ease) both; animation-delay: var(--lc-d, 0ms); transform-origin: top center; }
+html.lc-boot[data-skin="lcars"] .rail a:nth-child(3) { --lc-d: 30ms; } html.lc-boot[data-skin="lcars"] .rail a:nth-child(4) { --lc-d: 60ms; }
+html.lc-boot[data-skin="lcars"] .rail a:nth-child(5) { --lc-d: 90ms; } html.lc-boot[data-skin="lcars"] .rail a:nth-child(6) { --lc-d: 120ms; }
+html.lc-boot[data-skin="lcars"] .rail a:nth-child(7) { --lc-d: 150ms; } html.lc-boot[data-skin="lcars"] .rail a:nth-child(8) { --lc-d: 180ms; }
+html.lc-boot[data-skin="lcars"] .rail a[data-view="curate"] { --lc-d: 210ms; } html.lc-boot[data-skin="lcars"] .rail a.rail__settings { --lc-d: 240ms; }
+/* cards: arrive one after another, then each header draws left to right and its gauges fill block by block */
+html.lc-boot[data-skin="lcars"] #grid > .card:not(.ph) { animation: lc-in .34s var(--lc-ease) both; animation-delay: var(--lc-d, 260ms); }
+html.lc-boot[data-skin="lcars"] #grid > .card:nth-child(2) { --lc-d: 305ms; } html.lc-boot[data-skin="lcars"] #grid > .card:nth-child(3) { --lc-d: 350ms; }
+html.lc-boot[data-skin="lcars"] #grid > .card:nth-child(4) { --lc-d: 395ms; } html.lc-boot[data-skin="lcars"] #grid > .card:nth-child(5) { --lc-d: 440ms; }
+html.lc-boot[data-skin="lcars"] #grid > .card:nth-child(6) { --lc-d: 485ms; } html.lc-boot[data-skin="lcars"] #grid > .card:nth-child(7) { --lc-d: 530ms; }
+html.lc-boot[data-skin="lcars"] #grid > .card:nth-child(8) { --lc-d: 575ms; } html.lc-boot[data-skin="lcars"] #grid > .card:nth-child(9) { --lc-d: 620ms; }
+html.lc-boot[data-skin="lcars"] #grid > .card:nth-child(10) { --lc-d: 665ms; }
+html.lc-boot[data-skin="lcars"] #grid > .card .card__head > *, html.lc-boot[data-skin="lcars"] #grid > .card .card__head::before {
+  animation: lc-grow-x .34s var(--lc-ease) both; animation-delay: calc(var(--lc-d, 260ms) + 80ms); transform-origin: left center; }
+html.lc-boot[data-skin="lcars"] #grid .bar__fill { animation: lc-fill .7s steps(14) both; animation-delay: calc(var(--lc-d, 260ms) + 200ms); }
+
+/* an expanded card's console header draws in as it opens */
+html[data-skin="lcars"] #grid > .card.is-max .card__head > *, html[data-skin="lcars"] #grid > .card.is-max .card__head::before {
+  animation: lc-grow-x .34s var(--lc-ease) both .12s; transform-origin: left center; }
+
+/* changing page: the rail button bumps and a light runs along the body's bar (html.lc-sweep, set by app.js) */
+html[data-skin="lcars"] .rail a.is-bump { animation: lc-bump .18s ease-out; }
+@media (min-width: 761px) {
+  html.lc-sweep[data-skin="lcars"] .view.is-active::after {
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--silver-hi) 80%, transparent), transparent) -40% 0 / 30% 100% no-repeat, var(--lc-segs-body);
+    animation: lc-sweep .6s linear 1; }
+}
+
+/* a dismissed reminder shrinks away before its Undo appears (app.js waits for it) */
+html[data-skin="lcars"] .alert.is-going { animation: lc-shrink-x .26s var(--lc-ease) forwards; transform-origin: left center; }
+/* a readout number that changed flashes once (app.js marks it) */
+html[data-skin="lcars"] .readout dd.is-tick { animation: lc-tick .5s steps(1) 1; }
+/* a project starting or stopping blinks until it's done; round buttons give a little under the finger */
+html[data-skin="lcars"] .proj__act .btn[disabled], html[data-skin="lcars"] .tile[disabled] { animation: lc-blink 1s steps(1) infinite; opacity: 1; }
+html[data-skin="lcars"] .card .btn--icon { transition: color .2s, border-color .2s, background .2s, box-shadow .2s, transform .12s; }
+html[data-skin="lcars"] .card .btn--icon:active { transform: scale(.88); }
+
+/* ==========================================================================
+   News and Music page buttons. Both pages use the same section tabs (.mtabs, music.css) and either/or switches (.seg),
+   so one set of rules covers both. Tabs become pills like the header's bookmarks (a colour each, icon in that colour);
+   the current one is filled solid. A switch is a joined pill pair; the chosen side is filled solid.
+   ========================================================================== */
+html[data-skin="lcars"] .mtabs { gap: 6px; }
+html[data-skin="lcars"] .mtabs button { --lc-t: var(--lc-2); height: 34px; padding: 0 16px 0 12px; clip-path: none; border: 0; border-radius: 999px;
+  font: 500 15px/1 var(--lc-font); letter-spacing: .07em; text-transform: uppercase; color: var(--silver);
+  background: color-mix(in srgb, var(--lc-t) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lc-t) 40%, transparent);
+  transition: color .2s, background-color .2s, box-shadow .2s, transform .12s; }
+html[data-skin="lcars"] .mtabs button:nth-child(6n+2) { --lc-t: var(--lc-5); }
+html[data-skin="lcars"] .mtabs button:nth-child(6n+3) { --lc-t: var(--lc-4); }
+html[data-skin="lcars"] .mtabs button:nth-child(6n+4) { --lc-t: var(--lc-3); }
+html[data-skin="lcars"] .mtabs button:nth-child(6n+5) { --lc-t: var(--lc-1); }
+html[data-skin="lcars"] .mtabs button:nth-child(6n+6) { --lc-t: var(--lc-6); }
+html[data-skin="lcars"] .mtabs button .i { color: var(--lc-t); width: 17px; height: 17px; }
+html[data-skin="lcars"] .mtabs button:hover { color: var(--silver-hi); background: color-mix(in srgb, var(--lc-t) 24%, transparent); }
+html[data-skin="lcars"] .mtabs button[aria-pressed="true"] { color: var(--lc-on); background: var(--lc-t); box-shadow: none; }
+html[data-skin="lcars"] .mtabs button[aria-pressed="true"] .i { color: var(--lc-on); }
+html[data-skin="lcars"] .mtabs button:active { transform: scale(.95); }
+
+html[data-skin="lcars"] .seg { gap: 3px; border: 0; }
+html[data-skin="lcars"] .seg button { height: 32px; padding: 0 14px; border: 0; font: 500 14px/1 var(--lc-font); letter-spacing: .08em; color: var(--silver);
+  background: color-mix(in srgb, var(--lc-frame) 14%, transparent); box-shadow: none; transition: color .2s, background-color .2s; }
+html[data-skin="lcars"] .seg button + button { border-left: 0; }
+html[data-skin="lcars"] .seg button:first-child { border-radius: 16px 0 0 16px; padding-left: 16px; }
+html[data-skin="lcars"] .seg button:last-child { border-radius: 0 16px 16px 0; padding-right: 16px; }
+html[data-skin="lcars"] .seg button:hover { color: var(--silver-hi); background: color-mix(in srgb, var(--lc-frame) 26%, transparent); }
+html[data-skin="lcars"] .seg button[aria-pressed="true"] { color: var(--lc-on); background: var(--lc-frame); box-shadow: none; }
+@media (max-width: 760px) { html[data-skin="lcars"] .mtabs button { height: 32px; padding: 0 12px 0 10px; font-size: 13px; } }
+
+/* ==========================================================================
+   Music page playlists: each tile is an LCARS block in its own colour, like the bookmarks. A rounded end-cap on the
+   left holds the cover collage; the open playlist's cap is lit solid (as a chosen tab is). New playlist is a dashed pill.
+   ========================================================================== */
+html[data-skin="lcars"] .pl-strip { gap: 8px; }
+html[data-skin="lcars"] .pl-tile { --lc-c: var(--lc-2); --cap: color-mix(in srgb, var(--lc-c) 32%, transparent); --body: color-mix(in srgb, var(--lc-c) 10%, transparent);
+  clip-path: none; border: 0; border-radius: 34px 4px 4px 34px; gap: 14px; padding: 7px 12px 7px 20px;
+  background: linear-gradient(90deg, var(--cap) 0 79px, var(--body) 0); transition: transform .12s; }
+html[data-skin="lcars"] .pl-tile::before, html[data-skin="lcars"] .pl-tile::after { content: none; }
+html[data-skin="lcars"] .pl-tile:nth-child(5n+2) { --lc-c: var(--lc-5); }
+html[data-skin="lcars"] .pl-tile:nth-child(5n+3) { --lc-c: var(--lc-3); }
+html[data-skin="lcars"] .pl-tile:nth-child(5n+4) { --lc-c: var(--lc-1); }
+html[data-skin="lcars"] .pl-tile:nth-child(5n+5) { --lc-c: var(--lc-4); }
+html[data-skin="lcars"] .pl-tile:hover { --cap: color-mix(in srgb, var(--lc-c) 48%, transparent); --body: color-mix(in srgb, var(--lc-c) 20%, transparent); border: 0; }
+html[data-skin="lcars"] .pl-tile[aria-pressed="true"] { --cap: var(--lc-c); --body: color-mix(in srgb, var(--lc-c) 18%, transparent); box-shadow: none; }
+html[data-skin="lcars"] .pl-tile:active { transform: scale(.98); }
+html[data-skin="lcars"] .pl-tile .collage { width: 52px; height: 52px; clip-path: none; border-radius: 4px; overflow: hidden; background: var(--lc-on); }
+html[data-skin="lcars"] .pl-tile .mode { font: 500 12.5px var(--lc-font); letter-spacing: .1em; }
+html[data-skin="lcars"] .pl-tile .mode--rot { color: var(--lc-c); }
+html[data-skin="lcars"] .pl-tile__sub { font: 400 13px var(--lc-font); letter-spacing: .04em; }
+html[data-skin="lcars"] .pl-tile.pl-tile--new { --lc-c: var(--lc-frame); flex: 0 0 auto; min-width: 0; white-space: nowrap; gap: 8px; padding: 0 20px; border-radius: 34px; border: 1px dashed color-mix(in srgb, var(--lc-c) 60%, transparent);
+  background: none; color: var(--lc-c); font: 500 15px var(--lc-font); letter-spacing: .1em; }
+html[data-skin="lcars"] .pl-tile.pl-tile--new:hover { background: color-mix(in srgb, var(--lc-c) 16%, transparent); border: 1px dashed var(--lc-c); }

@@ -312,7 +312,9 @@
             field('title', 'title', p.title) + field('slug (the address: #/projects/…)', 'slug', p.slug) +
             field('summary (shown on the card)', 'summary', p.summary, true) +
             field('tags (comma separated)', 'tags', (p.tags || []).join(', ')) + field('github repo — a link, or “private”', 'repo', p.repo, false, 'text', 'https://github.com/… or private') +
-            field('live app — “launch” opens it inside the terminal', 'live', p.live, false, 'text', 'https://… (blank: no launch button)') +
+            field('live app — “launch” opens it inside the terminal', 'live', p.live, false, 'text', 'https://… or demo/citadel/ (blank: no launch button)') +
+            field('button label', 'live_label', p.live_label, false, 'text', 'launch') +
+            '<label class="field-check"><input type="checkbox" data-meta="live_max"' + (p.live_max ? ' checked' : '') + '> launch maximised</label>' +
             '<label class="field"><span class="field__label">status</span><select data-meta="status"><option value="draft"' + (p.status === 'draft' ? ' selected' : '') + '>draft — shown as coming soon</option><option value="published"' + (p.status === 'published' ? ' selected' : '') + '>published</option></select></label>' +
             field('started', 'started', p.started, false, 'text', '2026-03') +
             '</div>' +
@@ -375,7 +377,7 @@
         rootEl.querySelectorAll('[data-meta]').forEach(function (el) {
             el.addEventListener('input', function () {
                 var k = el.dataset.meta;
-                p[k] = k === 'tags' ? el.value.split(',').map(function (t) { return t.trim(); }).filter(Boolean)
+                p[k] = el.type === 'checkbox' ? el.checked : k === 'tags' ? el.value.split(',').map(function (t) { return t.trim(); }).filter(Boolean)
                     : k === 'slug' ? el.value.trim().toLowerCase() : el.value;
                 markDirty();
                 paintPreview();

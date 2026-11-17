@@ -93,21 +93,38 @@
         var frameHost = document.getElementById('app-frame');
         document.getElementById('app-back').href = '#/projects/' + encodeURIComponent(slug);
         document.getElementById('app-cmd').textContent = './' + slug;
-        var live = p && /^https?:\/\//.test(String(p.live || '')) ? p.live : '';
+        var live = MH.liveUrl(p);
         document.getElementById('app-newtab').innerHTML = live ? MH.newTabHtml(live) : '';
         if (!live) {
             appSlug = null;
             frameHost.innerHTML = '<p class="tagline app-missing">' + (p ? 'This project has no live app to run.' : 'No such project.') + '</p>';
             return;
         }
-        if (appSlug === slug) return;
-        appSlug = slug;
-        var frame = document.createElement('iframe');
-        frame.src = live + (live.indexOf('?') < 0 ? '?' : '&') + 'theme=' + encodeURIComponent(document.documentElement.dataset.theme || 'dark');
-        frame.title = p.title;
-        frame.allow = 'fullscreen';
-        frameHost.replaceChildren(frame);
+        appMaxWanted = !!p.live_max;
+        document.getElementById('app-full').hidden = !frameHost.requestFullscreen;
+        if (appSlug !== slug) {
+            appSlug = slug;
+            var frame = document.createElement('iframe');
+            frame.src = live + (live.indexOf('?') < 0 ? '?' : '&') + 'theme=' + encodeURIComponent(document.documentElement.dataset.theme || 'dark');
+            frame.title = p.title;
+            frame.allow = 'fullscreen';
+            frameHost.replaceChildren(frame);
+        }
     }
+    // "launch maximised" (the project's live_max): opening the app maximises the window, as the green button does, and
+    // leaving it puts the window back -- unless the visitor had maximised it themselves. "full screen" in the strip
+    // gives the frame the whole screen (the browser's own Esc comes back).
+    var appMaxWanted = false, autoMax = false;
+    function appWindow(route) {
+        if (route.view === 'app' && appMaxWanted && !isMax() && !isMin()) { setMax(true); autoMax = true; saveWin(); }
+        else if (route.view !== 'app' && autoMax) { autoMax = false; if (isMax()) { setMax(false); saveWin(); } }
+    }
+    function appFullscreen() {
+        var host = document.getElementById('app-frame');
+        if (!host.requestFullscreen || document.fullscreenElement) return;
+        host.requestFullscreen().catch(function () { /* no click to go on: stays in the terminal */ });
+    }
+    document.getElementById('app-full').addEventListener('click', appFullscreen);
 
     // "Play like a GIF" videos: muted loops that run only while on screen (no CPU spent on ones
     // scrolled out of view), and not at all for visitors who've asked for reduced motion.
@@ -194,6 +211,7 @@
         var from = current && views[current.view];
         var to = views[route.view];
         paintChrome(route);
+        appWindow(route);
         current = route;
         if (cancelSwap) { cancelSwap(); cancelSwap = null; }
 

@@ -1,0 +1,171 @@
+/* ==========================================================================
+   Citadel design tokens — obsidian & amethyst HUD
+   Palette: black / purple / silver. Restraint rule: glow is reserved for
+   focus, active state and live status; everything else is flat + hairline.
+   ========================================================================== */
+
+@font-face { font-family: "Chakra Petch"; font-weight: 400; font-display: swap; src: url("../fonts/ChakraPetch-400.woff2") format("woff2"); }
+@font-face { font-family: "Chakra Petch"; font-weight: 500; font-display: swap; src: url("../fonts/ChakraPetch-500.woff2") format("woff2"); }
+@font-face { font-family: "Chakra Petch"; font-weight: 600; font-display: swap; src: url("../fonts/ChakraPetch-600.woff2") format("woff2"); }
+@font-face { font-family: "Chakra Petch"; font-weight: 700; font-display: swap; src: url("../fonts/ChakraPetch-700.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-weight: 400; font-display: swap; src: url("../fonts/JetBrainsMono-Regular.ttf") format("truetype"); }
+@font-face { font-family: "JetBrains Mono"; font-weight: 700; font-display: swap; src: url("../fonts/JetBrainsMono-Bold.ttf") format("truetype"); }
+
+:root {
+  /* surfaces (near-black, faintly violet) */
+  --bg:         #07060a;
+  --bg-2:       #0b0910;
+  --surface:    #0e0b14;
+  --surface-2:  #151021;
+  --surface-3:  #1c1530;
+
+  /* amethyst */
+  --accent:      #8b5cf6;
+  --accent-hi:   #a855f7;
+  --accent-soft: #c4b5fd;   /* text-safe violet on dark */
+  --accent-deep: #4c1d95;
+  --accent-wash: rgba(139, 92, 246, 0.10);
+
+  /* silver */
+  --silver-hi:   #e6e9ee;
+  --silver:      #c9ced6;
+  --silver-mute: #9aa1ad;
+  --silver-dim:  #6b7280;
+
+  /* lines */
+  --edge:        rgba(201, 206, 214, 0.13);
+  --edge-strong: rgba(168, 85, 247, 0.45);
+
+  /* status — used only for dots and small chips */
+  --ok:   #34d399;
+  --warn: #f5b454;
+  --bad:  #f43f5e;
+  /* heat: the header readout's numbers as load/temperature climbs (level 0 keeps the readout's own colour) */
+  --heat-1: #f3d899;   /* pale gold */
+  --heat-2: #f5a742;   /* amber */
+  --heat-3: #ff4b2b;   /* burnt orange running into red */
+
+  /* neutral wells (true-black overlays with no accent hue) */
+  --well:      rgba(0, 0, 0, 0.38);
+  --vignette:  rgba(0, 0, 0, 0.45);
+
+  /* type */
+  --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* geometry */
+  --chamfer: 14px;
+  --gap: 16px;
+  --radius-sm: 2px;
+
+  /* motion */
+  --ease: cubic-bezier(.2, .7, .2, 1);
+}
+
+/* Light theme (Day) — parchment and three colours only: burnt orange (the accent), oxblood (Next gig's red, also
+   "bad") and one cool counterpoint, slate blue (also "ok"/live). Inks are sepia browns. No green, and nothing pastel:
+   the colours stay deep enough to read as ink on paper. Surfaces were ported from MusicDatabase's light theme. */
+:root[data-theme="light"] {
+  /* surfaces — sun-bleached parchment, climbing toward clean paper as elevation rises */
+  --bg:         #f2e8d5;
+  --bg-2:       #f5ecdd;
+  --surface:    #f8f0e2;
+  --surface-2:  #faf4e6;
+  --surface-3:  #fdf9f0;
+
+  /* burnt orange (was amethyst) */
+  --accent:      #b5541f;
+  --accent-hi:   #c4601f;
+  --accent-soft: #82401b;   /* text-safe burnt orange on light bg: DARKENED, not lightened */
+  --accent-deep: #6e2a12;
+  --accent-wash: rgba(181, 84, 31, 0.10);
+
+  /* ink (was silver) — direction flips: "hi" = darkest ink (most emphasis) */
+  --silver-hi:   #2a2015;
+  --silver:      #4a3c2a;
+  --silver-mute: #6b5c44;
+  --silver-dim:  #93876c;
+
+  /* lines */
+  --edge:        #ddcda8;
+  --edge-strong: rgba(196, 96, 31, 0.45);
+
+  /* status */
+  --ok:   #3d5a73;   /* slate blue: the one cool accent */
+  --warn: #b0601c;   /* burnt orange, a shade more amber than the accent */
+  --bad:  #8a2e2e;   /* oxblood (Next gig's red) */
+  --heat-1: #8c6a45;   /* warm sepia: still readable on cream */
+  --heat-2: #b5541f;   /* burnt orange */
+  --heat-3: #a3302a;   /* red */
+
+  /* neutral wells */
+  --well:      rgba(42, 32, 21, 0.07);
+  --vignette:  rgba(42, 32, 21, 0.10);
+
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { color-scheme: dark; -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--silver);
+  background:
+    radial-gradient(1100px 600px at 12% -10%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 105% 105%, color-mix(in srgb, var(--accent-deep) 20%, transparent), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* Custom themes (Settings → Appearance, applied by theme.js): a background picture behind everything, dimmed
+   towards the theme's own page colour so text stays readable, and the accent glows optional. The picture sits on
+   <html> so it fills the whole window whatever the page's height; body keeps only the glows on top of it. */
+html.has-bg {
+  background:
+    linear-gradient(color-mix(in srgb, var(--bg) var(--bg-dim, 40%), transparent), color-mix(in srgb, var(--bg) var(--bg-dim, 40%), transparent)) fixed,
+    var(--bg-image) var(--bg-pos, center) / var(--bg-size, cover) var(--bg-repeat, no-repeat) fixed,
+    var(--bg);
+}
+html.has-bg body {
+  background:
+    radial-gradient(1100px 600px at 12% -10%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 105% 105%, color-mix(in srgb, var(--accent-deep) 20%, transparent), transparent 60%);
+  background-attachment: fixed;
+}
+html.no-glow body { background: var(--bg); }
+html.has-bg.no-glow body { background: none; }
+
+/* scanline + vignette overlay: ~2% — felt more than seen */
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  background:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.017) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 90% at 50% 40%, transparent 55%, var(--vignette) 100%);
+}
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 1px solid var(--accent-hi);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-hi) 18%, transparent);
+}
+
+::selection { background: var(--accent-deep); color: var(--silver-hi); }
+
+/* thin, quiet scrollbars */
+* { scrollbar-width: thin; scrollbar-color: var(--surface-3) transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

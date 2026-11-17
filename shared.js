@@ -142,7 +142,7 @@
             } else if (/^::launch\s*$/.test(line)) {
                 flushPara(); flushList();
                 // the project's live app: a launch button (opens it in the terminal) and a new-tab link
-                if (project && project.live) out.push('<p class="launch-row">' + launchHtml(project) + newTabHtml(project.live) + '</p>');
+                if (liveUrl(project)) out.push('<p class="launch-row">' + launchHtml(project) + newTabHtml(liveUrl(project)) + '</p>');
             } else if ((m = line.match(/^(#{2,3})\s+(.*)$/))) {
                 flushPara(); flushList();
                 out.push('<h' + m[1].length + '>' + inline(m[2]) + '</h' + m[1].length + '>');
@@ -234,9 +234,16 @@
 
     // a project's live app (the "live" field): opens inside the terminal at #/projects/<slug>/live
     var PLAY_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>';
+    // An http(s) address, or a path on this site such as demo/citadel/ (no scheme, no //, no ..), so a demo
+    // hosted here also runs from the local admin server's preview. Same rule as clean_project in tools/admin_server.py.
+    function liveUrl(p) {
+        var live = String((p && p.live) || '');
+        if (/^https?:\/\//.test(live)) return live;
+        return /^[A-Za-z0-9][A-Za-z0-9._~\/-]*$/.test(live) && live.indexOf('..') < 0 ? live : '';
+    }
     function launchHtml(p) {
-        if (!p || !/^https?:\/\//.test(String(p.live || ''))) return '';
-        return '<a class="repo-btn launch-btn" href="#/projects/' + esc(p.slug) + '/live">' + PLAY_ICON + 'launch</a>';
+        if (!liveUrl(p)) return '';
+        return '<a class="repo-btn launch-btn" href="#/projects/' + esc(p.slug) + '/live">' + PLAY_ICON + esc(p.live_label || 'launch') + '</a>';
     }
     function newTabHtml(url) {
         return '<a class="newtab-link" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">open in a new tab &#8599;</a>';
@@ -462,7 +469,7 @@
 
     root.MH = {
         esc: esc, slugify: slugify, inline: inline, md: md, figureIds: figureIds, pinsHtml: pinsHtml, figureHtml: figureHtml, isVideo: isVideo,
-        cdBtn: cdBtn, tagsHtml: tagsHtml, articleHtml: articleHtml, newTabHtml: newTabHtml,
+        cdBtn: cdBtn, tagsHtml: tagsHtml, articleHtml: articleHtml, newTabHtml: newTabHtml, liveUrl: liveUrl,
         CV_SECTIONS: CV_SECTIONS, cvSection: cvSection, cvHtml: cvHtml,
         initChrome: initChrome
     };
