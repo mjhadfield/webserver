@@ -36,6 +36,8 @@
 .hud__seg[aria-pressed="true"] { color: var(--accent-soft); }
 /* A leading plain space in generated content collapses away since it lands at the very start of the button's own
    box (buttons are inline-block by default) — a non-breaking space survives that. */
+.hud__short { display: none; }
+@media (max-width: 760px) { .hud__long { display: none; } .hud__short { display: inline; } }
 .hud__seg + .hud__seg::before { content: "\00a0// "; color: var(--accent); }
 .mono { font-family: var(--font-mono); }
 .dim { color: var(--silver-mute); }

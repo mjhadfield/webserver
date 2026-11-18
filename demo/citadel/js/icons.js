@@ -37,7 +37,9 @@ const paths = {
   check:  '<path d="M4 12.5l5 5L20 6"/>',
   plus:   '<path d="M12 5v14M5 12h14"/>',
   wave:   '<path d="M3 12h1M7 8v8M11 4v16M15 8v8M19 10v4"/>',
+  filter: '<path d="M3 5h18l-7 8v6l-4 2v-8z"/>',
   list:   '<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
+  spade:  '<path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 6c-1.8 2.4-4.5 3.8-4.5 6.2a2.3 2.3 0 0 0 4.1 1.4L10.7 17.5h2.6l-.9-3.9a2.3 2.3 0 0 0 4.1-1.4c0-2.4-2.7-3.8-4.5-6.2z"/>',
   tool:   '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
   spark:  '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',
   shuffle:'<path d="M16 4h4v4M4 20L20 4M20 16v4h-4M15 15l5 5M4 4l5 5"/>',
@@ -51,6 +53,8 @@ const paths = {
   desk:   '<path d="M4 5h16v11H4zM2 19h20"/>',
   phone:  '<path d="M8 2h8v20H8zM11 18h2"/>',
   history:'<path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 3"/>',
+  chart:  '<path d="M3 3v18h18"/><path d="M6 16l4-6 4 3 5-8"/>',
+  fleet:  '<path d="M12 2l4 9-4-2-4 2zM5.5 11l4 9-4-2-4 2zM18.5 11l4 9-4-2-4 2z"/>',   // three ships in V formation (the Fleet page)
   tag:    '<path d="M3 12V4h8l10 10-8 8zM7.5 7.5h.01"/>',
   users:  '<path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21a7 7 0 0 1 14 0M16 3.5a4 4 0 0 1 0 7.5M22 21a7 7 0 0 0-4-6.3"/>',
   user:   '<path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 21a7 7 0 0 1 14 0"/>',

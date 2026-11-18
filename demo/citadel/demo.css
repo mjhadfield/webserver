@@ -1,18 +1,30 @@
 /* Citadel online demo (tools/build_demo.py): the snapshot chip in the header and the "not available" pages. */
 
-.demo-chip { margin-left: 10px; white-space: nowrap; }
+/* The snapshot chip, in gold: the one thing in the header that isn't Citadel's own */
+:root { --demo-gold: #e2b75a; }
+:root[data-theme="light"] { --demo-gold: #8f6512; }
+.demo-chip { margin-left: 10px; white-space: nowrap; color: var(--demo-gold); border-color: color-mix(in srgb, var(--demo-gold) 60%, transparent);
+  background: color-mix(in srgb, var(--demo-gold) 12%, transparent); }
+html[data-skin="lcars"] .demo-chip { color: #1a1206; background: var(--demo-gold); border-color: transparent; box-shadow: none; }
+html[data-skin="lcars"][data-theme="light"] .demo-chip { color: #fbf3e2; }
 .top__right .badge-role { display: none; }   /* "Owner device" means nothing here; the snapshot chip takes its room */
 
-/* Media, Odysseus and House keep their (never-loaded) iframes so app.js still finds them; the notice takes their place. */
+/* The home-network pages keep their (never-loaded) iframes so app.js still finds them; the notice takes their place,
+   over a blurred screenshot of the real page when the build had one (.has-shot, background-image set inline). */
 .frame-shell[hidden] { display: none !important; }
 .demo-na {
-  flex: 1; height: 100%; min-height: 320px; box-sizing: border-box;
-  display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 24px 16px;
-  border: 1px solid var(--edge); background: var(--surface); color: var(--silver);
+  position: relative; flex: 1; height: 100%; min-height: 320px; box-sizing: border-box; overflow: hidden;
+  display: grid; place-content: center; justify-items: center; padding: 24px 16px;
+  border: 1px solid var(--edge); background: var(--surface) center / cover no-repeat; color: var(--silver);
 }
+.demo-na.has-shot::before { content: ""; position: absolute; inset: 0; background: color-mix(in srgb, var(--bg) 15%, transparent); }
+.demo-na__card { position: relative; display: grid; justify-items: center; gap: 10px; text-align: center; max-width: 52ch; }
+.demo-na.has-shot .demo-na__card { padding: 26px 30px; border: 1px solid var(--edge-strong); background: color-mix(in srgb, var(--surface-2) 88%, transparent);
+  box-shadow: 0 24px 60px var(--vignette); backdrop-filter: blur(6px); }
 .demo-na .i { width: 40px; height: 40px; color: var(--accent); opacity: .8; }
 .demo-na b { font-size: 1.15rem; color: var(--silver-hi); letter-spacing: .04em; }
 .demo-na span { max-width: 46ch; color: var(--silver-mute); }
+.demo-na a { color: var(--accent-soft, var(--accent)); text-decoration: underline; text-underline-offset: 3px; }
 
 @media (max-width: 700px) {
   .demo-chip { display: none; }
@@ -28,7 +40,10 @@
 html[data-skin="lcars"] .demo-pop { border: 0; border-radius: 20px 0 20px 20px; box-shadow: inset 4px 0 0 var(--lc-frame), 0 24px 60px var(--vignette); }
 html[data-skin="lcars"] .demo-pop b { font: 500 20px var(--lc-font); letter-spacing: .08em; text-transform: uppercase; color: var(--lc-frame); }
 html[data-skin="lcars"] .demo-pop .btn { border: 0; border-radius: 999px; padding: 0 18px; height: 30px; background: var(--lc-frame); color: var(--lc-on); font: 500 14px var(--lc-font); letter-spacing: .1em; }
-html[data-skin="lcars"] .demo-na { border: 0; background: none; }   /* the page's elbow is the frame: no second box inside it */
+html[data-skin="lcars"] .demo-na { border: 0; background-color: transparent; }   /* the page's elbow is the frame: no second box inside it */
+html[data-skin="lcars"] .demo-na.has-shot .demo-na__card { border: 0; border-radius: 20px 0 20px 20px; box-shadow: inset 4px 0 0 var(--lc-frame), 0 24px 60px var(--vignette); }
+html[data-skin="lcars"] .demo-na b { font: 500 22px var(--lc-font); letter-spacing: .08em; text-transform: uppercase; color: var(--lc-frame); }
+html[data-skin="lcars"] .demo-na a { color: var(--lc-frame); }
 html[data-skin="lcars"] .demo-na .i { color: var(--lc-frame); }
 
 /* Settings (settings.html): the read-only notice across the top */

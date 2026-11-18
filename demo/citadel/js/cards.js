@@ -28,14 +28,31 @@ function binRow(item, streams, hour) {
     <div class="bin__when">${esc(fmtDay(item.date))}<br>${esc(relDays(item.in_days))}</div></li>`;
 }
 
-function monthGrid(first, marks, streams, todayIso) {
+// Full screen lists each collection day once (the two "next" rows above are hidden there), so the first domestic, blue
+// and brown collection is picked out in its bin's colour; a day that's the first of two splits its colour between them.
+// Food & garden goes every week, so it's never singled out.
+const HIGHLIGHT = ['domestic', 'blue', 'brown'];
+const firstCollections = upcoming => Object.fromEntries(HIGHLIGHT.map(k => [k, upcoming.find(u => u.streams.includes(k))?.date]));
+
+function schedRow(u, d, firsts, hour) {
+  const colour = k => d.streams[k]?.colour || '#6b7280';
+  const hl = u.streams.filter(k => firsts[k] === u.date).map(colour);
+  const split = dir => hl.length === 1 ? hl[0] : `linear-gradient(${dir}, ${hl.map((c, i) => `${c} ${i / hl.length * 100}% ${(i + 1) / hl.length * 100}%`).join(', ')})`;
+  const style = hl.length ? ` style="--hc:${esc(hl[0])};--hl:${esc(split('90deg'))};--hlv:${esc(split('180deg'))}"` : '';
+  const when = !hl.length ? '' : u.in_days === 0 ? '<span class="chip chip--today">Today</span>'
+    : u.in_days === 1 && hour >= 17 ? '<span class="chip chip--today">Tonight</span>' : `<span class="sched__in">${esc(relDays(u.in_days))}</span>`;
+  return `<li class="sched more${hl.length ? ' sched--next' : ''}"${style} hidden><span class="sched__d">${esc(fmtDay(u.date))}</span><span class="sched__b">${
+    u.streams.map(k => `<span style="--sw:${esc(colour(k))}"><i></i>${esc(d.streams[k]?.title || k)}</span>`).join('')}</span>${when}</li>`;
+}
+
+// One month as a Monday-first grid. day(iso, col) gives a day's extra classes/attributes and what goes under its number.
+function monthGrid(first, todayIso, day) {
   const y = first.getFullYear(), m0 = first.getMonth();
   const lead = (first.getDay() + 6) % 7, days = new Date(y, m0 + 1, 0).getDate();
   let cells = [...'MTWTFSS'].map(d => `<span class="cal__dow">${d}</span>`).join('') + '<span class="cd cd--out"></span>'.repeat(lead);
   for (let d = 1; d <= days; d++) {
-    const iso = isoOf(y, m0, d);
-    const bars = (marks[iso] || []).map(k => `<i style="--sw:${esc(streams[k]?.colour || '#6b7280')}"></i>`).join('');
-    cells += `<span class="cd${iso === todayIso ? ' cd--today' : ''}${iso < todayIso ? ' cd--past' : ''}"><b>${d}</b>${bars}</span>`;
+    const iso = isoOf(y, m0, d), x = day(iso, (lead + d - 1) % 7);
+    cells += `<span class="cd${iso === todayIso ? ' cd--today' : ''}${iso < todayIso ? ' cd--past' : ''}${x.cls || ''}"${x.attrs || ''}><b>${d}</b>${x.html || ''}</span>`;
   }
   return `<div class="cal"><div class="cal__h">${esc(first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }))}</div><div class="cal__g">${cells}</div></div>`;
 }
@@ -43,7 +60,8 @@ function monthGrid(first, marks, streams, todayIso) {
 function collectionCalendars(data, todayIso) {
   const marks = Object.fromEntries(data.upcoming.map(u => [u.date, u.streams]));
   const t = parseDate(todayIso);
-  const months = [0, 1, 2].map(i => monthGrid(new Date(t.getFullYear(), t.getMonth() + i, 1), marks, data.streams, todayIso)).join('');
+  const bars = iso => ({ html: (marks[iso] || []).map(k => `<i style="--sw:${esc(data.streams[k]?.colour || '#6b7280')}"></i>`).join('') });
+  const months = [0, 1, 2].map(i => monthGrid(new Date(t.getFullYear(), t.getMonth() + i, 1), todayIso, bars)).join('');
   const legend = Object.values(data.streams)
     .map(s => `<span style="--sw:${esc(s.colour)}"><i></i>${esc(s.title)} <span class="dim">— ${esc(s.sub)}</span></span>`).join('');
   return `<div class="calm more" hidden>${months}<div class="cal__legend">${legend}</div></div>`;
@@ -60,10 +78,9 @@ function now(s) {
     list = `<li class="note">${w.error ? `Couldn't read the council page: ${esc(w.error)}` : 'Fetching bin days…'}</li>`;
   } else {
     const d = w.data;
+    const firsts = firstCollections(d.upcoming);
     list = binRow(d.next.recycling, d.streams, hour) + binRow(d.next.domestic, d.streams, hour)
-      + `<li class="note more" hidden>Recycling alternates blue and brown; domestic follows the council's three-weekly cycle. Synced ${esc(hhmm(w.fetched_at))} from the council website.</li>`
-      + d.upcoming.slice(0, 14).map(u => `<li class="sched more" hidden><span class="sched__d">${esc(fmtDay(u.date))}</span><span class="sched__b">${
-        u.streams.map(k => `<span style="--sw:${esc(d.streams[k]?.colour || '#6b7280')}"><i></i>${esc(d.streams[k]?.title || k)}</span>`).join('')}</span></li>`).join('');
+      + d.upcoming.slice(0, 14).map(u => schedRow(u, d, firsts, hour)).join('');
     extra = collectionCalendars(d, today);
   }
   return {
@@ -84,7 +101,8 @@ function diary(s, ctx) {
   if (!w.data?.events) return { meta: w.error ? 'error' : 'loading', body: empty('cal', w.error ? "Couldn't read the calendar" : 'Loading…', w.error || '') };
 
   const today = s.now.slice(0, 10), tomorrow = addDays(today, 1);
-  const range = ctx.expanded ? Number(ctx.filter || 14) : 14;
+  if (ctx.expanded) return calendarFull(s, ctx, w, today, tomorrow);
+  const range = 14;
   const cutoff = addDays(today, range);
   const groups = new Map();
   for (const e of w.data.events) {
@@ -107,6 +125,45 @@ function diary(s, ctx) {
   return {
     meta: `${esc(w.data.calendars[0]?.name || 'calendar')} · ${esc(hhmm(w.fetched_at))}${staleChip(w)}`,
     body: html ? `<div class="cols">${html}</div>` : empty('cal', 'Nothing planned', `No events in the next ${range} days.`),
+  };
+}
+
+// Full screen: this month and the next two as calendars (a day's events show on hover or focus), then every day with
+// something on in the chosen range, in date order, reading across then down.
+function calendarFull(s, ctx, w, today, tomorrow) {
+  const range = Number(ctx.filter || 14), cutoff = addDays(today, range);
+  const t = parseDate(today), calEnd = isoOf(t.getFullYear(), t.getMonth() + 3, 0);
+  const byDay = new Map();
+  for (const e of w.data.events) {                                  // an event over several days marks each of them
+    for (let d = e.date, n = 0; d <= (e.until || e.date) && d <= calEnd && n < 93; d = addDays(d, 1), n++) {
+      if (!byDay.has(d)) byDay.set(d, []);
+      byDay.get(d).push(e);
+    }
+  }
+  const colour = e => COLOURS[e.colour] || COLOURS.violet;
+  const when = e => (e.all_day ? 'All day' : esc(e.time));
+  const label = d => (d === today ? 'Today' : d === tomorrow ? 'Tomorrow' : esc(fmtDay(d)));
+  const day = (iso, col) => {
+    const evs = byDay.get(iso);
+    if (!evs) return {};
+    const pop = `<span class="cd__pop" role="tooltip"><span class="cd__ph">${label(iso)}</span>${evs.map(e => `<span class="cd__pe" style="--cal:${colour(e)}">
+      <span class="cd__pt">${when(e)}</span><span class="cd__pm"><span class="cd__pn">${esc(e.title)}</span>${e.location ? `<span class="cd__pl">${esc(e.location)}</span>` : ''}</span></span>`).join('')}</span>`;
+    return { cls: ` cd--ev${col >= 4 ? ' cd--r' : ''}`, attrs: ` tabindex="0" aria-label="${esc(fmtDay(iso))}: ${evs.length} event${evs.length === 1 ? '' : 's'}"`,
+      html: `${evs.slice(0, 3).map(e => `<i style="--sw:${colour(e)}"></i>`).join('')}${pop}` };
+  };
+  const months = [0, 1, 2].map(i => monthGrid(new Date(t.getFullYear(), t.getMonth() + i, 1), today, day)).join('');
+  const cals = w.data.calendars || [];
+  const legend = cals.length > 1 ? `<div class="cal__legend">${cals.map(c => `<span style="--sw:${COLOURS[c.colour] || COLOURS.violet}"><i></i>${esc(c.name)}</span>`).join('')}</div>` : '';
+  const days = [...byDay].filter(([d]) => d <= cutoff).sort(([a], [b]) => (a < b ? -1 : 1));
+  const rows = days.map(([d, evs]) => `<li class="crow${d === today ? ' crow--today' : ''}"><span class="crow__d">${label(d)}</span><div class="crow__evs">${evs.map(e => {
+    const sub = [e.until && e.until !== d ? `until ${fmtDay(e.until)}` : '', e.location].filter(Boolean).join(' · ');
+    return `<div class="crow__e" style="--cal:${colour(e)}"><span class="crow__t">${when(e)}</span><div class="crow__m"><div class="crow__n">${esc(e.title)}</div>${sub ? `<div class="crow__s">${esc(sub)}</div>` : ''}</div></div>`;
+  }).join('')}</div></li>`).join('');
+  return {
+    meta: `${esc(cals[0]?.name || 'calendar')} · ${esc(hhmm(w.fetched_at))}${staleChip(w)}`,
+    // phones put the days coming up first and the calendars under them (dashboard.css .calx)
+    body: `<div class="calx"><div class="calm calm--diary">${months}${legend}</div><div class="now__label hud">Coming up</div>
+      ${rows ? `<ul class="crows">${rows}</ul>` : `<p class="note crows__none">Nothing planned in the next ${range} days.</p>`}</div>`,
   };
 }
 
@@ -211,10 +268,12 @@ function remote(s) {
   const tiles = list.map(r => {
     const busy = ui.pending[`vnc:${r.id}`];
     const dot = r.up === true ? '<span class="dot dot--ok"></span>' : r.up === false ? '<span class="dot dot--bad"></span>' : '';
-    // a device reached by name (pi-2.local) shows the LAN address that name last resolved to
-    const sub = busy === 'open' ? 'Opening…' : busy === 'close' ? 'Closing…' : r.open ? 'Viewer open' : r.lan_ip || r.address;
+    // a device reached by name (probe-2.local) shows the LAN address that name last resolved to
+    // asleep or off, with a MAC address: the tile wakes it (Wake-on-LAN) instead of opening a viewer that can't connect
+    const wake = r.wake && r.up === false && !r.open;
+    const sub = busy === 'open' ? 'Opening…' : busy === 'close' ? 'Closing…' : busy === 'wake' ? 'Waking…' : r.open ? 'Viewer open' : wake ? 'Asleep · wake' : r.lan_ip || r.address;
     const close = r.open ? `<button class="pinbtn is-on" data-vnc-close="${r.id}" aria-label="Close the viewer" title="Close the viewer">${ico('x')}</button>` : '';
-    return `<div class="tilewrap"><button class="tile${r.open ? ' tile--primary' : ''}" type="button" data-vnc="${r.id}" ${busy ? 'disabled' : ''}>
+    return `<div class="tilewrap"><button class="tile${r.open ? ' tile--primary' : ''}" type="button" ${wake || busy === 'wake' ? `data-wake="${r.id}" title="Wake ${esc(r.name)}"` : `data-vnc="${r.id}"`} ${busy ? 'disabled' : ''}>
       ${ico('desk')}<div><b>${esc(r.name)}</b><small>${esc(sub)}</small></div>${dot}</button>${close}</div>`;
   }).join('');
   return { meta: `${list.filter(r => r.up).length} / ${list.length} on`, body: `<div class="tiles">${tiles}</div>` };
@@ -261,7 +320,48 @@ const tempClass = t => (t == null ? '' : t >= 85 ? ' mon-temp--hot' : t >= 70 ? 
 const monHead = (label, temp, withTemp = true) =>
   `<div class="mon-head"><span class="mon-col__label">${esc(label)}</span>${withTemp
     ? `<span class="mon-temp${tempClass(temp)}" title="${esc(label)} temperature"><small>temp</small>${temp != null ? `${temp.toFixed(1)}°` : '—'}</span>` : ''}</div>`;
+// A full-view section's heading: its name, then its temperatures on the right like a machine panel's (main one last).
+const secHead = (label, temps) =>
+  `<div class="mon-head mon-head--sec"><span class="hud">${esc(label)}</span><span class="mon-temps">${temps.map(([k, t, main]) =>
+    `<span class="mon-temp${main ? '' : ' mon-temp--sub'}${tempClass(t)}" title="${esc(label.split(' ·')[0])} ${esc(k)}"><small>${esc(k)}</small>${t != null ? `${t.toFixed(1)}°` : '—'}</span>`).join('')}</span></div>`;
 const busiestCore = cores => cores.reduce((max, p) => (p != null && (max == null || p > max) ? p : max), null);
+
+// The other machines on the estate (app/machines.py): one panel each, in Remote Access order.
+function machinePanel(m) {
+  const st = m.stats, asleep = m.up === false;
+  const dot = asleep ? (m.always_on ? '<span class="dot dot--bad"></span>' : '<span class="dot"></span>') : m.error && !st ? '<span class="dot dot--bad"></span>' : m.up ? '<span class="dot dot--ok"></span>' : '<span class="dot"></span>';
+  const temp = st?.cpu?.temp ?? null;
+  const stale = m.at && Date.now() / 1000 - m.at > 90;
+  const sub = asleep ? (m.at ? `Asleep · last seen ${hhmm(m.at)}` : 'Asleep')
+    : st ? [st.os, st.uptime_s != null ? `up ${duration(st.uptime_s)}` : '', stale ? `as of ${hhmm(m.at)}` : ''].filter(Boolean).join(' · ') : '';
+  let body = '';
+  if (st) {
+    const cpu = st.cpu?.percent, memPct = st.mem?.total ? st.mem.used / st.mem.total * 100 : null;
+    const disks = st.disks || [];
+    const full = disks.reduce((a, d) => (!a || (d.total - d.free) / d.total > (a.total - a.free) / a.total ? d : a), null);
+    const fullPct = full ? (full.total - full.free) / full.total * 100 : 0;
+    const extra = [];
+    if (st.gpu?.temp != null) extra.push(['GPU temp', `${st.gpu.temp.toFixed(0)}°C`]);
+    if (st.battery) extra.push(['battery', `${st.battery.percent}% · ${st.battery.status}`]);
+    if (st.pi) extra.push(['power', st.pi.under_voltage_now ? 'Low now' : st.pi.under_voltage_seen ? 'Low since boot' : 'OK']);
+    if (st.drive_temps?.length) extra.push(['drives', `up to ${Math.max(...st.drive_temps.map(d => d.temp)).toFixed(0)}°C`]);
+    if (st.raid) extra.push(['RAID', `${st.raid.health || '—'}${st.raid.events_24h ? ` · ${st.raid.events_24h} warnings today` : ''}`]);
+    body = `${bar('CPU', '', cpu != null ? `${cpu}%` : '—', cpu ?? 0, (cpu ?? 0) >= 85)}
+      ${memPct != null ? bar('RAM', '', `${bytes(st.mem.used)} / ${bytes(st.mem.total)}`, memPct, memPct >= 85) : ''}
+      ${full ? `<div title="${esc(disks.map(d => `${d.mount}: ${bytes(d.free)} free of ${bytes(d.total)}`).join('\n'))}">${bar('Disk', full.mount, `${bytes(full.free)} free`, fullPct, fullPct >= 90)}</div>` : ''}
+      ${st.gpu && st.gpu.percent != null ? bar('GPU', '', `${st.gpu.percent}%`, st.gpu.percent, st.gpu.percent >= 85) : ''}
+      ${extra.length ? `<dl class="kv">${extra.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''}`;
+  }
+  return `<div class="mach${asleep ? ' mach--asleep' : ''}">
+    <div class="mon-head"><span class="mach__name">${dot}<span class="mon-col__label">${esc(m.name)}</span><a class="mach__hist" href="#stats" data-rs-machine="rh${esc(m.id)}" title="${esc(m.name)}’s history">${ico('chart')}</a></span>${temp != null && !asleep
+      ? `<span class="mon-temp${tempClass(temp)}" title="CPU temperature"><small>temp</small>${temp.toFixed(1)}°</span>` : ''}</div>
+    ${sub ? `<div class="mach__sub">${esc(sub)}</div>` : ''}
+    ${m.error && !asleep ? `<div class="mach__err">${esc(m.error)}</div>` : ''}
+    ${asleep ? '' : body}</div>`;
+}
+
+const machinesSection = list => list?.length
+  ? `<div class="mon-section mon-machines"><span class="hud">Machines</span><div class="mach-grid">${list.map(machinePanel).join('')}</div></div>` : '';
 
 function monitoring(s, ctx) {
   const m = s.monitoring;
@@ -280,8 +380,9 @@ function monitoring(s, ctx) {
          ${bar('VRAM', '', `${Math.round(vramPct)}%`, vramPct, vramPct >= 85)}
          ${m.gpu.power_limit_w ? bar('Power', '', `${m.gpu.power_w.toFixed(0)} W`, powerPct, powerPct >= 90) : ''}`
       : '<p class="dim">No GPU detected.</p>';
+    const ms = s.machines || [];
     return {
-      meta: '',
+      meta: ms.length ? `machines ${ms.filter(m => m.up).length} / ${ms.length} on` : '',
       body: `<div class="mon-split">
         <div class="mon-col">
           ${monHead('CPU', cpuTemp)}
@@ -300,48 +401,41 @@ function monitoring(s, ctx) {
   }
 
   const cores = m.cpu.per_core.map((p, i) => bar(`core ${i}`, '', p != null ? `${p}%` : '—', p ?? 0, (p ?? 0) >= 85)).join('');
-  const chiplets = m.cpu.temp.chiplets.map(c => `<dt>${esc(c.label)}</dt><dd>${c.temp.toFixed(1)}°C</dd>`).join('');
   const mem = m.mem, swapPct = mem.swap_total ? mem.swap_used / mem.swap_total * 100 : 0;
   const gpuSection = m.gpu
-    ? `<div class="mon-section"><span class="hud">GPU · ${esc(m.gpu.name)}</span>
+    ? `<div class="mon-section">${secHead(`GPU · ${m.gpu.name}`, [['temp', m.gpu.temp, true]])}
         ${bar('Usage', '', `${m.gpu.percent}%`, m.gpu.percent, m.gpu.percent >= 85)}
         ${bar('VRAM', '', `${bytes(m.gpu.mem_used_mb * 1024 * 1024)} / ${bytes(m.gpu.mem_total_mb * 1024 * 1024)}`, m.gpu.mem_used_mb / m.gpu.mem_total_mb * 100)}
         ${m.gpu.power_limit_w ? bar('Power', '', `${m.gpu.power_w.toFixed(0)} W / ${m.gpu.power_limit_w.toFixed(0)} W`, m.gpu.power_w / m.gpu.power_limit_w * 100) : ''}
-        <dl class="kv">
-          <dt>temperature</dt><dd>${m.gpu.temp.toFixed(1)}°C</dd>
-          <dt>core clock</dt><dd>${m.gpu.clock_sm_mhz.toFixed(0)} MHz</dd>
-          <dt>memory clock</dt><dd>${m.gpu.clock_mem_mhz.toFixed(0)} MHz</dd>
-          ${m.gpu.fan_percent != null ? `<dt>fan</dt><dd>${m.gpu.fan_percent.toFixed(0)}%</dd>` : ''}
-        </dl>
       </div>`
     : `<div class="mon-section"><span class="hud">GPU</span><p class="dim">No NVIDIA GPU detected.</p></div>`;
 
-  // The header readout (which opens this) keeps the temperatures, usage and uptime; the rest of the old readout is here.
+  // The header readout (which opens this) keeps the temperatures, usage and uptime; the rest of the old readout is here,
+  // with the GPU's clocks and fan. Temperatures sit in the CPU and GPU headings; the services are on the System tile.
   const checks = serviceChecks(s), up = s.widgets?.system?.data?.uptime_s;
   const pc = `<div class="mon-section"><span class="hud">This PC</span>
       <dl class="kv"><dt>name</dt><dd>${esc(s.host)}</dd><dt>LAN address</dt><dd>${esc(s.ip || '—')}</dd>
         ${up != null ? `<dt>uptime</dt><dd>${esc(duration(up))}</dd>` : ''}
-        <dt>services</dt><dd>${checks.filter(c => c.ok).length} / ${checks.length} up</dd></dl>
-      <ul class="svcs">${checks.map(c => `<li class="svc"><span class="dot ${c.ok ? 'dot--ok' : 'dot--bad'}"></span><span>${esc(c.name)}</span><span class="mono dim">${esc(c.detail)}</span></li>`).join('')}</ul>
+        <dt>services</dt><dd>${checks.filter(c => c.ok).length} / ${checks.length} up</dd>
+        <dt>load (1/5/15m)</dt><dd>${m.load.map(x => x.toFixed(2)).join(' · ')}</dd>
+        ${m.gpu ? `<dt>GPU core clock</dt><dd>${m.gpu.clock_sm_mhz.toFixed(0)} MHz</dd>
+          <dt>GPU memory clock</dt><dd>${m.gpu.clock_mem_mhz.toFixed(0)} MHz</dd>
+          <dt>buffers + cached</dt><dd>${bytes(m.mem.buffers + m.mem.cached)}</dd>
+          ${m.gpu.fan_percent != null ? `<dt>GPU fan</dt><dd>${m.gpu.fan_percent.toFixed(0)}%</dd>` : ''}` : ''}
+        ${m.gpu ? '' : `<dt>buffers + cached</dt><dd>${bytes(m.mem.buffers + m.mem.cached)}</dd>`}</dl>
     </div>`;
   return {
     meta: '',
-    body: `<div class="mon-cols"><div><div class="mon-section"><span class="hud">CPU</span>
+    body: `<div class="mon-cols"><div><div class="mon-section">${secHead('CPU', [...m.cpu.temp.chiplets.map(c => [c.label, c.temp]), ['temp', cpuTemp, true]])}
         ${bar('Overall', '', m.cpu.percent != null ? `${m.cpu.percent}%` : '—', cpuPct, cpuPct >= 85)}
         <div class="mon-cores">${cores}</div>
-        <dl class="kv">
-          <dt>package temp</dt><dd>${cpuTemp != null ? `${cpuTemp.toFixed(1)}°C` : '—'}</dd>
-          ${chiplets}
-          <dt>load (1/5/15m)</dt><dd>${m.load.map(x => x.toFixed(2)).join(' · ')}</dd>
-        </dl>
       </div></div>
       <div>${gpuSection}
       <div class="mon-section"><span class="hud">Memory</span>
         ${bar('Used', '', `${bytes(mem.used)} / ${bytes(mem.total)}`, memPct, memPct >= 85)}
         ${mem.swap_total ? bar('Swap', '', `${bytes(mem.swap_used)} / ${bytes(mem.swap_total)}`, swapPct) : ''}
-        <dl class="kv"><dt>buffers + cached</dt><dd>${bytes(mem.buffers + mem.cached)}</dd></dl>
       </div></div>
-      <div>${pc}</div></div>`,
+      <div>${pc}</div></div>${machinesSection(s.machines)}`,
   };
 }
 
@@ -352,8 +446,8 @@ const content = Object.fromEntries(contentCards.map(c => [c.id, c]));
 export const cards = [
   { id: 'now', area: 'now', cls: 'now', label: 'Now', flush: true, render: now },
   content.gigs,
-  { id: 'diary', area: 'diary', label: 'Diary', flush: true, render: diary,
-    filters: [{ label: 'Next 7 days', value: '7' }, { label: 'Next 14 days', value: '14' }, { label: 'Next 30 days', value: '30' }, { label: 'Next 60 days', value: '60' }], defaultFilter: '14' },
+  { id: 'diary', area: 'diary', label: 'Calendar', flush: true, render: diary,
+    filters: [{ label: 'Next 7 days', value: '7' }, { label: 'Next 14 days', value: '14' }, { label: 'Next 30 days', value: '30' }, { label: 'Next 60 days', value: '60' }], defaultFilter: '14', phoneFilter: '30' },
   { id: 'remote', area: 'remote', label: 'Remote Access', render: remote,
     headerAction: { icon: 'plus', label: 'Add a device', href: '/settings?add=remote#remote' } },
   content.releases,

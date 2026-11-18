@@ -28,19 +28,18 @@
 /* ---- front page ------------------------------------------------------------------------------------------------- */
 .nw-front { display: grid; grid-template-columns: minmax(340px, 30%) minmax(0, 1fr); gap: var(--gap); align-items: start; }
 .nw-front--solo { grid-template-columns: minmax(0, 1fr); }
+.nw-mrs { display: grid; gap: var(--gap); min-width: 0; }
 .nw-blocks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); align-items: start; }
 .nw-front .card__head .btn { cursor: pointer; }
 .nw-block__tabs { display: flex; gap: 6px; }
 .nw-block .card__head, .nw-mr .card__head, .nw-sec .card__head { padding-bottom: 6px; cursor: default; }
+.nw-front .card__head { min-height: 50px; }        /* tiles with and without buttons start their stories level */
 
-/* Most read: big rank numbers, movement since the last hour */
-.mr .st { gap: 12px; }
-.mr__n { flex: none; width: 30px; font: 700 22px/1 var(--font-display); color: var(--accent-soft); text-align: right; padding-top: 2px; }
-.mr li:nth-child(n+4) .mr__n { color: var(--silver-mute); font-size: 19px; }
-.mr__move { margin-left: 8px; font: 10px var(--font-mono); letter-spacing: .08em; }
-.mr__move.up { color: var(--ok); }
-.mr__move.down { color: var(--bad); }
-.mr__move.new { color: var(--accent-soft); }
+/* Most read: the BBC's and the Guardian's, stacked; big rank numbers */
+.mr .st { gap: 14px; align-items: center; padding-top: 10px; padding-bottom: 10px; }
+.mr .st__title { margin-top: 0; }
+.mr__n { flex: none; width: 30px; font: 700 24px/1 var(--font-display); color: var(--accent-soft); text-align: center; }   /* centred: the display font's narrow "1" looks adrift when right-aligned */
+.mr li:nth-child(n+4) .mr__n { color: var(--silver-mute); }
 
 /* ---- a story ---------------------------------------------------------------------------------------------------- */
 .st-list { list-style: none; margin: 0; padding: 0; }
@@ -67,7 +66,17 @@ a.st__link:hover { color: var(--silver-hi); }
 .st.is-read .st__pic img { opacity: .6; }
 .st.is-saved { box-shadow: inset 2px 0 0 var(--accent-soft); }
 
-.st__acts { display: flex; gap: 4px; flex: none; opacity: 0; transition: opacity .2s; }
+/* The three buttons sit in the row's top-right corner, beside the outlet's name, so headlines get the full width.
+   Most read rows (no outlet line) and held-back rows keep them in line. */
+.st__acts { display: flex; gap: 2px; flex: none; opacity: 0; transition: opacity .2s; position: absolute; top: 7px; right: 10px; }
+.st__acts .btn--icon { padding: 3px; }
+.st__src { padding-right: 84px; min-height: 22px; }
+.st--shield .st__acts { position: static; }
+.mr .st__acts { top: 50%; transform: translateY(-50%); padding: 2px; background: var(--surface-3); box-shadow: -14px 0 12px -2px var(--surface-3); }
+@media (hover: none) {        /* touch: always shown, so they get a line of their own under the headline */
+  .mr .st:not(.st--shield):not(.st--muted) { display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 14px; row-gap: 4px; }
+  .mr .st__acts { position: static; transform: none; background: none; box-shadow: none; grid-column: 2; justify-self: end; }
+}
 .st:hover .st__acts, .st:focus-within .st__acts, .st__acts--on { opacity: 1; }
 .st__acts .btn.is-on { opacity: 1; color: var(--accent-soft); border-color: var(--edge-strong); background: var(--accent-wash); }
 .st__acts .btn.is-on .i { fill: color-mix(in srgb, currentColor 25%, transparent); }
@@ -118,11 +127,6 @@ a.st__link:hover { color: var(--silver-hi); }
 @media (max-width: 760px) {
   .nw-status { margin-left: 0; white-space: normal; }
   .st { padding: 10px 12px; gap: 10px; }
-  /* the three buttons sit in the row's top-right corner, beside the outlet's name, rather than on a line of their own */
-  .st__acts { position: absolute; top: 6px; right: 8px; gap: 2px; }
-  .st__acts .btn--icon { padding: 3px; }
-  .st__src { padding-right: 84px; min-height: 22px; }
-  .st--shield .st__acts { position: static; }
   .st__pic { width: 104px; }
   .st--lead .st__title { font-size: 16px; }
   .nw-search { max-width: none; }
@@ -135,7 +139,8 @@ a.st__link:hover { color: var(--silver-hi); }
 @media (min-width: 1800px) and (min-height: 860px) {
   .nw__panel:has(> .nw-front) { overflow: hidden; }
   .nw-front { height: 100%; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
-  .nw-front > .card, .nw-blocks { min-height: 0; }
+  .nw-mrs, .nw-blocks { min-height: 0; }
+  .nw-mrs { grid-auto-rows: minmax(0, 1fr); }
   .nw-blocks { grid-auto-rows: minmax(0, 1fr); align-items: stretch; }
   .nw-front .card__in { min-height: 0; overflow: hidden; }
   .nw-front .st-list { flex: 1 1 auto; min-height: 0; overflow: hidden; }

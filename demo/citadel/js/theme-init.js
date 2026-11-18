@@ -21,4 +21,8 @@ try {
     if (h.bg) r.classList.add('has-bg');
     if (!h.glow) r.classList.add('no-glow');
   }
+  // LCARS screen overlay (Settings → Appearance → Overlay, this device's own; lcars.css): scanlines unless picked
+  var ov = function () { var v = null; try { v = localStorage.getItem('lc-overlay'); } catch (e) {} if (v && v !== 'scan') r.dataset.lcOverlay = v; else delete r.dataset.lcOverlay; };
+  ov();
+  addEventListener('storage', function (e) { if (e.key === 'lc-overlay' || e.key === null) ov(); });
 } catch (e) {}

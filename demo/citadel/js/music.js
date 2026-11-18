@@ -241,7 +241,7 @@ function designHtml(p) {
       <div class="namebox"><span>${esc(ov.settings.prefix)}</span><input id="mu-name" data-mu-field="name" value="${esc(p.name)}" maxlength="80"></div>
       <div class="erow">
         <div><span class="lbl">Type</span><span class="seg" role="group"><button type="button" data-mu-mode="fixed" aria-pressed="${p.mode === 'fixed'}">Fixed</button><button type="button" data-mu-mode="rot" aria-pressed="${p.mode === 'rot'}">Rotating</button></span></div>
-        ${p.mode === 'rot' ? `<div><span class="lbl">Refresh</span><span class="sched">
+        ${p.mode === 'rot' ? `<div><span class="lbl">Refresh</span><span class="mu-sched">
           <select class="fld" data-mu-sched="every">${opt([['daily', 'Daily'], ['weekly', 'Weekly'], ['monthly', 'Monthly']], s.every)}</select>
           ${s.every === 'weekly' ? `<select class="fld" data-mu-sched="day">${opt(DAYS.map((d, i) => [i, d]), s.day)}</select>` : ''}
           ${s.every === 'monthly' ? `<select class="fld" data-mu-sched="day">${opt(Array.from({ length: 28 }, (_, i) => [i + 1, `the ${ord(i + 1)}`]), s.day)}</select>` : ''}

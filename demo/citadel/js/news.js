@@ -1,7 +1,7 @@
-// The News page (#news): a Front page (the BBC's Most read top 10 and each section's lead stories), one tab per section
+// The News page (#news): a Front page (the BBC's and the Guardian's Most read top 5s and each section's lead stories), one tab per section
 // (its latest stories, merged and ranked), and an Archive of everything still kept. Stories come from /api/owner/news,
 // never the dashboard state; app.js tells this module when the page is shown (onView). A 'widget' event for news,
-// mostread or f1cal says something new arrived.
+// mostread, guardianread or f1cal says something new arrived.
 //
 // 👍/👎 teach the page (Settings → News → What I've learned); 👎 also offers one-tap "Never show" rules. F1 stories the
 // spoiler shield holds back arrive without a headline at all — there is nothing here to leak.
@@ -65,7 +65,7 @@ async function boot() {
   root.addEventListener('input', onInput);
   root.addEventListener('error', e => { if (e.target.tagName === 'IMG') e.target.closest('.st__pic')?.remove(); }, true);
   // app.js's stream, shared (api.subscribe) — one per tab, or the browser runs out of connections to Citadel
-  api.subscribe(e => { let d = {}; try { d = JSON.parse(e.data); } catch { /* fine */ } if (['news', 'mostread', 'f1cal'].includes(d.id)) changed(); },
+  api.subscribe(e => { let d = {}; try { d = JSON.parse(e.data); } catch { /* fine */ } if (['news', 'mostread', 'guardianread', 'f1cal'].includes(d.id)) changed(); },
     ok => { if (!ok) streamDown = true; else if (streamDown) { streamDown = false; changed(); } }, '/api/owner/events', ['widget']);
   await refresh();
 }
@@ -143,8 +143,8 @@ function renderShield(sh) {
 
 // ---- stories --------------------------------------------------------------------------------------------------------------
 function rankChip(it) {
-  if (it.most_read) return `<span class="chip chip--new" title="In the BBC’s Most read right now">#${it.most_read} most read</span>`;
-  if (it.peak_rank) return `<span class="chip" title="How high it got in the BBC’s Most read">was #${it.peak_rank} most read</span>`;
+  if (it.most_read) return `<span class="chip chip--new" title="In the ${esc(it.most_read_by || 'BBC')}’s Most read right now">#${it.most_read} most read</span>`;
+  if (it.peak_rank) return `<span class="chip" title="How high it got in Most read">was #${it.peak_rank} most read</span>`;
   return '';
 }
 const MON_SHORT = iso => { const [y, m, d] = String(iso || '').split('-'); return d ? `${Number(d)} ${MON[Number(m) - 1]}` : iso || ''; };
@@ -189,14 +189,12 @@ function storyRow(it, { lead = false, summary = false, reason = '', rank = false
   if (it.shielded) return shieldRow(it, { rank });
   if (it.muted) return `<li class="st st--muted">${rank ? `<span class="mr__n">${it.rank}</span>` : ''}<div class="st__main"><div class="st__title st__title--shield">Hidden — you said never show “${esc(it.muted)}”</div></div></li>`;
   const pic = lead && it.image ? `<a class="st__pic" href="${esc(safeUrl(it.url))}" target="_blank" rel="noopener noreferrer" data-nw-read="${it.id}" tabindex="-1"><img src="${esc(it.image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a>` : '';
-  const move = rank && it.prev_rank != null && it.prev_rank !== it.rank
-    ? `<span class="mr__move ${it.prev_rank > it.rank ? 'up' : 'down'}" title="Was #${it.prev_rank} an hour ago">${it.prev_rank > it.rank ? '▲' : '▼'}${Math.abs(it.prev_rank - it.rank)}</span>`
-    : rank && it.fresh ? '<span class="mr__move new" title="New to the list this hour">NEW</span>' : '';
   const bands = (it.artists || []).length || (it.links || []).length ? `<span class="st__bands">${(it.artists || []).map(a => `<span class="chip chip--vinyl">${esc(a)}</span>`).join('')}${linkChips(it)}</span>` : '';
+  // A Most read row is one outlet's list, so no outlet line.
   return `<li class="st${lead ? ' st--lead' : ''}${it.read ? ' is-read' : ''}${it.saved ? ' is-saved' : ''}" data-nw-row="${it.id}"${it.sole ? ' data-nw-keep' : ''}>
     ${rank ? `<span class="mr__n">${it.rank}</span>` : ''}${pic}
     <div class="st__main">
-      <div class="st__src">${esc(it.source)}${it.t && !rank ? `<span class="st__age">${esc(age(it.t))}</span>` : ''}${move}${rank ? '' : rankChip(it)}${reason ? `<span class="chip chip--warn">${esc(reason)}</span>` : ''}</div>
+      ${rank ? '' : `<div class="st__src">${esc(it.source)}${it.t ? `<span class="st__age">${esc(age(it.t))}</span>` : ''}${rankChip(it)}${reason ? `<span class="chip chip--warn">${esc(reason)}</span>` : ''}</div>`}
       <a class="st__title" href="${esc(safeUrl(it.url))}" target="_blank" rel="noopener noreferrer" data-nw-read="${it.id}">${esc(it.title)}</a>
       ${(lead || summary) && it.summary ? `<p class="st__sum">${esc(it.summary)}</p>` : ''}
       ${alsoChip(it)}${bands}${downStrip(it)}
@@ -232,16 +230,17 @@ function renderPanel() {
 const empty = (icon, title, text) => `<div class="nw-empty">${ico(icon)}<b>${esc(title)}</b>${text ? `<span>${text}</span>` : ''}</div>`;
 
 function frontHtml(d) {
-  const mr = d.most_read;
-  const mrCard = mr ? `<section class="card nw-mr"><div class="card__in"><div class="card__head"><span class="hud">Most read · BBC</span>
+  const mrs = [].concat(d.most_read || []);                     // a hub not yet restarted sends one list, not an array
+  const mrCards = mrs.map(mr => `<section class="card nw-mr"><div class="card__in"><div class="card__head"><span class="hud">Most read · ${esc(mr.name || 'BBC')}</span>
       <span class="meta">${mr.error ? `<span class="warn" title="${esc(mr.error)}">couldn’t refresh · </span>` : ''}${mr.at ? `as of ${esc(hm(mr.at))}` : ''}</span></div>
-      ${mr.items.length ? `<ol class="rows st-list mr">${mr.items.map(it => storyRow(it, { rank: true })).join('')}</ol>` : empty('news', 'Not loaded yet', 'The BBC’s list arrives within the hour.')}</div></section>` : '';
+      ${mr.items.length ? `<ol class="rows st-list mr">${mr.items.map(it => storyRow(it, { rank: true })).join('')}</ol>`
+        : mr.at ? empty('news', 'No news in the list', 'Nothing but features right now.') : empty('news', 'Not loaded yet', `The ${esc(mr.name || 'BBC')}’s list arrives within the hour.`)}</div></section>`).join('');
   const blocks = d.sections.map(b => `<section class="card nw-block"><div class="card__in"><div class="card__head"><span class="hud">${esc(b.name)}${b.personal ? ' · your artists' : ''}</span>
       <span class="nw-block__tabs">${(b.tabs || [{ id: b.id, name: '', total: b.total }]).length > 1
         ? b.tabs.map(t => `<button type="button" class="btn" data-nw-tab="${esc(t.id)}">${esc(t.name)} ${t.total} ›</button>`).join('')
         : `<button type="button" class="btn" data-nw-tab="${esc(b.id)}">${b.total ? `All ${b.total}` : 'Open'} ›</button>`}</span></div>
       ${b.lead || b.items.length ? `<ul class="rows st-list">${b.lead ? storyRow(b.lead, { lead: true }) : ''}${b.items.map(it => storyRow(it)).join('')}</ul>` : empty(ICONS[b.id] || 'news', 'Nothing new', b.personal ? 'No news about your artists in the last couple of days.' : 'No stories in the last couple of days.')}</div></section>`).join('');
-  return `<div class="nw-front${mr ? '' : ' nw-front--solo'}">${mrCard}<div class="nw-blocks">${blocks || empty('news', 'No sections on the front page', 'Choose some in Settings → News.')}</div></div>`;
+  return `<div class="nw-front${mrs.length ? '' : ' nw-front--solo'}">${mrs.length ? `<div class="nw-mrs">${mrCards}</div>` : ''}<div class="nw-blocks">${blocks || empty('news', 'No sections on the front page', 'Choose some in Settings → News.')}</div></div>`;
 }
 
 function sectionHtml(d) {
@@ -310,7 +309,7 @@ function archiveHtml() {
 function allShown() {
   if (tab === 'archive') return arch.items;
   if (!view) return [];
-  if (tab === 'front') return [...(view.most_read?.items || []), ...view.sections.flatMap(b => [b.lead, ...b.items].filter(Boolean))];
+  if (tab === 'front') return [...[].concat(view.most_read || []).flatMap(m => m.items), ...view.sections.flatMap(b => [b.lead, ...b.items].filter(Boolean))];
   return [...view.stories, ...view.hidden];
 }
 const findAll = id => allShown().filter(s => s && s.id === id);

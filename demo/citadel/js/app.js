@@ -7,6 +7,8 @@ import { $, $$, esc, gcalUrl, hostUrl, ico, safeUrl, tickClock, tickUptimes, toa
 import { THEMES, currentLook, currentSkin, currentTheme, look, mode, setLook, setMode, syncThemes } from './theme.js';
 import * as music from './music.js';
 import * as news from './news.js';
+import * as stats from './stats.js';
+import * as motion from './motion.js';
 
 let state = null;
 const shell = new Shell($('#grid'), cards, id => renderCard(id));
@@ -18,11 +20,17 @@ const defs = new Map(cards.map(c => [c.id, c]));
 // each time, even though the tile's own 1s-fresh data was perfectly fine. Keeping it in its own variable and
 // merging it in at render time means it survives every one of those reloads untouched.
 let monitoring = null;
+// The other machines (app/machines.py) change every 30 s server-side: fetched on every 15th 2 s tick and when Monitoring opens.
+let machines = null, monTicks = 0;
+async function pollMachines() {
+  try { machines = (await api.get('/api/owner/machines')).machines; } catch { /* keep the last list */ }
+  renderCard('monitoring');
+}
 
 function renderCard(id) {
   if (!state) return;
-  if (id === 'monitoring') { shell.update(id, defs.get(id).render({ ...state, monitoring }, shell.ctx(id))); return; }
-  shell.update(id, defs.get(id).render(state, shell.ctx(id)));
+  if (id === 'monitoring') { shell.update(id, defs.get(id).render({ ...state, monitoring, machines }, shell.ctx(id))); return; }
+  shell.update(id, defs.get(id).render(state, shell.ctx(id)), { fresh: freshData });
   if (id === 'vinyl') {
     // Shell's own expand/collapse (#apply) already hides .maxbar (filters + search) on the small tile and
     // un-hides it once expanded — that has to be reasserted here too, not just left to Shell, because
@@ -51,6 +59,8 @@ function alertsDrawer(on) {
 const UNDO_MS = 6000;
 let alertsOpen = false;
 const undoable = new Map();                           // key -> { title, timer }
+const rechecking = new Map();                         // alert key -> the widget's sync stamp when Recheck was pressed
+const syncStamp = id => { const w = state.widgets?.[id]; return w ? `${w.fetched_at}|${w.error_at}` : ''; };
 
 function alertHtml(a) {
   const title = a.href ? `<a href="${esc(safeUrl(a.href))}" target="_blank" rel="noopener">${esc(a.title)}</a>` : esc(a.title);
@@ -58,10 +68,15 @@ function alertHtml(a) {
   return `<div class="alert alert--${esc(a.level)} cut">${ico(a.icon)}
     <span class="alert__text"><b>${title}</b> — ${esc(a.detail)}</span>
     <span class="chip ${a.level === 'now' ? 'chip--today' : a.level === 'info' ? 'chip--fresh' : 'chip--new'} alert__when">${esc(a.chip)}</span>
+    ${a.action ? `<button class="btn alert__act" type="button" data-alert-action="${esc(a.key)}"${rechecking.has(a.key) ? ' disabled>Checking…' : `>${esc(a.action.label)}`}</button>` : ''}
     ${a.key ? `<button class="btn btn--icon alert__x" type="button" data-alert-dismiss="${esc(a.key)}" aria-label="${esc(done)}: ${esc(a.title)}" title="${esc(done)}">${ico(a.done ? 'check' : 'x')}</button>` : ''}</div>`;
 }
 
 function renderAlerts() {
+  for (const [key, stamp] of rechecking) {                // the sync finished (or the alert went): the button comes back
+    const a = state.alerts.find(x => x.key === key);
+    if (!a || syncStamp(a.action.widget) !== stamp) rechecking.delete(key);
+  }
   const list = state.alerts.filter(a => !undoable.has(a.key));
   const folded = !alertsOpen && list.length > ALERTS_SHOWN ? list.length - (ALERTS_SHOWN - 1) : 0;
   const shown = folded ? list.slice(0, ALERTS_SHOWN - 1) : list;
@@ -95,6 +110,15 @@ async function dismissAlert(key) {
   renderAlerts();
   try { await api.post('/api/owner/alerts/dismiss', { key }); }
   catch (err) { clearTimeout(undoable.get(key)?.timer); undoable.delete(key); renderAlerts(); toast(`Couldn't dismiss: ${err.message}`); }
+}
+
+async function alertAction(key) {
+  const a = state.alerts.find(x => x.key === key);
+  if (!a?.action || rechecking.has(key)) return;
+  rechecking.set(key, syncStamp(a.action.widget));
+  renderAlerts();
+  try { await api.post(`/api/owner/widgets/${encodeURIComponent(a.action.widget)}/refresh`); }
+  catch (err) { rechecking.delete(key); renderAlerts(); toast(`Couldn't recheck: ${err.message}`); }
 }
 
 async function restoreAlert(key) {
@@ -227,6 +251,17 @@ function setHouseSrc() {
 }
 houseFrame.addEventListener('load', tellFrames);
 
+// And for the Casino page (Casino World, a link). A Godot game with its own look, so no theme hand-off.
+const casinoFrame = $('#casino-frame');
+let casinoSrcSet = false;
+function setCasinoSrc() {
+  if (casinoSrcSet) return;
+  const link = state.links.find(l => l.for_casino);
+  if (!link) return;
+  casinoFrame.src = link.url;
+  casinoSrcSet = true;
+}
+
 // The bookmarks across the top (Settings → Widgets → Bookmarks; the widget is still called "shortcuts" inside):
 // a Bookmarks button, then the first four in Settings' order. The button drops a panel with the rest, laid over the
 // reminders so the card grid never moves. On desktop the panel hangs from the button as a column of the button's width
@@ -262,18 +297,21 @@ function renderShortcuts() {
   bar.innerHTML = `<div class="bmbar__list">${top.map((s, i) => tile(s, i, true)).join('')}${rest.map((s, i) => tile(s, i)).join('')}</div>`
     + '<a class="bmbar__edit" href="/settings#widgets">Edit in Settings</a>';
 }
-/** Desktop: hang the open panel from the Bookmarks button. Its columns are the button's width, and each holds as many
- *  bookmarks as fit between the button and the bottom of the screen. Measured in screen pixels and divided back down by
- *  the shell's zoom (the 2560 layout's 1.2), the same way layoutRail does. Phones keep their own fixed panel (CSS). */
-function placeBookmarks() {
-  const bar = $('#bm-bar'), btn = $('[data-bm-toggle]'), list = bar?.querySelector('.bmbar__list');
-  if (!bar || bar.hidden || !btn) return;
-  const props = ['--bm-top', '--bm-left', '--bm-w', '--bm-col', '--bm-rows'];
+/** Desktop: hang an open drop-down (Bookmarks, Style) from its button. Its columns are the button's width, and each
+ *  holds as many tiles as fit between the button and the bottom of the screen. Measured in screen pixels and divided
+ *  back down by the shell's zoom (the 2560 layout's 1.2), the same way layoutRail does. Style hangs from the button's
+ *  right edge (--bm-right), Bookmarks from its left. Phones keep their own fixed panel (CSS). */
+function placeDrop(bar, btn) {
+  const list = bar?.querySelector('.bmbar__list');
+  if (!bar || bar.hidden || !btn || !list) return;
+  if (bar === styleBar) btn = lookGroup;          // Style hangs from both look buttons
+  const props = ['--bm-top', '--bm-left', '--bm-right', '--bm-w', '--bm-col', '--bm-rows'];
   if (matchMedia('(max-width: 760px)').matches) { props.forEach(p => bar.style.removeProperty(p)); return; }
   const z = rail.getBoundingClientRect().width / parseFloat(getComputedStyle(rail).width) || 1;
   const b = btn.getBoundingClientRect(), m = bar.offsetParent.getBoundingClientRect(), cs = getComputedStyle(bar);
   bar.style.setProperty('--bm-top', `${(b.bottom - m.top) / z}px`);   // flush: the panel carries on from the button
   bar.style.setProperty('--bm-left', `${(b.left - m.left) / z}px`);
+  bar.style.setProperty('--bm-right', `${(m.right - b.right) / z}px`);
   bar.style.setProperty('--bm-w', `${b.width / z}px`);
   const sides = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((n, k) => n + parseFloat(cs[k]), 0);
   bar.style.setProperty('--bm-col', `${b.width / z - sides}px`);
@@ -284,16 +322,19 @@ function placeBookmarks() {
   const room = innerHeight - 16 - bar.getBoundingClientRect().top - (bar.getBoundingClientRect().height - list.getBoundingClientRect().height);
   bar.style.setProperty('--bm-rows', Math.max(1, Math.min(tiles.length, Math.floor((room + gap) / (tile + gap)))));
 }
+const placeBookmarks = () => placeDrop($('#bm-bar'), $('[data-bm-toggle]'));
+const isDropOpen = bar => !!bar && !bar.hidden && !bar.classList.contains('is-closing');
 /** Open/close the bookmarks panel (no argument: toggle). `now` skips the fold-away animation. */
-function bookmarks(on, now = false) {
-  const bar = $('#bm-bar'), btn = $('[data-bm-toggle]');
+function bookmarks(on, now = false) { drop($('#bm-bar'), $('[data-bm-toggle]'), on, now); }
+/** Open/close a drop-down panel (no argument: toggle). `now` skips the fold-away animation. */
+function drop(bar, btn, on, now = false) {
   if (!bar) return;
-  const isOpen = !bar.hidden && !bar.classList.contains('is-closing');
+  const isOpen = isDropOpen(bar);
   on = on ?? !isOpen;
   if (on === isOpen && !now) return;
   btn?.setAttribute('aria-expanded', String(on));
   bar.classList.remove('is-opening', 'is-closing');
-  if (on) { bar.hidden = false; placeBookmarks(); void bar.offsetWidth; bar.classList.add('is-opening'); return; }
+  if (on) { bar.hidden = false; placeDrop(bar, btn); void bar.offsetWidth; bar.classList.add('is-opening'); return; }
   if (now || matchMedia('(prefers-reduced-motion: reduce)').matches) { bar.hidden = true; return; }
   bar.classList.add('is-closing');
   bar.addEventListener('animationend', () => { if (bar.classList.contains('is-closing')) { bar.hidden = true; bar.classList.remove('is-closing'); } }, { once: true });
@@ -313,21 +354,18 @@ function renderReadout() {
   const m = monitoring, up = state.widgets?.system?.data?.uptime_s;
   const cpuT = m?.cpu?.temp?.package, gpuT = m?.gpu?.temp, cpu = m?.cpu?.percent, gpu = m?.gpu?.percent;
   const vram = m?.gpu?.mem_total_mb ? m.gpu.mem_used_mb / m.gpu.mem_total_mb * 100 : null, ram = m?.mem ? m.mem.used / m.mem.total * 100 : null;
-  const cells = [                                                   // [label, text, the number its heat comes from]
-    ['CPU °C', cpuT != null ? cpuT.toFixed(1) : '—', cpuT],
-    ['GPU °C', gpuT != null ? gpuT.toFixed(1) : '—', gpuT],
-    ['CPU', cpu != null ? `${cpu.toFixed(1)}%` : '—', cpu],
-    ['GPU', m?.gpu ? pct(gpu) : '—', gpu],
-    ['VRAM', pct(vram), vram],
-    ['RAM', pct(ram), ram],
-    ['Uptime', up != null ? `${Math.floor(up / 86400)}d ${Math.floor(up % 86400 / 3600)}h` : '—', null],
-  ];
-  // a number that changed since the last reading flashes once (lcars.css .is-tick)
-  const before = Object.fromEntries([...el.querySelectorAll('div')].map(d => [d.firstChild.textContent, d.lastChild.textContent]));
-  el.innerHTML = cells.map(([k, v, n]) => {
-    const heat = heatOf(k, n);
-    return `<div><dt>${esc(k)}</dt><dd${k in before && before[k] !== v ? ' class="is-tick"' : ''}${heat ? ` data-heat="${heat}"` : ''}>${esc(v)}</dd></div>`;
-  }).join('');
+  const t1 = v => v.toFixed(1), p1 = v => `${v.toFixed(1)}%`;
+  const cells = [                                                   // fmt: number -> text, so LCARS can roll between readings
+    { k: 'CPU °C', n: cpuT, fmt: t1 },
+    { k: 'GPU °C', n: gpuT, fmt: t1 },
+    { k: 'CPU', n: cpu, fmt: p1 },
+    { k: 'GPU', n: m?.gpu ? gpu : null, fmt: pct },
+    { k: 'VRAM', n: vram, fmt: pct },
+    { k: 'RAM', n: ram, fmt: pct },
+    { k: 'Uptime', n: null, text: up != null ? `${Math.floor(up / 86400)}d ${Math.floor(up % 86400 / 3600)}h` : '—' },
+  ].map(c => ({ ...c, n: c.n ?? null, text: c.text ?? (c.n != null ? c.fmt(c.n) : '—'), heat: heatOf(c.k, c.n) }));
+  // updated in place: in LCARS a number rolls to its new value and only a real change gets a cue (motion.js)
+  motion.updateReadout(el, cells);
 }
 // On the element itself, so it runs before Shell's document-level "click outside closes the open card": opening stops
 // the click there (or Shell would close it again at once without View Transitions); with a card open, Shell closes it.
@@ -335,21 +373,28 @@ function openMonitoring(e) {
   if (shell.open) return;
   e.stopPropagation();
   shell.toggle($('#monitoring'));
+  pollMachines();
 }
 $('#readout').addEventListener('click', openMonitoring);
 $('#readout').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMonitoring(e); } });
 
+// True while renderAll redraws the cards from new state, so LCARS can show which cards' data changed (motion.js); not
+// for redraws from opening, filtering or searching a card, or Monitoring's own 2 s poll.
+let freshData = false;
 function renderAll() {
   renderShortcuts();
   renderReadout();
-  cards.forEach(c => renderCard(c.id));
+  freshData = true;
+  try { cards.forEach(c => renderCard(c.id)); } finally { freshData = false; }
   renderAlerts();
   setMediaSrc();
   setMusicSrc();
   setSqlSrc();
   setAiSrc();
   setHouseSrc();
+  setCasinoSrc();
   setCurateSrc();
+  renderNav(state.navigation);
   music.onState(state);
   $('#host-label').textContent = `${state.host} · ${location.hostname}`;
   $('#device-label').textContent = `${state.device.role === 'owner' ? 'Owner' : state.device.role} device`;
@@ -363,16 +408,17 @@ function renderAll() {
 async function pollMonitoring() {
   if (!state || document.hidden || VIEWS.includes(location.hash.slice(1)) && location.hash !== '#home') return;   // the tile is on Home only
   try { monitoring = await api.get('/api/owner/monitoring'); } catch { /* keep the last good reading, don't blank the tile over one dropped request */ }
+  if (monTicks++ % 15 === 0) pollMachines();
   renderCard('monitoring');
   renderReadout();
 }
 
-// ---- view router (Home / News / Media / Companion / SQL DB / Music / Odysseus / House) --------------------------------------------------------------
-const VIEWS = ['home', 'news', 'media', 'music', 'sql', 'listen', 'ai', 'house', 'curate', 'settings'];
+// ---- view router (Home / News / Media / Companion / SQL DB / Music / Casino / Odysseus / House / Stats) --------------------------------------------------------------
+const VIEWS = ['home', 'news', 'media', 'music', 'sql', 'listen', 'casino', 'ai', 'house', 'stats', 'curate', 'settings'];
 // While an embedded page is showing, the phone keyboard shrinks the screen (interactive-widget=resizes-content) rather
 // than sliding over it, so the pinned page (dashboard.css, .main:has(...)) ends just above the keyboard and a chat box
 // at the bottom of it stays visible. Only on those pages: Home, News and Music keep the browser's default.
-const FRAME_VIEWS = ['media', 'music', 'sql', 'ai', 'house', 'curate', 'settings'];
+const FRAME_VIEWS = ['media', 'music', 'sql', 'casino', 'ai', 'house', 'curate', 'settings'];
 const viewportMeta = $('meta[name="viewport"]');
 const VIEWPORT = viewportMeta.content;
 // Settings opens inside the dashboard, framed like the embedded pages (it's Citadel's own page, same origin). It loads
@@ -400,17 +446,114 @@ function route() {
   viewportMeta.content = FRAME_VIEWS.includes(v) ? `${VIEWPORT}, interactive-widget=resizes-content` : VIEWPORT;
   document.documentElement.dataset.page = v;         // the header's middle slot follows it (shortcuts, or the Music page's player)
   $$('.view').forEach(el => el.classList.toggle('is-active', el.dataset.view === v));
-  $$('.rail a[data-view], .tabbar a[data-view]').forEach(a => {
-    if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-  });
+  if (slideDir) slideIn($(`.view[data-view="${v}"]`), slideDir);
+  slideDir = null;
+  moreSheet(false);
+  markCurrent();
   music.onView(v);                                  // the Music page (music.js) only polls Spotify while it's on screen
   news.onView(v);                                   // the News page (news.js) loads its own stories when shown
+  stats.onView(v);                                  // the Fleet page (stats.js): machine history from the collector on NZXT
 }
+function markCurrent() {
+  $$('.rail a[data-view], .tabbar a[data-view], #more-sheet a[data-view]').forEach(a => {
+    if (a.dataset.view === lastView) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+  $('[data-more]')?.classList.toggle('is-current', !!$(`#more-sheet a[data-view="${lastView}"]`));   // the page shown is under More
+}
+
+// ---- navigation (Settings → Navigation): page names, the phone's tabs, the rail's pages, and their order -----------------
+// index.html holds the defaults; this renames, reorders and hides rail links and rebuilds the phone's tab bar from the
+// saved settings (this device's own, or every device's). Pages without a phone tab go under the tab bar's More. The last
+// settings seen are kept on this device too, so a phone draws its own tabs straight away instead of the defaults until
+// the state arrives.
+const tabbar = $('.tabbar'), more = $('#more-sheet');
+$$('.rail a[data-view]').forEach(a => { a.dataset.title = a.title; });     // a page under its own name keeps its fuller tooltip
+let navShown = '';
+function renderNav(nav) {
+  if (!nav?.pages?.length) return;
+  const key = JSON.stringify(nav);
+  if (key === navShown) return;
+  navShown = key;
+  try { localStorage.setItem('nav', key); } catch { /* storage blocked: just no head start next time */ }
+  const spacer = $('.rail .spacer'), railEnd = $('.rail .rail__settings');
+  for (const p of nav.pages) {
+    const a = $(`.rail a[data-view="${p.id}"]`);
+    if (!a) continue;
+    $('.rail__label', a).textContent = p.label;
+    a.title = p.label === p.default ? a.dataset.title : p.label;
+    a.hidden = !p.rail;
+    // in turn, so they end up in the saved order between Home and the gap. Hidden ones wait at the very end, out of the
+    // way of LCARS lining up whichever page follows Home (lcars.css) and of the boot animation's one-after-another.
+    if (!p.rail) railEnd.after(a); else if (p.movable) spacer.before(a);
+  }
+  const shown = nav.pages.filter(p => $(`.view[data-view="${p.id}"]`));
+  const icon = p => (p.id === 'home' && currentSkin() === 'lcars' ? 'logo' : p.icon);    // as placeLcars does
+  const link = p => `<a href="#${esc(p.id)}" data-view="${esc(p.id)}"><svg class="i"><use href="#i-${esc(icon(p))}"/></svg><span class="tabbar__label">${esc(p.label)}</span></a>`;
+  const rest = shown.filter(p => !p.phone);
+  more.innerHTML = rest.map(link).join('');
+  tabbar.innerHTML = shown.filter(p => p.phone).map(link).join('')
+    + (rest.length ? `<button type="button" class="tabbar__more" data-more aria-expanded="false" aria-controls="more-sheet"><svg class="i"><use href="#i-grid"/></svg><span class="tabbar__label">More</span></button>` : '');
+  moreSheet(false);
+  markCurrent();
+  if (booted) requestAnimationFrame(layoutRail);       // the first page under Home may have changed (LCARS lines it up)
+}
+
+// More: the phone's other pages, in a small sheet over the tab bar. Picking one changes the address, and route() closes it.
+function moreSheet(on) {
+  more.hidden = !on;
+  $('[data-more]')?.setAttribute('aria-expanded', String(on));
+}
+tabbar.addEventListener('click', e => { if (e.target.closest('[data-more]')) moreSheet(more.hidden); });
+document.addEventListener('click', e => { if (!more.hidden && !e.target.closest('#more-sheet, [data-more]')) moreSheet(false); });
+
+// ---- swiping between Citadel's own pages (phones) -----------------------------------------------------------------------
+// Left and right go to the next and previous built-in page in tab-bar order. Embedded pages are skipped, both ways: a
+// swipe inside one belongs to the app in it, so it's never swiped to or from. "Built in" is read from the page itself (a
+// view with no .frame-shell), so a new page of Citadel's own joins without a change here.
+const builtIn = id => { const v = $(`.view[data-view="${id}"]`); return !!v && !v.querySelector('.frame-shell'); };
+let swipe = null, slideDir = null;
+function scrollsSideways(el) {                          // a row that scrolls sideways (News sections, playlists) keeps its swipe
+  for (let n = el; n && n !== document.body; n = n.parentElement) {
+    if (n.scrollWidth > n.clientWidth + 2 && /auto|scroll/.test(getComputedStyle(n).overflowX)) return true;
+  }
+  return false;
+}
+function slideIn(view, dir) {
+  if (!view || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const root = document.documentElement;
+  view.dataset.slide = dir; root.classList.add('is-sliding');            // .main clips it meanwhile, so the page never widens
+  clearTimeout(slideIn.t);
+  slideIn.t = setTimeout(() => { delete view.dataset.slide; root.classList.remove('is-sliding'); }, 260);
+}
+const mainEl = $('.main');
+mainEl.addEventListener('touchstart', e => {
+  swipe = null;
+  if (!phone.matches || e.touches.length !== 1 || !builtIn(lastView)) return;
+  const t = e.touches[0];
+  if (t.clientX < 24 || t.clientX > innerWidth - 24) return;            // the screen's edges are the browser's back gesture
+  if (e.target.closest('input, textarea, select, dialog, .card.is-max, .top') || scrollsSideways(e.target)) return;
+  swipe = { x: t.clientX, y: t.clientY, at: e.timeStamp };
+}, { passive: true });
+mainEl.addEventListener('touchcancel', () => { swipe = null; }, { passive: true });
+mainEl.addEventListener('touchend', e => {
+  const s = swipe; swipe = null;
+  if (!s) return;
+  const t = e.changedTouches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
+  if (Math.abs(dx) < 70 || Math.abs(dx) < 2 * Math.abs(dy) || e.timeStamp - s.at > 700) return;
+  if (!more.hidden || $('#alerts').classList.contains('is-open') || !$('#bm-bar').hidden || !styleBar.hidden || $('dialog[open]') || window.getSelection()?.toString()) return;
+  const pages = $$('.tabbar a[data-view]').map(a => a.dataset.view).filter(builtIn);
+  const i = pages.indexOf(lastView), to = i < 0 ? null : pages[i + (dx < 0 ? 1 : -1)];
+  if (!to) return;
+  slideDir = dx < 0 ? 'next' : 'prev';
+  location.hash = to;
+}, { passive: true });
+
 addEventListener('hashchange', route);
 route();
 
-// The header's two look buttons. Day/Night flips this device's mode in one press; Theme opens a small menu: the
-// built-in Citadel and LCARS, then any custom themes (Settings → Appearance). Each is this device's own choice.
+// The header's two look buttons. Day/Night flips this device's mode in one press; Style drops a panel the same way
+// Bookmarks does: the built-in Citadel and LCARS, then any custom themes (Settings → Appearance), the one in use lit,
+// and Customise as its foot. Each is this device's own choice.
 const modeBtn = $('[data-mode-toggle]');
 const themeBtn = $('[data-theme-menu]');
 function syncLookButtons() {
@@ -420,32 +563,36 @@ function syncLookButtons() {
     $('.look-btn__word', modeBtn).textContent = to;
     modeBtn.setAttribute('aria-label', `Switch to ${to}`); modeBtn.title = `Switch to ${to}`;
   }
-  if (themeBtn) {
-    const id = look(), t = [...THEMES, ...(state?.appearance?.themes || [])].find(x => x.id === id);
-    $('.look-btn__word', themeBtn).textContent = t ? t.name : 'Citadel';
-  }
 }
 function swatch(t) {
   const h = t[mode()];
   if (!h) return `<span class="tm__sw tm__sw--${esc(t.id)}"></span>`;                          // a built-in theme: CSS knows its colours
   return `<span class="tm__sw tm__sw--${esc(t.skin)}" style="--sw-bg:${esc(h.panel)};--sw-ac:${esc(h.accent)}">${h.background?.file ? `<img src="backgrounds/${esc(h.background.file)}" alt="">` : ''}</span>`;
 }
-function closeThemeMenu() { $('#theme-menu')?.remove(); themeBtn?.setAttribute('aria-expanded', 'false'); }
-function openThemeMenu() {
-  const themes = state?.appearance?.themes || [], cur = look();
-  const item = t => `<button type="button" role="menuitemradio" aria-checked="${t.id === cur}" data-use-theme="${esc(t.id)}">${swatch(t)}<span>${esc(t.name)}</span>${t.id === cur ? ico('check') : ''}</button>`;
-  const menu = document.createElement('div');
-  menu.id = 'theme-menu'; menu.className = 'tm'; menu.setAttribute('role', 'menu');
-  menu.innerHTML = [...THEMES, ...themes].map(item).join('') + '<a class="tm__more" href="/settings#appearance">Customise…</a>';
-  themeBtn.after(menu);
-  themeBtn.setAttribute('aria-expanded', 'true');
-  menu.querySelector('[aria-checked="true"]')?.focus();
+// Style's panel hangs from the pair (Day/Night + Style, #look-group) and spans both. Open, the pair joins into one
+// cap over it (.look-group.is-open: the gap filled, only the outer top corners rounded).
+const styleBar = $('#style-bar'), lookGroup = $('#look-group');
+const placeStyles = () => placeDrop(styleBar, themeBtn);
+function renderStyles() {
+  const cur = look();
+  const tile = (t, i) => `<button class="bm" type="button" role="menuitemradio" aria-checked="${t.id === cur}" data-use-theme="${esc(t.id)}" style="--d:${80 + i * 22}ms">${swatch(t)}<span><b>${esc(t.name)}</b></span></button>`;
+  styleBar.innerHTML = `<div class="bmbar__list" role="menu" aria-label="Style">${[...THEMES, ...(state?.appearance?.themes || [])].map(tile).join('')}</div>`
+    + '<a class="bmbar__edit" href="/settings#appearance">Customise</a>';
+}
+/** Open/close the Style panel (no argument: toggle). It's drawn afresh on each open, so the lit theme is current. */
+function styles(on, now = false) {
+  on = on ?? !isDropOpen(styleBar);
+  if (on && !isDropOpen(styleBar)) renderStyles();
+  lookGroup?.classList.toggle('is-open', on);
+  drop(styleBar, themeBtn, on, now);
+  if (on) { placeStyles(); styleBar.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true }); }
 }
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  if ($('#theme-menu')) { closeThemeMenu(); themeBtn?.focus(); }
+  if (isDropOpen(styleBar)) { styles(false); themeBtn?.focus(); }
   if (!$('#bm-bar')?.hidden) { bookmarks(false); $('[data-bm-toggle]')?.focus(); }
   if ($('#alerts').classList.contains('is-open')) { alertsDrawer(false); $('[data-alerts-toggle]').focus(); }
+  if (!more.hidden) { moreSheet(false); $('[data-more]')?.focus(); }
 });
 // LCARS lays the header out differently, so two pieces move into it: the reminders (a row inside the header's frame,
 // under the bookmarks and buttons) and the readout (centred on the header itself, not in the bookmarks' slot).
@@ -501,11 +648,12 @@ function layoutRail() {
 }
 new ResizeObserver(() => layoutRail()).observe($('.top'));
 addEventListener('resize', layoutRail);
-addEventListener('resize', placeBookmarks);
+addEventListener('resize', () => { placeBookmarks(); placeStyles(); });
 addEventListener('hashchange', () => requestAnimationFrame(layoutRail));
 document.fonts?.ready.then(layoutRail);
-document.addEventListener('theme:change', () => { tellFrames(); syncLookButtons(); placeLcars(); });
-phone.addEventListener('change', () => { alertsDrawer(false); placeLcars(); });
+document.addEventListener('theme:change', () => { tellFrames(); syncLookButtons(); placeLcars(); if (isDropOpen(styleBar)) { styleBar.classList.remove('is-opening'); renderStyles(); placeStyles(); } });
+phone.addEventListener('change', () => { alertsDrawer(false); moreSheet(false); placeLcars(); });
+try { renderNav(JSON.parse(localStorage.getItem('nav'))); } catch { /* nothing saved on this device yet */ }
 syncLookButtons();
 placeLcars();
 
@@ -515,7 +663,7 @@ document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
   const n = '1234567890'.indexOf(e.key);
   if (n < 0 || document.documentElement.dataset.page !== 'home' || shell.open) return;
-  if (e.target.closest('input, textarea, select, [contenteditable], dialog') || $('dialog[open]') || $('#theme-menu')) return;
+  if (e.target.closest('input, textarea, select, [contenteditable], dialog') || $('dialog[open]') || isDropOpen(styleBar)) return;
   const card = [...shell.cards.values()][n]?.el;
   if (card) { e.preventDefault(); bookmarks(false, true); shell.toggle(card); }
 });
@@ -583,27 +731,26 @@ bookForm.addEventListener('submit', async e => {
 // ---- start / stop -----------------------------------------------------------------------------------------
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-mode-toggle]')) { setMode(mode() === 'day' ? 'night' : 'day'); return; }
-  if (e.target.closest('[data-theme-menu]')) {
-    if ($('#theme-menu')) closeThemeMenu(); else openThemeMenu();
-    return;
-  }
+  if (e.target.closest('[data-theme-menu]')) { bookmarks(false); styles(); return; }
   const use = e.target.closest('[data-use-theme]');
-  if (use) { setLook(use.dataset.useTheme, state?.appearance?.themes); closeThemeMenu(); return; }
-  if ($('#theme-menu') && !e.target.closest('#theme-menu')) closeThemeMenu();
+  if (use) { styles(false, true); setLook(use.dataset.useTheme, state?.appearance?.themes); return; }   // a new skin re-lays the header: no fold-away
+  if (isDropOpen(styleBar) && (e.target.closest('#style-bar .bmbar__edit') || !e.target.closest('#style-bar'))) styles(false);
   if (!e.target.closest('#alerts, [data-alerts-toggle]')) alertsDrawer(false);   // a tap outside the reminders drawer closes it
   if (e.target.closest('[data-alerts-toggle]')) { alertsDrawer(); return; }
   if (e.target.closest('[data-bm-toggle]')) { bookmarks(); return; }
-  if (!$('#bm-bar').hidden && (e.target.closest('.bm, .bmbar__edit') || !e.target.closest('#bm-bar'))) bookmarks(false);   // picked one, or clicked elsewhere
+  if (!$('#bm-bar').hidden && (e.target.closest('#bm-bar .bm, #bm-bar .bmbar__edit') || !e.target.closest('#bm-bar'))) bookmarks(false);   // picked one, or clicked elsewhere
   const toSettings = e.target.closest('a[href^="/settings"]');
   if (toSettings && e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey) {     // opens in the Settings view (openSettings)
     e.preventDefault();
-    closeThemeMenu();
+    styles(false, true);
     settingsNext = toSettings.getAttribute('href');
     if (location.hash === '#settings') openSettings(); else location.hash = '#settings';
     return;
   }
   const dismiss = e.target.closest('[data-alert-dismiss]');
   if (dismiss) { dismissAlert(dismiss.dataset.alertDismiss); return; }
+  const act = e.target.closest('[data-alert-action]');
+  if (act) { alertAction(act.dataset.alertAction); return; }
   const restore = e.target.closest('[data-alert-restore]');
   if (restore) { restoreAlert(restore.dataset.alertRestore); return; }
   if (e.target.closest('[data-alerts-more]')) { alertsOpen = !alertsOpen; renderAlerts(); return; }
@@ -659,6 +806,26 @@ document.addEventListener('click', async e => {
     vinylUi.mode = vinylMode.dataset.vinylMode;
     $$('[data-vinyl-mode]', vinylMode.closest('.card__head')).forEach(b => b.setAttribute('aria-pressed', b === vinylMode));
     renderCard('vinyl');
+    return;
+  }
+  const wakeTile = e.target.closest('[data-wake]');
+  if (wakeTile) {                                                           // Remote Access: wake a sleeping device (Wake-on-LAN)
+    const id = wakeTile.dataset.wake;
+    const name = state.remote.find(r => String(r.id) === id)?.name || 'that device';
+    ui.pending[`vnc:${id}`] = 'wake';
+    renderCard('remote');
+    try {
+      await api.post(`/api/owner/remote/${encodeURIComponent(id)}/wake`);
+      toast(`Waking ${name}…`);
+      // "Waking…" until the ping sees it (the server's quick recheck sends a health event), or 3 minutes
+      const until = Date.now() + 180000;
+      const done = () => state.remote.find(r => String(r.id) === id)?.up || Date.now() > until;
+      const tick = setInterval(() => { if (done()) { clearInterval(tick); delete ui.pending[`vnc:${id}`]; renderCard('remote'); } }, 1000);
+    } catch (err) {
+      delete ui.pending[`vnc:${id}`];
+      renderCard('remote');
+      toast(err.message);
+    }
     return;
   }
   const vnc = e.target.closest('[data-vnc], [data-vnc-close]');
@@ -752,6 +919,7 @@ document.addEventListener('card:max', e => {
 });
 
 // ---- boot -------------------------------------------------------------------------------------------------
+motion.init();
 await load();
 tickClock();
 tickUptimes();

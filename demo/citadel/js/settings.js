@@ -3,8 +3,11 @@
 import * as api from './api.js';
 import { $, $$, esc, ico, hhmm, ago, toast, isoOf } from './util.js';
 import { THEMES, applySpec, look, mode, setLook, setMode, specOf, syncThemes } from './theme.js';
+import * as motion from './motion.js';
 
-const TABS = [['links', 'Links', 'globe'], ['projects', 'Projects', 'grid'], ['remote', 'Remote access', 'desk'], ['widgets', 'Widgets', 'cal'], ['appearance', 'Appearance', 'sun'], ['music', 'Music', 'disc'], ['listen', 'Music page', 'wave'], ['news', 'News', 'news'], ['screens', 'Screens & devices', 'server'], ['maintenance', 'Maintenance & logs', 'gear'], ['about', 'About', 'chip']];
+const TABS = [['links', 'Links', 'globe'], ['projects', 'Projects', 'grid'], ['remote', 'Remote access', 'desk'], ['widgets', 'Widgets', 'cal'], ['appearance', 'Appearance', 'sun'], ['navigation', 'Navigation', 'list'], ['music', 'Music', 'disc'], ['listen', 'Music page', 'wave'], ['news', 'News', 'news'], ['screens', 'Screens & devices', 'server'], ['maintenance', 'Maintenance & logs', 'gear'], ['about', 'About', 'chip']];
+// LCARS screen overlays to try (Settings → Appearance → Overlay; lcars.css). 'scan' = the Citadel scanlines, the default.
+const LC_OVERLAYS = [['scan', 'Scanlines'], ['none', 'None'], ['vignette', 'Vignette'], ['dots', 'Dot grid'], ['bands', 'Bands'], ['tint', 'Tinted']];
 const panel = $('#panel');
 let cfg = null, live = null, extras = { artists: { artists: [], music_db: false }, gigs: [] };   // config, live widget status, artists + gigs
 let maint = { jobs: [], log_counts: {}, backups: [], now: 0 }, logs = { items: [], sources: [], counts: {} };   // schedule table + event log
@@ -57,6 +60,7 @@ function linkForm(l = {}) {
       ${check('for_sql', 'Use as SQL DB view', l.for_sql, '')}
       ${check('for_ai', 'Use as Odysseus view', l.for_ai, '')}
       ${check('for_house', 'Use as House view', l.for_house, '')}
+      ${check('for_casino', 'Use as Casino view', l.for_casino, '')}
     </div>
     <div class="form-actions">${act('cancel', 'Cancel')}<button class="btn btn--solid" type="submit">Save link</button></div></form>`;
 }
@@ -129,9 +133,13 @@ function projectsTab() {
 function remoteForm(r = {}) {
   return `<form class="form" data-form="remote" data-id="${esc(r.id || '')}">
     <div class="form-grid">
-      ${field('Name', input('name', r.name, 'required maxlength="40" placeholder="e.g. Pi 1 desktop"'))}
-      ${field('VNC address', input('address', r.address, 'required maxlength="253" spellcheck="false" placeholder="e.g. pi-1.local"'), 'Host name or IP address. Only for a server not on the usual port 5900: <code>host:1</code> is port 5901, <code>host::5905</code> is port 5905.')}
+      ${field('Name', input('name', r.name, 'required maxlength="40" placeholder="e.g. Probe-1 desktop"'))}
+      ${field('VNC address', input('address', r.address, 'required maxlength="253" spellcheck="false" placeholder="e.g. probe-1.local"'), 'Host name or IP address. Only for a server not on the usual port 5900: <code>host:1</code> is port 5901, <code>host::5905</code> is port 5905.')}
+      ${field('Viewer', select('viewer', [['krdc', 'KRDC (scales to the window)'], ['tigervnc', 'TigerVNC']], r.viewer || 'krdc'))}
+      ${field('Wake-on-LAN MAC address', input('mac', r.mac, 'maxlength="17" spellcheck="false" autocomplete="off" placeholder="blank = no wake"'))}
+      ${field('Monitoring SSH user', input('ssh_user', r.ssh_user, 'maxlength="32" spellcheck="false" autocomplete="off" placeholder="blank = not monitored"'), 'Set up once with <code>tools/machines_setup.py</code>.')}
     </div>
+    <div class="checks">${check('always_on', 'Always on', r.always_on, 'Remind me when it’s been off for a while.')}</div>
     <div class="form-actions">${act('cancel', 'Cancel')}<button class="btn btn--solid" type="submit">Save device</button></div></form>`;
 }
 
@@ -140,13 +148,13 @@ function remoteTab() {
   const rows = list.map((r, i) => editing?.kind === 'remote' && editing.id === r.id
     ? `<li class="item item--edit">${remoteForm(r)}</li>`
     : `<li class="item"><span class="item__icon">${ico('desk')}</span>
-        <div class="item__main"><b>${esc(r.name)}</b><div class="item__sub">${esc(r.address)}</div></div>
+        <div class="item__main"><b>${esc(r.name)}</b><div class="item__sub">${esc(r.address)} · ${r.viewer === 'tigervnc' ? 'TigerVNC' : 'KRDC'}${r.mac ? ' · wakes' : ''}${r.ssh_user ? ' · monitored' : ''}${r.always_on ? ' · always on' : ''}</div></div>
         <div class="item__acts">
           ${act('move-remote', ico('up'), `data-i="${i}" data-d="-1" aria-label="Move up" ${i > 0 ? '' : 'disabled'}`, 'btn--icon')}
           ${act('move-remote', ico('down'), `data-i="${i}" data-d="1" aria-label="Move down" ${i < list.length - 1 ? '' : 'disabled'}`, 'btn--icon')}
           ${act('edit-remote', 'Edit', `data-id="${r.id}"`)}${act('delete-remote', 'Delete', `data-id="${r.id}" data-name="${esc(r.name)}"`, 'btn--danger')}</div></li>`).join('');
   const adding = editing?.kind === 'remote' && editing.id === 'new' ? `<li class="item item--edit">${remoteForm()}</li>` : '';
-  return card('Remote access', 'Each device is a tile on Home that opens a VNC viewer (TigerVNC) on this PC.',
+  return card('Remote access', 'Each device is a tile on Home that opens a VNC viewer on this PC.',
     `<div class="bar-actions">${act('new-remote', `${ico('play')}Add device`, '', 'btn--go')}</div><ul class="items">${adding}${rows}</ul>`);
 }
 
@@ -213,7 +221,8 @@ const ALERT_KINDS = [
   ['f1', 'F1 sessions', 'From three hours before qualifying, a sprint or the race. Session names only, never results.'],
   ['onsale', 'Ticket on-sales', 'When tickets (or a presale) for a gig on your radar go on sale today or tomorrow.'],
   ['fresh', 'Fresh announcements', 'A newly announced album, gig or vinyl pre-order by one of your top artists, for a day.'],
-  ['down', 'Something’s down', 'A running project or a Launchpad service that has stopped answering for 10 minutes, or this PC short of memory or disk.'],
+  ['down', 'Something’s down', 'A running project or a Launchpad service that has stopped answering for 10 minutes, this PC short of memory or disk, or Vinyl Radar unable to read a store.'],
+  ['machines', 'Other machines', 'A disk nearly full, a machine running hot for 5 minutes, the RAID not healthy, or an “Always on” device off for 10 minutes.'],
 ];
 
 function notificationsCard() {
@@ -234,7 +243,7 @@ const calRow = (c = {}) => `<div class="cal-row" data-cal data-id="${esc(c.id ||
 
 function diaryCard() {
   const s = cfg.widgets.diary.settings;
-  return card('Diary — calendars',
+  return card('Calendar — calendars',
     'Google Calendar → Settings → your calendar → Integrate calendar → <i>Secret address in iCal format</i>.',
     `${statusLine(live?.diary, 'diary')}<form class="form" data-form="diary" style="padding:0 18px 12px">
       <div id="cals">${(s.calendars.length ? s.calendars : [{}]).map(calRow).join('')}</div>
@@ -362,9 +371,10 @@ const when = epoch => new Date(epoch * 1000).toLocaleString('en-GB', { weekday: 
 
 function newsFrontCard() {
   const s = cfg.widgets.news.settings;
-  return card('News — front page', 'What the <a href="/#news">News page</a> opens on: the BBC’s <b>Most read</b> top 10 beside each section’s lead stories. Each section’s own tab shows its latest stories, with near-duplicates from different outlets merged into one.',
-    `${statusLine(live?.news, 'news', 'Feeds')}${statusLine(live?.mostread, 'mostread', 'Most read')}<form class="form" data-form="news-front" style="padding:0 18px 12px">
-      <div class="checks">${check('most_read', 'Show the BBC’s Most read top 10', s.most_read, 'Read from bbc.co.uk once an hour.')}</div>
+  return card('News — front page', 'What the <a href="/#news">News page</a> opens on: the BBC’s and the Guardian’s <b>Most read</b> top 5s beside each section’s lead stories. Each section’s own tab shows its latest stories, with near-duplicates from different outlets merged into one.',
+    `${statusLine(live?.news, 'news', 'Feeds')}${statusLine(live?.mostread, 'mostread', 'BBC Most read')}${statusLine(live?.guardianread, 'guardianread', 'Guardian Most read')}<form class="form" data-form="news-front" style="padding:0 18px 12px">
+      <div class="checks">${check('most_read', 'Show the BBC’s Most read top 5', s.most_read, 'Read from bbc.co.uk once an hour.')}
+        ${check('most_read_guardian', 'Show the Guardian’s Most read top 5', s.most_read_guardian, 'News and sport only, read from theguardian.com once an hour.')}</div>
       <div class="form-grid">
         ${field('Stories per section on the front page', select('front_per_section', [2, 3, 4, 5, 6, 8], s.front_per_section))}
         ${field('A section’s “latest” covers', select('latest_hours', [[12, '12 hours'], [24, '24 hours'], [48, '2 days'], [72, '3 days'], [168, 'a week']], s.latest_hours))}
@@ -517,7 +527,7 @@ const musicPageTab = () => musicCfg ? spotifyCard() + playlistDefaultsCard() + s
   : card('Music page', '<span class="spin"></span>', '');
 
 // ---- Screens & devices ------------------------------------------------------------------------------------------
-const PANEL_LABELS = { bins: ['Bins', ''], gigs: ['Next gig', ''], diary: ['Diary', 'Anyone who can see the TV will see your events.'] };
+const PANEL_LABELS = { bins: ['Bins', ''], gigs: ['Next gig', ''], diary: ['Calendar', 'Anyone who can see the TV will see your events.'] };
 
 function screensCard() {
   const s = cfg.screens;
@@ -722,14 +732,49 @@ function appearanceTab() {
         <div class="item__main"><b>${esc(t.name)}</b>${t.id === cur ? '<span class="chip chip--new">This device</span>' : ''}<span class="chip">built on ${esc(SKIN_LABEL[t.skin] || t.skin)}</span>${t.day.background.file || t.night.background.file ? '<span class="chip">Background</span>' : ''}
           <div class="item__sub">Day accent ${esc(t.day.accent)} · Night accent ${esc(t.night.accent)}</div></div>
         <div class="item__acts">${act('edit-theme', 'Edit', `data-id="${esc(t.id)}"`)}${act('copy-theme', 'Duplicate', `data-id="${esc(t.id)}"`)}${act('delete-theme', 'Delete', `data-id="${esc(t.id)}" data-name="${esc(t.name)}"`, 'btn--danger')}</div></li>`).join('');
+  // LCARS only: how much it moves between page changes (motion.js), this device's own
+  const lv = motion.savedLevel(), motionRow = document.documentElement.dataset.skin !== 'lcars' ? ''
+    : `<div class="bar-actions modepick modepick--motion"><span class="field__l">Motion</span>${motion.LEVEL_NAMES.map(([k, label]) =>
+      `<button type="button" class="btn${k === lv ? ' btn--go' : ''}" data-do="use-motion" data-level="${k}" aria-pressed="${k === lv}">${label}</button>`).join('')}</div>`;
+  // LCARS only: the screen overlay over everything (theme-init.js sets html[data-lc-overlay]; lcars.css draws it)
+  const ovCur = (() => { try { return localStorage.getItem('lc-overlay') || 'scan'; } catch { return 'scan'; } })();
+  const overlayRow = document.documentElement.dataset.skin !== 'lcars' ? ''
+    : `<div class="bar-actions modepick modepick--motion"><span class="field__l">Overlay</span>${LC_OVERLAYS.map(([k, label]) =>
+      `<button type="button" class="btn${k === ovCur ? ' btn--go' : ''}" data-do="use-overlay" data-overlay="${k}" aria-pressed="${k === ovCur}">${label}</button>`).join('')}</div>`;
   const adding = editing?.kind === 'theme' && editing.id === 'new' ? `<li class="item item--edit">${themeForm(editing.seed || {})}</li>` : '';
   return card('This device',
     'Day or Night, and which theme. The same two buttons sit in the dashboard’s header.',
-    `<div class="bar-actions modepick">${modes}</div><div class="themepicks">${tiles}</div>`)
+    `<div class="bar-actions modepick">${modes}</div><div class="themepicks">${tiles}</div>${motionRow}${overlayRow}`)
     + card('Custom themes',
     'A variant of Citadel or LCARS, with its own Day and Night colours and pictures.',
     `<div class="bar-actions">${act('new-theme', `${ico('plus')}New theme`, '', 'btn--go')}</div><ul class="items">${adding}${rows}</ul>
      ${themes.length || adding ? '' : '<p class="sx__intro" style="padding-top:0">No custom themes yet.</p>'}`);
+}
+
+// ---- Navigation: page names, which pages a phone has tabs for (the rest go under More), which the desktop rail shows,
+// and the order. Every device shares one set unless a device saves its own. Home stays first, with a phone tab and on
+// the rail; Settings stays on the rail; Curate and Settings keep their place at the foot of the rail. ------------------
+let navScope = null;                    // 'shared' | 'device': which set the tab is editing
+const navRow = p => `<div class="nav-row" data-nav data-id="${esc(p.id)}"${p.movable ? ' data-movable' : ''}>
+  <span class="sc-row__preview">${ico(p.icon)}</span>
+  ${input('nav_label', p.label, `maxlength="${cfg.navigation.max_label}" placeholder="${esc(p.default)}" aria-label="Name"`)}
+  <span class="nav-row__checks">
+    <label class="check"><input type="checkbox" name="nav_phone"${p.phone ? ' checked' : ''}${p.id === 'home' ? ' disabled' : ''}><span>On phones</span></label>
+    <label class="check"><input type="checkbox" name="nav_rail"${p.rail ? ' checked' : ''}${p.id === 'home' || p.id === 'settings' ? ' disabled' : ''}><span>On desktop</span></label>
+  </span>
+  <span class="sc-row__tools">${p.movable ? act('nav-up', ico('up'), 'aria-label="Move up" title="Move up"', 'btn--icon') + act('nav-down', ico('down'), 'aria-label="Move down" title="Move down"', 'btn--icon') : ''}</span></div>`;
+
+function navigationTab() {
+  const n = cfg.navigation, inUse = n.device ? 'device' : 'shared';
+  navScope ??= inUse;
+  const pages = navScope === 'device' ? (n.device || n.shared) : n.shared;
+  const scopes = [['shared', 'Every device', 'users'], ['device', 'This device', 'phone']].map(([k, label, icon]) =>
+    `<button type="button" class="btn${k === navScope ? ' btn--go' : ''}" data-do="nav-scope" data-scope="${k}" aria-pressed="${k === navScope}">${ico(icon)}${label}${k === inUse ? '<span class="chip chip--new">In use here</span>' : ''}</button>`).join('');
+  return card('Pages', '',
+    `<div class="bar-actions modepick">${scopes}</div>
+    <form class="form" data-form="navigation" style="padding:0 18px 12px">
+      <div id="navs">${pages.map(navRow).join('')}</div>
+      <div class="form-actions">${navScope === 'device' && n.device ? act('nav-forget', 'Use every device’s') : ''}${act('nav-reset', 'Reset')}<button class="btn btn--solid" type="submit">Save</button></div></form>`);
 }
 
 // ---- About -----------------------------------------------------------------------------------------------------
@@ -744,7 +789,8 @@ function aboutTab() {
 function render() {
   if (editing?.kind !== 'theme') { syncThemes(cfg.appearance.themes); applySpec(); }   // ends any live preview; picks up edits made elsewhere
   $('#tabs').innerHTML = TABS.map(([id, label, icon]) => `<button role="tab" data-tab="${id}" aria-selected="${id === tab}"${id === 'maintenance' && needsAttention() ? ' class="has-attn"' : ''}>${ico(icon)}${esc(label)}</button>`).join('');
-  panel.innerHTML = { links: linksTab, projects: projectsTab, remote: remoteTab, widgets: () => shortcutsCard() + binsCard() + notificationsCard() + diaryCard(), appearance: appearanceTab, music: () => gigsCard() + artistsCard() + releasesCard() + vinylCard() + purchasesCard() + radarCard(), listen: musicPageTab, news: newsTab, screens: () => screensCard() + pairCard() + devicesCard() + enrolCard(), maintenance: maintenanceTab, about: aboutTab }[tab]();
+  panel.innerHTML = { links: linksTab, projects: projectsTab, remote: remoteTab, widgets: () => shortcutsCard() + binsCard() + notificationsCard() + diaryCard(), appearance: appearanceTab, navigation: navigationTab, music: () => gigsCard() + artistsCard() + releasesCard() + vinylCard() + purchasesCard() + radarCard(), listen: musicPageTab, news: newsTab, screens: () => screensCard() + pairCard() + devicesCard() + enrolCard(), maintenance: maintenanceTab, about: aboutTab }[tab]();
+  motion.phaseAll(panel);
 }
 
 async function load() {
@@ -833,6 +879,12 @@ panel.addEventListener('click', e => {
     case 'cancel': editing = null; render(); break;
     case 'use-theme': setLook(d.id, cfg.appearance.themes); render(); toast('Theme set for this device'); break;
     case 'use-mode': setMode(d.mode); render(); break;
+    case 'use-motion': motion.saveLevel(d.level); render(); break;
+    case 'use-overlay': {
+      try { localStorage.setItem('lc-overlay', d.overlay); } catch { /* private window: this page only */ }
+      if (d.overlay === 'scan') delete document.documentElement.dataset.lcOverlay; else document.documentElement.dataset.lcOverlay = d.overlay;
+      render(); break;
+    }
     case 'new-theme': editing = { kind: 'theme', id: 'new', seed: { skin: look() === 'lcars' ? 'lcars' : 'citadel' } }; render(); $('[data-form="theme"] [name=name]')?.focus(); previewTheme($('[data-form="theme"]')); break;
     case 'edit-theme': editing = { kind: 'theme', id: d.id }; render(); previewTheme($('[data-form="theme"]')); break;
     case 'copy-theme': { const t = cfg.appearance.themes.find(x => x.id === d.id); editing = { kind: 'theme', id: 'new', seed: { ...t, id: '', name: `${t.name} copy`.slice(0, 40) } }; render(); previewTheme($('[data-form="theme"]')); break; }
@@ -936,6 +988,11 @@ panel.addEventListener('click', e => {
     case 'add-cal': $('#cals').insertAdjacentHTML('beforeend', calRow()); break;
     case 'sc-add': $('#scs').insertAdjacentHTML('beforeend', scRow()); $('#scs [data-sc]:last-child [name=sc_label]')?.focus(); break;
     case 'sc-remove': b.closest('[data-sc]').remove(); break;
+    case 'nav-up': { const r = b.closest('[data-nav]'), o = r.previousElementSibling; if (o?.hasAttribute('data-movable')) o.before(r); b.focus(); break; }
+    case 'nav-down': { const r = b.closest('[data-nav]'), o = r.nextElementSibling; if (o?.hasAttribute('data-movable')) o.after(r); b.focus(); break; }
+    case 'nav-scope': navScope = d.scope; render(); break;
+    case 'nav-forget': run(async () => { await api.del('/api/owner/navigation/device'); navScope = 'shared'; }, 'This device uses every device’s again'); break;
+    case 'nav-reset': if (confirm(`Put every page back to its own name, place and tabs${navScope === 'device' ? ' on this device' : ' for every device'}?`)) run(() => api.put('/api/owner/navigation', { pages: [], device: navScope === 'device' }), 'Navigation reset'); break;
     case 'sc-up': { const r = b.closest('[data-sc]'); if (r.previousElementSibling) r.previousElementSibling.before(r); break; }
     case 'sc-down': { const r = b.closest('[data-sc]'); if (r.nextElementSibling) r.nextElementSibling.after(r); break; }
     case 'sc-import': {
@@ -967,9 +1024,13 @@ panel.addEventListener('submit', e => {
   const f = e.target, kind = f.dataset.form;
   if (kind === 'link') {
     const body = { name: val(f, 'name'), subtitle: val(f, 'subtitle'), url: val(f, 'url'), icon: val(f, 'icon'), health_url: val(f, 'health_url') || null,
-      is_primary: on(f, 'is_primary'), show_guest: on(f, 'show_guest'), tier: on(f, 'more') ? 'more' : 'main', pinned: on(f, 'pinned'), for_media: on(f, 'for_media'), for_music: on(f, 'for_music'), for_sql: on(f, 'for_sql'), for_ai: on(f, 'for_ai'), for_house: on(f, 'for_house') };
+      is_primary: on(f, 'is_primary'), show_guest: on(f, 'show_guest'), tier: on(f, 'more') ? 'more' : 'main', pinned: on(f, 'pinned'), for_media: on(f, 'for_media'), for_music: on(f, 'for_music'), for_sql: on(f, 'for_sql'), for_ai: on(f, 'for_ai'), for_house: on(f, 'for_house'), for_casino: on(f, 'for_casino') };
     const id = f.dataset.id;
     run(async () => { await (id ? api.put(`/api/owner/links/${id}`, body) : api.post('/api/owner/links', body)); editing = null; }, 'Link saved');
+  } else if (kind === 'navigation') {
+    const pages = $$('[data-nav]', f).map(r => ({ id: r.dataset.id, label: $('[name=nav_label]', r).value.trim(), phone: $('[name=nav_phone]', r).checked, rail: $('[name=nav_rail]', r).checked }));
+    const device = navScope === 'device';
+    run(() => api.put('/api/owner/navigation', { pages, device }), device ? 'Saved for this device' : 'Saved for every device');
   } else if (kind === 'project') {
     let env;
     try { env = parseEnv(val(f, 'env')); } catch (err) { toast(err.message); return; }
@@ -983,7 +1044,7 @@ panel.addEventListener('submit', e => {
       if (res.warnings?.length) setTimeout(() => toast(res.warnings.join(' ')), 300);
     }, 'Project saved');
   } else if (kind === 'remote') {
-    const body = { name: val(f, 'name'), address: val(f, 'address') }, id = f.dataset.id;
+    const body = { name: val(f, 'name'), address: val(f, 'address'), viewer: val(f, 'viewer'), ssh_user: val(f, 'ssh_user'), always_on: f.elements.always_on.checked, mac: val(f, 'mac') }, id = f.dataset.id;
     run(async () => { await (id ? api.put(`/api/owner/remote/${id}`, body) : api.post('/api/owner/remote', body)); editing = null; }, 'Device saved');
   } else if (kind === 'theme') {
     const t = readTheme(f), id = f.dataset.id;
@@ -1006,7 +1067,7 @@ panel.addEventListener('submit', e => {
       .map(r => ({ id: r.dataset.id || undefined, name: r.querySelector('[name=cal_name]').value.trim() || 'Calendar', colour: r.querySelector('[name=cal_colour]').value,
         ...(r.querySelector('[name=cal_url]').value.trim() ? { url: r.querySelector('[name=cal_url]').value.trim() } : {}) }))
       .filter(c => c.id || c.url);                                          // an untouched "Add calendar" row is ignored
-    run(() => api.put('/api/owner/widgets/diary/settings', { calendars, horizon_days: Number(val(f, 'horizon_days')) || 60 }), 'Calendars saved — syncing');
+    run(() => api.put('/api/owner/widgets/diary/settings', { calendars, horizon_days: Number(val(f, 'horizon_days')) || 93 }), 'Calendars saved — syncing');
   } else if (kind === 'screens') {
     run(() => api.put('/api/owner/screens', { panels: cfg.tv_panels.filter(k => on(f, `panel_${k}`)), rotate_seconds: Number(val(f, 'rotate_seconds')) || 12, show_alerts: on(f, 'show_alerts') }), 'Screen settings saved');
   } else if (kind === 'gig') {
@@ -1031,7 +1092,7 @@ panel.addEventListener('submit', e => {
   } else if (kind === 'radar') {
     run(() => api.put('/api/owner/widgets/radar/settings', { latlong: val(f, 'latlong'), radius_miles: Number(val(f, 'radius_miles')), batch: Number(val(f, 'batch')), api_key: val(f, 'api_key') }), 'Saved — syncing');
   } else if (kind === 'news-front') {
-    run(() => api.put('/api/owner/widgets/news/settings', { most_read: on(f, 'most_read'), front_per_section: Number(val(f, 'front_per_section')), latest_hours: Number(val(f, 'latest_hours')), latest_cap: Number(val(f, 'latest_cap')) }), 'Saved');
+    run(() => api.put('/api/owner/widgets/news/settings', { most_read: on(f, 'most_read'), most_read_guardian: on(f, 'most_read_guardian'), front_per_section: Number(val(f, 'front_per_section')), latest_hours: Number(val(f, 'latest_hours')), latest_cap: Number(val(f, 'latest_cap')) }), 'Saved');
   } else if (kind === 'news-f1') {
     const round = val(f, 'f1_watched'), season = Number(f.dataset.season);
     run(() => api.put('/api/owner/widgets/news/settings', { f1_shield: on(f, 'f1_shield'), f1_extra_terms: lines(val(f, 'f1_extra_terms')),
@@ -1090,6 +1151,7 @@ api.subscribe(() => {
 // current choice, so it redraws (not while a custom theme is open in the editor).
 document.addEventListener('theme:change', () => { if (tab === 'appearance' && !editing) render(); });
 
+motion.init();
 await load();
 document.documentElement.classList.remove('lc-boot');    // the LCARS boot animation is the dashboard's; theme-init sets it everywhere
 if (addParam === 'gig') $('[data-form="gig"] input')?.focus();

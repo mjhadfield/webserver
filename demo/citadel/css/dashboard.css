@@ -35,7 +35,7 @@
 /* ---- Views (Home / News / Media / Companion / future sections) ----------------------- */
 .view { display: none; }
 .view.is-active { display: block; }
-#view-media, #view-music, #view-sql, #view-ai, #view-house, #view-curate, #view-settings { position: relative; }
+#view-media, #view-music, #view-sql, #view-ai, #view-house, #view-casino, #view-curate, #view-settings { position: relative; }
 /* Same chamfered, hairline-gradient-border shell as .card (components.css) — an iframe can't carry
    ::before/::after itself, so the shell is a real wrapper element around it instead. This only reaches
    the iframe's own border/frame; whatever renders *inside* it (Jellyfin's or Companion's own UI, incl.
@@ -81,7 +81,7 @@ html.has-bg .frame-shell iframe { background: transparent; }    /* a custom them
     position: fixed; inset: 0 0 calc(63px + env(safe-area-inset-bottom)) 0;
     display: flex; flex-direction: column; padding: 14px 16px 16px;
   }
-  #view-media.is-active, #view-music.is-active, #view-sql.is-active, #view-ai.is-active, #view-house.is-active, #view-curate.is-active, #view-settings.is-active { flex: 1; height: auto; min-height: 0; }
+  #view-media.is-active, #view-music.is-active, #view-sql.is-active, #view-ai.is-active, #view-house.is-active, #view-casino.is-active, #view-curate.is-active, #view-settings.is-active { flex: 1; height: auto; min-height: 0; }
 }
 
 /* z-index: the header's middle slot is a size container (its own stacking layer), so the bookmarks panel it drops can
@@ -111,10 +111,6 @@ html.has-bg .frame-shell iframe { background: transparent; }    /* a custom them
 .sc__letter { display: grid; place-items: center; font: 600 12px var(--font-display); color: var(--accent-soft);
   background: var(--accent-wash); border: 1px solid var(--edge-strong); border-radius: 3px; }
 .sc__label { font: 500 13px var(--font-display); letter-spacing: .02em; white-space: nowrap; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 760px) {                                     /* phones: just the Bookmarks button, as an icon and a count */
-  .shortcuts .sc:not(.sc--menu), .sc--menu .sc__label { display: none; }
-  .shortcuts { mask-image: none; }
-}
 
 /* ---- Bookmarks: the menu button (first in the row) and the panel it drops ---------------------------------------
    The panel is absolutely placed in the header's middle slot (a size container, so it's the containing block) and
@@ -163,7 +159,6 @@ html.has-bg .frame-shell iframe { background: transparent; }    /* a custom them
 @keyframes bm-tile { from { transform: scaleX(.6); opacity: 0; } }
 .bm--top, .bmbar__list:not(:has(.bm:not(.bm--top))) { display: none; }   /* the bar's four: in the panel on phones only */
 @media (max-width: 760px) {
-  .bmbar { position: fixed; top: 64px; left: 8px; right: 8px; }
   .bm--top, .bmbar__list { display: grid; }
   .bm--top { display: flex; }
   .bmbar__list { grid-template-columns: 1fr 1fr; }
@@ -176,8 +171,8 @@ html.has-bg .frame-shell iframe { background: transparent; }    /* a custom them
    opens Monitoring's full view, so where it shows, that card has no tile of its own (.card--popout). */
 .readout { cursor: pointer; }
 .readout:focus-visible { outline: 1px solid var(--accent-soft); outline-offset: 4px; }
-/* heat levels (app.js renderReadout sets data-heat 1–3 from each number's own thresholds); the change flash
-   (.is-tick) still lights a number up and drops it back to its heat colour. Specific enough to beat both themes' dd. */
+/* heat levels (motion.js updateReadout sets data-heat 1–3 from each number's own thresholds, HEAT in app.js); LCARS's
+   change cue (.is-cue) still lights a number up and drops it back to its heat colour. Specific enough to beat both themes' dd. */
 html:root body .readout dd[data-heat="1"] { color: var(--heat-1); }
 html:root body .readout dd[data-heat="2"] { color: var(--heat-2); }
 html:root body .readout dd[data-heat="3"] { color: var(--heat-3); text-shadow: 0 0 10px color-mix(in srgb, var(--heat-3) 45%, transparent); }
@@ -195,7 +190,31 @@ html[data-theme="light"] body .readout dd[data-heat="3"] { text-shadow: none; } 
 .look-btn { gap: 7px; padding: 5px 10px 5px 8px; }
 .look-btn .look-btn__chev { width: 11px; height: 11px; color: var(--silver-mute); }
 .look-btn[aria-expanded="true"] { color: var(--silver-hi); border-color: var(--edge-strong); background: var(--accent-wash); }
-@media (max-width: 760px) { .look-btn { padding: 5px; } .look-btn__word, .look-btn .look-btn__chev { display: none; } }
+.look-btn .look-btn__chev { transition: transform .25s var(--ease); }
+.look-btn[aria-expanded="true"] .look-btn__chev { transform: rotate(180deg); }
+/* Day/Night and Style sit as a pair (#look-group). Style drops the bookmarks panel (.bmbar) with small theme tiles, the
+   one in use lit. On desktop it hangs from the pair, one column as wide as both: open, the pair joins into one cap (the
+   gap filled, inner edges square, only the outer top corners rounded) that runs straight into the panel. */
+.look-group { display: inline-flex; align-items: center; gap: 6px; }
+.stylebar .bm { width: 100%; gap: 7px; padding: 6px 7px; font: inherit; text-align: left; cursor: pointer; }
+.stylebar .bm > .tm__sw { width: 18px; height: 13px; }
+.stylebar .bm > .tm__sw::after { left: 2px; right: 2px; bottom: 2px; height: 2px; }
+.stylebar .bm b { font-size: 13px; font-weight: 500; }
+.stylebar .bm[aria-checked="true"] { color: var(--silver-hi); border-color: var(--accent-soft); background: var(--accent-wash); }
+.stylebar .bm[aria-checked="true"] b { color: var(--accent-soft); }
+@media (min-width: 761px) {
+  .look-btn[data-theme-menu] { padding: 5px 16px 5px 14px; }
+  .look-group.is-open { border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background: linear-gradient(var(--edge-strong) 0 0) top / 100% 1px no-repeat, linear-gradient(var(--accent-wash) 0 0) var(--bg-2); }
+  .look-group.is-open > .look-btn { color: var(--silver-hi); border-color: var(--edge-strong); border-bottom-color: transparent;
+    background: linear-gradient(var(--accent-wash) 0 0) var(--bg-2); border-radius: 0; }
+  .look-group.is-open > .look-btn:first-child { border-right-color: transparent; border-top-left-radius: var(--radius-sm); }
+  .look-group.is-open > .look-btn:last-child { border-left-color: transparent; border-top-right-radius: var(--radius-sm); }
+  .stylebar { left: auto; right: var(--bm-right, 0); padding: 6px;
+    background: linear-gradient(var(--accent-wash) 0 0) var(--bg-2); }
+  .stylebar .bmbar__list { gap: 6px; grid-auto-columns: var(--bm-col, 96px); }
+  .stylebar .bmbar__edit { margin-top: 8px; }
+}
 .badge-role { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ---- Alert strip -------------------------------------------------------- */
@@ -213,6 +232,7 @@ html[data-theme="light"] body .readout dd[data-heat="3"] { text-shadow: none; } 
 .alert__text a { color: inherit; text-decoration: none; }
 .alert__text a:hover, .alert__text a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 .alert__when { margin-left: auto; flex: none; }
+.alert__act { flex: none; }
 .alert__x { flex: none; margin: -4px -6px -4px 0; opacity: .55; transition: opacity .2s; }
 .alert:hover .alert__x, .alert__x:focus-visible { opacity: 1; }
 .alert--info { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 9%, transparent), transparent); }
@@ -246,6 +266,7 @@ html[data-theme="light"] body .readout dd[data-heat="3"] { text-shadow: none; } 
 .hero__unit { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; color: var(--accent-soft); text-transform: uppercase; padding-bottom: 6px; }
 .hero__name { font-size: 22px; font-weight: 700; color: var(--silver-hi); margin-top: 10px; letter-spacing: .02em; }
 .hero__sub { color: var(--silver-mute); font-size: 14px; margin-bottom: 14px; }
+.hero__sub + .hero__name { margin-top: 0; }                  /* two gigs on the next date: the second one stacks under the first */
 .subrow { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--edge); font-size: 14px; }
 .subrow:first-of-type { margin-top: 14px; }
 .subrow .mono { margin-left: auto; font-size: 12px; color: var(--silver-mute); }
@@ -320,9 +341,25 @@ button.tile:disabled { cursor: default; opacity: .6; transform: none; }
 .mon-section { margin-top: 18px; }
 .mon-section:first-child { margin-top: 0; }
 .mon-section .hud { display: block; margin-bottom: 10px; }
+.mon-head--sec { align-items: flex-end; margin-bottom: 10px; }
+.mon-head--sec .hud { margin-bottom: 0; }
+.mon-temps { display: flex; align-items: baseline; gap: 18px; }
+.mon-temp--sub { font-size: 15px; }
 .mon-cores { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 4px 16px; margin: 10px 0 14px; }
 .mon-cores .bar { margin-bottom: 0; }
 .mon-cores .bar__top { font-size: 10.5px; }
+/* Machines: the other computers on the estate (app/machines.py), under the three columns */
+.mon-machines { margin-top: 26px; }
+.mach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px 32px; align-items: start; }
+.mach { min-width: 0; padding-top: 12px; border-top: 1px solid var(--edge); }
+.mach .bar { margin-bottom: 6px; }
+.mach .kv { margin-top: 8px; }
+.mach__name { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+/* same heading height with or without a temperature (asleep, or Nasferatu), so the panels' bars line up */
+.mach .mon-head { min-height: 26px; align-items: flex-end; }
+.mach__sub { margin: -2px 0 10px; font-family: var(--font-mono); font-size: 11px; color: var(--silver-dim); overflow-wrap: anywhere; }
+.mach__err { margin: 0 0 10px; font-size: 12px; color: var(--warn); }
+.mach--asleep { opacity: .6; }
 
 /* ---- Diary (calendar events) -------------------------------------------- */
 .day { padding: 10px 16px 6px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--silver-dim); border-top: 1px solid var(--edge); }
@@ -348,8 +385,6 @@ button.tile:disabled { cursor: default; opacity: .6; transform: none; }
   .shell { grid-template-columns: 1fr; }
   .rail { display: none; }
   .main { padding: 14px 16px 96px; }
-  .top__brand .wordmark { font-size: 18px; }
-  .top__brand .hud, .top__right .badge-role { display: none; }
   .grid > * { grid-column: 1 / -1; }
   .hero__count { font-size: 52px; }
   .now .clock__time { font-size: 44px; }
@@ -362,17 +397,38 @@ button.tile:disabled { cursor: default; opacity: .6; transform: none; }
   .feed__date { min-width: 0; text-align: left; }
   .meta--opt { display: none; }
   .tabbar {
-    display: grid; grid-template-columns: repeat(7, 1fr);
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);     /* one column per tab: Settings → Navigation picks them */
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
     padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--bg-2) 92%, transparent); backdrop-filter: blur(10px);
     border-top: 1px solid var(--edge-strong);
   }
-  .tabbar a { display: grid; justify-items: center; gap: 2px; padding: 4px 0; color: var(--silver-mute); font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; }
-  .tabbar a[aria-current] { color: var(--accent-soft); }
+  .tabbar a, .tabbar__more { display: grid; justify-items: center; gap: 2px; padding: 4px 0; color: var(--silver-mute); font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; }
+  .tabbar__more { margin: 0; background: none; border: 0; cursor: pointer; line-height: inherit; }
+  .tabbar a[aria-current], .tabbar__more.is-current, .tabbar__more[aria-expanded="true"] { color: var(--accent-soft); }
   .tabbar .i { width: 22px; height: 22px; }
+  .tabbar__label { max-width: 100%; padding: 0 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mockbar { bottom: 74px; }
+  /* More: the pages without a tab, in a sheet sitting on the tab bar's right-hand end */
+  .more-sheet:not([hidden]) {
+    position: fixed; right: 8px; bottom: calc(66px + env(safe-area-inset-bottom)); z-index: 51;
+    display: grid; min-width: 190px; max-width: calc(100vw - 16px); padding: 6px;
+    background: color-mix(in srgb, var(--bg-2) 96%, transparent); backdrop-filter: blur(10px);
+    border: 1px solid var(--edge-strong); box-shadow: 0 10px 30px color-mix(in srgb, var(--bg) 70%, transparent);
+  }
+  .more-sheet a { display: flex; align-items: center; gap: 12px; padding: 11px 12px; color: var(--silver); font-family: var(--font-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+  .more-sheet a + a { border-top: 1px solid var(--edge); }
+  .more-sheet a[aria-current] { color: var(--accent-soft); }
+  .more-sheet .i { width: 20px; height: 20px; flex: none; }
+  /* a swipe to the next or previous page slides it in (app.js); .main clips it meanwhile so the page never widens */
+  html.is-sliding .main { overflow-x: clip; }
+  .view.is-active[data-slide="next"] { animation: view-in-next .24s ease-out; }
+  .view.is-active[data-slide="prev"] { animation: view-in-prev .24s ease-out; }
 }
+.more-sheet { display: none; }
+.rail a[data-view][hidden] { display: none; }        /* Settings → Navigation took it off the rail */
+@keyframes view-in-next { from { opacity: 0; transform: translateX(36px); } }
+@keyframes view-in-prev { from { opacity: 0; transform: translateX(-36px); } }
 
 
 /* ==========================================================================
@@ -407,6 +463,19 @@ button.tile:disabled { cursor: default; opacity: .6; transform: none; }
 .card__body.is-clipped:not(.at-end) { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 44px), transparent); }
 
 .maxbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 14px 16px 2px; }
+/* the filter chips; on phones they fold behind one filter button (shell.js data-fbtn) and drop down when it's tapped */
+.fchips { display: contents; }
+.fbtn { display: none; }
+@media (max-width: 760px) {
+  .maxbar { position: relative; }
+  .fbtn { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent-soft); background: var(--accent-wash); border: 1px solid var(--edge-strong); cursor: pointer; }
+  .fbtn .i { width: 15px; height: 15px; }
+  .fchips { display: none; }
+  .maxbar.is-fopen .fchips { position: absolute; z-index: 30; top: calc(100% + 4px); left: 16px; display: grid; gap: 6px; min-width: 190px; padding: 10px;
+    background: var(--bg-2); border: 1px solid var(--edge-strong); box-shadow: 0 16px 36px var(--vignette); }
+  .fchips .fchip { text-align: left; }
+}
 .fchip { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; padding: 6px 11px; color: var(--silver-mute); background: transparent; border: 1px solid var(--edge); cursor: pointer; transition: color .2s, border-color .2s, background .2s; }
 .fchip:hover { color: var(--silver-hi); border-color: var(--edge-strong); }
 .fchip[aria-pressed="true"] { color: var(--accent-soft); border-color: var(--edge-strong); background: var(--accent-wash); }
@@ -433,7 +502,8 @@ body.has-max::before { content: ""; position: fixed; inset: 0; z-index: 80; back
 .card.is-max .maxbar { padding: 18px 24px 4px; }
 .card.is-max .rows--cols { column-width: 560px; column-gap: 0; }
 .card.is-max .rows--cols > li { break-inside: avoid; border-top: 0; border-bottom: 1px solid var(--edge); }
-.card.is-max .cols { column-width: 440px; column-gap: 36px; }
+.card.is-max .cols { column-width: 440px; column-gap: 36px; padding: 0 24px 16px; }   /* the Diary's body is flush: keep its days off the frame */
+.card.is-max .cols .day { padding-inline: 0; }
 .card.is-max .dg { break-inside: avoid; margin-bottom: 8px; }
 .card.is-max .tiles { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
 .card.is-max .feed__acts { opacity: 1; }
@@ -503,6 +573,52 @@ body.has-max::before { content: ""; position: fixed; inset: 0; z-index: 80; back
 .card.is-max.now .rows > li.note { grid-column: 1 / -1; border: 0; padding-left: 0; background: none; }
 .card.is-max.now .now__label { border-top: 0; }
 
+/* Calendar, full screen (cards.js calendarFull): three months, a day's events in a popover on hover or focus, then the
+   days coming up as tiles, like Now's collections */
+.calm--diary { padding-bottom: 18px; }
+@media (max-width: 760px) {                         /* phones: the days coming up first, then the calendars */
+  .calx { display: flex; flex-direction: column; }
+  .calx > .now__label { order: 1; padding-top: 14px; }
+  .calx > .crows, .calx > .crows__none { order: 2; }
+  .calx > .calm { order: 3; padding-top: 4px; }
+}
+.cd { position: relative; }
+.cd--ev { cursor: default; }
+.cd--ev:hover, .cd--ev:focus-visible { border-color: var(--edge-strong); outline: 0; }
+.cd__pop { display: none; position: absolute; z-index: 6; top: calc(100% + 6px); left: 0; width: 300px; padding: 10px 12px; text-align: left;
+  font-family: var(--font-display); font-size: 13px; color: var(--silver); background: var(--bg-2); border: 1px solid var(--edge-strong); box-shadow: 0 14px 34px var(--vignette); }
+.cd--r .cd__pop { left: auto; right: 0; }
+.cd--ev:hover .cd__pop, .cd--ev:focus .cd__pop { display: grid; gap: 8px; }
+.cd__ph { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--silver-dim); }
+.cd__pe { display: flex; gap: 10px; padding-left: 8px; border-left: 2px solid var(--cal); }
+.cd__pt { flex: none; width: 46px; font-family: var(--font-mono); font-size: 12px; color: var(--silver-mute); }
+.cd__pm { display: grid; min-width: 0; }
+.cd__pn { color: var(--silver-hi); font-weight: 600; }
+.cd__pl { font-size: 12px; color: var(--silver-mute); }
+.card.is-max.a-diary .now__label { border-top: 0; padding-inline: 24px; }
+.crows { list-style: none; margin: 0; padding: 4px 24px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); gap: 12px; }
+.crows__none { padding: 4px 24px 24px; }
+.crow { display: flex; gap: 18px; padding: 12px 16px; border: 1px solid var(--edge); background: rgba(255, 255, 255, .015); }
+.crow--today { border-color: color-mix(in srgb, var(--accent-hi) 50%, var(--edge)); }
+.crow__d { flex: none; width: 96px; padding-top: 2px; font-family: var(--font-mono); font-size: 12px; color: var(--silver-mute); }
+.crow--today .crow__d { color: var(--accent-soft); }
+.crow__evs { display: grid; gap: 8px; min-width: 0; flex: 1; }
+.crow__e { display: flex; gap: 12px; padding-left: 10px; border-left: 2px solid var(--cal, var(--accent)); }
+.crow__t { flex: none; width: 52px; padding-top: 2px; font-family: var(--font-mono); font-size: 12px; color: var(--silver-mute); }
+.crow__m { min-width: 0; }
+.crow__n { color: var(--silver-hi); font-weight: 600; line-height: 1.25; }
+.crow__s { font-size: 13px; color: var(--silver-mute); }
+/* full screen: the schedule lists every collection day once, so the two "next" rows would repeat its first days */
+.card.is-max.now .rows > li.bin { display: none; }
+/* the first domestic, blue and brown collection (cards.js schedRow): a bar in the bin's colour (split between two
+   bins when a day is the first of both) and a tint */
+.sched--next { position: relative; }
+.card.is-max.now .rows > li.sched--next { background: linear-gradient(90deg, color-mix(in srgb, var(--hc) 14%, transparent), transparent 70%); }
+.sched--next::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--hlv); }
+.sched--next .sched__d { color: var(--silver-hi); }
+.sched__in { margin-left: auto; flex: none; font-family: var(--font-mono); font-size: 12px; color: var(--silver-mute); }
+.sched .chip { margin-left: auto; flex: none; }
+
 /* expanded: feed rows scale up */
 .card.is-max .feed { padding: 16px 24px; gap: 18px; }
 .card.is-max .feed .cover { width: 60px; height: 60px; font-size: 22px; }
@@ -544,21 +660,61 @@ body.has-max::before { content: ""; position: fixed; inset: 0; z-index: 80; back
    Live dashboard additions (empty states, toast, log selection, legend)
    ========================================================================== */
 .alerts:empty { display: none; }
-/* Phones: the Citadel logo replaces the wordmark and opens the reminders as a drawer under the header (app.js
-   alertsDrawer; the strip is moved into .top there). The badge is how many reminders are waiting. */
-.top__logo { display: none; }
+/* ==========================================================================
+   Phone header. Both themes share the layout and each draws its own (LCARS: lcars.css).
+   One row: the logo, which carries the reminder count and opens the reminders as a drawer (app.js alertsDrawer; the
+   strip is moved into .top there), then Bookmarks, Day/Night, Style and Settings as one set. The header's middle and
+   right slots and the look pair are unwrapped (display: contents), so the four buttons are siblings in that order. What
+   they open (bookmarks, styles, reminders) hangs just under the header, full width.
+   Citadel: one chamfered panel like the cards (hairline gradient edge, accent tick top left), the wordmark beside the
+   logo, and the buttons as a strip of icon cells on the right divided by hairlines; the open one is lit with an
+   accent line along its foot.
+   ========================================================================== */
+.top__logo, .top__settings { display: none; }
 @media (max-width: 760px) {
-  .top__brand .wordmark { display: none; }
-  .top__logo { position: relative; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; background: none; cursor: pointer;
-    color: var(--accent-hi); filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent-hi) 50%, transparent)); }
-  .top__logo .i { width: 30px; height: 30px; }
-  .top__badge { position: absolute; top: -2px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  .top { align-items: stretch; gap: 0; height: 52px; margin-bottom: 14px; }
+  .top__mid, .top__right, .look-group { display: contents; }
+  .top__brand { order: 0; flex: 1 1 auto; min-width: 0; align-items: center; gap: 4px; }
+  .top__brand .hud, .top__right .badge-role { display: none; }
+  .shortcuts { order: 1; flex: none; align-items: stretch; gap: 0; padding: 0; overflow: visible; mask-image: none; }
+  .shortcuts .sc:not(.sc--menu), .sc--menu .sc__label, .sc--menu .sc__chev, .look-btn__word, .look-btn .look-btn__chev { display: none; }
+  .top [data-mode-toggle] { order: 2; }
+  .top [data-theme-menu] { order: 3; }
+  .top .top__settings { order: 4; display: inline-flex; }
+  .top__logo { position: relative; display: grid; place-items: center; flex: none; width: 46px; height: 100%; padding: 0; border: 0; background: none;
+    cursor: pointer; color: var(--accent-hi); }
+  .top__logo .i { width: 28px; height: 28px; }
+  .top__badge { position: absolute; top: 5px; right: 1px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
     background: var(--warn); color: var(--bg); font: 600 11px/18px var(--font-mono); text-align: center; }
-  .top > .alerts { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; right: 0; display: none; gap: 8px; margin: 0; padding: 10px;
-    max-height: 70dvh; overflow-y: auto; transform-origin: top center;
+  .top .bmbar, .top > .alerts { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; right: 0; }
+  .top > .alerts { display: none; gap: 8px; margin: 0; padding: 10px; max-height: 70dvh; overflow-y: auto; transform-origin: top center;
     background: var(--bg-2); border: 1px solid var(--edge-strong); box-shadow: 0 18px 40px var(--vignette); }
   .top > .alerts.is-open:not(:empty) { display: grid; animation: bm-in .3s var(--ease) both; }
+
+  /* Citadel's panel: the card's shell (edge gradient, then the fill 1px in), drawn behind the header so nothing in it,
+     or hanging from it, is clipped */
+  html:not([data-skin="lcars"]) .top { --c: 12px; }
+  html:not([data-skin="lcars"]) .top::before, html:not([data-skin="lcars"]) .top::after {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    clip-path: polygon(0 0, calc(100% - var(--c)) 0, 100% var(--c), 100% 100%, var(--c) 100%, 0 calc(100% - var(--c))); }
+  html:not([data-skin="lcars"]) .top::before { background: linear-gradient(135deg, color-mix(in srgb, var(--silver) 30%, transparent), color-mix(in srgb, var(--accent) 20%, transparent) 45%, color-mix(in srgb, var(--silver) 9%, transparent)); }
+  html:not([data-skin="lcars"]) .top::after { inset: 1px;
+    clip-path: polygon(0 0, calc(100% - var(--c) + .4px) 0, 100% calc(var(--c) - .4px), 100% 100%, calc(var(--c) - .4px) 100%, 0 calc(100% - var(--c) + .4px));
+    background: linear-gradient(90deg, var(--accent-hi), transparent) 16px 0 / 34px 2px no-repeat, linear-gradient(180deg, var(--surface-2), var(--surface) 90%); }
+  html:not([data-skin="lcars"]) .top__logo { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent-hi) 50%, transparent)); }
+  html:not([data-skin="lcars"]) .top__brand { padding-left: 4px; }
+  /* the wordmark sits centred between the logo and the buttons (its trailing letter-spacing given back on the left) */
+  html:not([data-skin="lcars"]) .top__brand .wordmark { display: block; flex: 1 1 auto; min-width: 0; font-size: 15px; white-space: nowrap; text-align: center; padding-left: .34em; }
+  html:not([data-skin="lcars"]) .top .sc--menu, html:not([data-skin="lcars"]) .top .look-btn, html:not([data-skin="lcars"]) .top .top__settings {
+    position: relative; width: 46px; height: auto; padding: 0; justify-content: center; gap: 0;
+    border: 0; border-left: 1px solid var(--edge); border-radius: 0; clip-path: none; background: none; color: var(--silver); }
+  html:not([data-skin="lcars"]) .top .top__settings { clip-path: polygon(0 0, calc(100% - var(--c) + 1px) 0, 100% calc(var(--c) - 1px), 100% 100%, 0 100%); }   /* its lit fill keeps the panel's cut */
+  html:not([data-skin="lcars"]) .top .sc--menu .i, html:not([data-skin="lcars"]) .top .look-btn .i, html:not([data-skin="lcars"]) .top .top__settings .i { width: 20px; height: 20px; color: inherit; }
+  html:not([data-skin="lcars"]) .top .sc--menu[aria-expanded="true"], html:not([data-skin="lcars"]) .top .look-btn[aria-expanded="true"],
+  html:not([data-skin="lcars"])[data-page="settings"] .top .top__settings { color: var(--accent-soft); background: var(--accent-wash); box-shadow: inset 0 -2px 0 var(--accent-hi); }
+  html:not([data-skin="lcars"]) .top .sc--menu:active, html:not([data-skin="lcars"]) .top .look-btn:active, html:not([data-skin="lcars"]) .top .top__settings:active { background: var(--accent-wash); }
 }
+@media (max-width: 379px) { html:not([data-skin="lcars"]) .top__brand .wordmark { display: none; } }
 .empty { display: grid; justify-items: center; align-content: center; gap: 8px; height: 100%; min-height: 120px; padding: 16px; text-align: center; }
 .empty .i { width: 28px; height: 28px; color: var(--silver-dim); }
 .empty__title { font-weight: 600; color: var(--silver); }
@@ -573,8 +729,6 @@ body.has-max::before { content: ""; position: fixed; inset: 0; z-index: 80; back
 .cal__legend i { width: 4px; height: 14px; background: var(--sw); }
 
 
-.top__settings { display: none; }
-@media (max-width: 760px) { .top__settings { display: inline-flex; } }
 
 
 /* ---- Pinning ------------------------------------------------------------------------------------- */
@@ -611,12 +765,17 @@ body.has-max::before { content: ""; position: fixed; inset: 0; z-index: 80; back
 .note a { color: var(--accent-soft); text-decoration: underline; text-underline-offset: 3px; }
 
 /* booked gigs */
-.gigs { list-style: none; margin: 14px 0 0; padding: 0; column-width: 460px; column-gap: 36px; }
+.gigs { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 1fr)); column-gap: 36px; align-content: start; }
+.gigs > .note { grid-column: 1 / -1; }
+.gigs__h { display: block; margin-top: 26px; }
+.gigs__h + .gigs { margin-top: 10px; }
 .gigline { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid var(--edge); break-inside: avoid; }
 .gigline__d { flex: none; width: 92px; font-size: 12px; color: var(--silver-mute); }
 .gigline__main { min-width: 0; flex: 1; }
 .gigline__main b { color: var(--silver-hi); font-weight: 600; }
 .gigline__sub { font-size: 13px; color: var(--silver-mute); }
+/* full screen: the next few gigs stay a compact block, so each one's date (venue in LCARS) sits by its artist, not across the card */
+.card.is-max .subrow { max-width: 480px; }
 .card.is-max .hero__count { font-size: 88px; }
 .card.is-max .hero__name { font-size: 30px; }
 
@@ -689,22 +848,18 @@ body.has-max::before { content: ""; position: fixed; inset: 0; z-index: 80; back
   font-family: var(--font-mono); font-size: 11px; color: var(--silver-hi);
   padding: 5px 8px; background: var(--well); border: 1px solid var(--edge);
 }
+/* Phones: cover beside the names, then the badge + date and the two buttons as two rows under the names */
 @media (max-width: 760px) {
-  .feed--preorder .feed__main { flex-basis: calc(100% - 72px); }
-  .feed--preorder .feed__meta { flex-direction: column; align-items: flex-start; width: 100%; padding-left: 70px; }
+  .feed--preorder, .card.is-max .feed--preorder { gap: 6px 14px; padding: 12px 14px; }
+  .feed--preorder .cover, .card.is-max .feed--preorder .cover { width: 56px; height: 56px; font-size: 20px; }
+  .feed--preorder .feed__main { flex: 1 1 calc(100% - 70px); min-width: 0; }
+  .feed.feed--preorder .feed__meta { flex-direction: column; align-items: stretch; width: 100%; padding-left: 70px; }
   .preorder__row { width: 100%; justify-content: space-between; }
+  .preorder-date { min-width: 140px; }      /* Android's date field doesn't size itself to the date: room for dd/mm/yyyy */
 }
 
-/* ---- Theme menu (the header's theme button) --------------------------------- */
+/* ---- Style panel swatches (a theme's colours in this device's mode) --------------------------------- */
 .top__right { position: relative; }
-.tm { position: absolute; top: calc(100% + 8px); right: 0; z-index: 120; min-width: 220px; padding: 6px; display: grid; gap: 2px;
-  background: var(--bg-2); border: 1px solid var(--edge-strong); box-shadow: 0 18px 40px rgba(0, 0, 0, .45); }
-.tm button, .tm__more { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; background: none; text-align: left;
-  color: var(--silver); font: 500 14px var(--font-display); cursor: pointer; }
-.tm button:hover, .tm button:focus-visible, .tm__more:hover { background: var(--accent-wash); color: var(--silver-hi); outline: none; }
-.tm button[aria-checked="true"] { color: var(--accent-soft); }
-.tm button .i { margin-left: auto; width: 14px; height: 14px; }
-.tm__more { font: 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--silver-mute); border-top: 1px solid var(--edge); margin-top: 4px; padding-top: 10px; }
 .tm__sw { position: relative; flex: none; width: 26px; height: 18px; overflow: hidden; border: 1px solid var(--edge); background: var(--sw-bg); }
 .tm__sw::after { content: ""; position: absolute; left: 3px; right: 3px; bottom: 3px; height: 3px; background: var(--sw-ac); }
 .tm__sw img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .75; }
@@ -741,7 +896,7 @@ body.has-max::before { content: ""; position: fixed; inset: 0; z-index: 80; back
 .card.is-max.a-remote .tiles { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 @media (max-width: 760px) { .a-remote .tiles { grid-template-columns: minmax(0, 1fr); } }
 
-/* Monitoring's full view: CPU | GPU + memory | this PC and its services, side by side when there's room */
+/* Monitoring's full view: CPU | GPU + memory | this PC and its sensor readings, side by side when there's room */
 .mon-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 18px 44px; align-items: start; }
 .mon-cols > div > .mon-section:first-child { margin-top: 0; }
 @media (max-width: 760px) { .mon-cols { grid-template-columns: minmax(0, 1fr); } }

@@ -164,9 +164,10 @@ function releases(s, ctx) {
 // used by every other grid card too) — it's a two-value enum, so it doesn't need a generic mechanism.
 export const vinylUi = { mode: 'radar' };
 
+// Phones get the short names (components.css), so the full-screen header keeps room for its close button.
 function vinylHeader() {
-  return `<button type="button" class="hud__seg" data-vinyl-mode="radar" aria-pressed="true">Vinyl Radar</button>` +
-         `<button type="button" class="hud__seg" data-vinyl-mode="preorders" aria-pressed="false">Confirmed Pre-orders</button>`;
+  return `<button type="button" class="hud__seg" data-vinyl-mode="radar" aria-pressed="true"><span class="hud__long">Vinyl Radar</span><span class="hud__short">Radar</span></button>` +
+         `<button type="button" class="hud__seg" data-vinyl-mode="preorders" aria-pressed="false"><span class="hud__long">Confirmed Pre-orders</span><span class="hud__short">Pre-orders</span></button>`;
 }
 
 // Once release day arrives, "3d ago"-style ageing stops being useful — it's not late, it just hasn't been
@@ -207,9 +208,8 @@ function preorderList(s) {
 function vinyl(s, ctx) {
   if (vinylUi.mode === 'preorders') return preorderList(s);
   const w = s.widgets.vinyl, d = w.data;
-  const hint = d ? `<div class="note more" hidden>Pre-orders from ${d.stores} label and record stores, matched to the artists you follow. Release dates are shown where a store gives one; otherwise when the pre-order was listed. Manage stores in <a href="/settings#music">Settings → Music</a>.${d.errors?.length ? ` Couldn’t read: ${esc(d.errors.join(', '))}.` : ''}</div>` : '';
   return feedCard(s, ctx, {
-    w, kind: 'vinyl', hint, unit: `pre-orders · ${d?.stores ?? 0} stores`, compact: LONG,
+    w, kind: 'vinyl', unit: `pre-orders · ${d?.stores ?? 0} stores`, compact: LONG,
     render: vinylRow,
     extra: { dated: i => !!i.date },
     emptyIcon: 'disc', emptyTitle: 'No pre-orders found', emptyText: `Nothing on pre-order for the artists you follow, across ${d?.stores ?? 0} stores.`,
@@ -234,7 +234,7 @@ function gigLine(g, past = false) {
   const tix = g.ticket_url ? ` <a class="feed__link" href="${esc(safeUrl(g.ticket_url))}" target="_blank" rel="noopener">tickets</a>` : '';
   // A booked gig can be (re)added to the diary any time — for one typed in Settings, or if the Google tab was closed unsaved.
   const diary = past ? '' : ` <a class="feed__link" href="${esc(gcalUrl(g))}" target="_blank" rel="noopener" title="Add to Google Calendar">diary</a>`;
-  return `<li class="gigline"><span class="gigline__d mono">${esc(fmtDay(g.date))}</span>
+  return `<li class="gigline${past ? ' gigline--past' : ''}"><span class="gigline__d mono">${esc(fmtDay(g.date))}</span>
     <div class="gigline__main"><b>${esc(g.artist)}</b><div class="gigline__sub">${esc(where)}${g.doors ? ` · doors ${esc(g.doors)}` : ''}${g.notes ? ` · ${esc(g.notes)}` : ''}${tix}${diary}</div></div>
     <span class="chip">${past ? esc(`${-g.in_days}d ago`) : esc(relDays(g.in_days))}</span></li>`;
 }
@@ -244,23 +244,30 @@ function gigs(s, ctx) {
   if (!d || (!d.next && !d.past.length)) {
     return { meta: 'none booked', body: empty('bolt', 'No gigs booked', 'Add your tickets and get a countdown, plus a reminder the day before.', settingsLink('Add a gig')) };
   }
-  const n = d.next;
-  const list = ctx.expanded ? { upcoming: d.upcoming, past: d.past, all: [...d.past.slice().reverse(), ...d.upcoming] }[ctx.filter || 'upcoming'] : [];
-  const expandedList = ctx.expanded ? `<ul class="gigs more" hidden>${list.map(g => gigLine(g, g.in_days < 0)).join('') || '<li class="note">Nothing here.</li>'}</ul>` : '';
+  const n = d.next, filter = ctx.filter || 'upcoming';
+  // Gigs on the same day as the next one (a co-headline, a festival day) share the countdown at the top
+  const first = n ? d.upcoming.filter(g => g.date === n.date) : [];
+  // Full screen, each gig shows once: Upcoming is the countdown to the next gig, then the rest in date order; Past is
+  // newest first; All is everything in date order. The lists read across, then down (dashboard.css .gigs).
+  const list = !ctx.expanded ? [] : { upcoming: d.upcoming.slice(first.length), past: d.past, all: [...d.past.slice().reverse(), ...d.upcoming] }[filter];
+  const head = filter === 'upcoming' && n && list.length ? '<div class="gigs__h hud more" hidden>Coming soon</div>' : '';
+  const expandedList = ctx.expanded ? `${head}<ul class="gigs more" hidden>${list.map(g => gigLine(g, g.in_days < 0)).join('')
+    || `<li class="note">${filter === 'upcoming' && n ? 'Nothing else booked.' : 'Nothing here.'}</li>`}</ul>` : '';
+  if (ctx.expanded && filter !== 'upcoming') return { meta: `${d.count} booked`, body: expandedList };
   if (!n) {
     return { meta: 'none upcoming', body: `${empty('bolt', 'No upcoming gigs', 'Nothing booked ahead.', settingsLink('Add a gig'))}${expandedList}` };
   }
   const hero = n.in_days === 0 ? { count: 'GIG', unit: 'tonight' } : { count: String(n.in_days).padStart(2, '0'), unit: n.in_days === 1 ? 'day' : 'days' };
-  const where = [n.venue, n.city].filter(Boolean).join(', ');
   // The venue column and the ticking HH:MM:SS are shown by the LCARS theme only (lcars.css); Citadel hides them.
-  const others = d.upcoming.slice(1, 4).map(g => `<div class="subrow">${ico('bolt')}${esc(g.artist)}<span class="subrow__venue">${esc(g.venue || '')}</span><span class="mono">${esc(fmtDay(g.date))}</span></div>`).join('');
+  const others = ctx.expanded ? '' : d.upcoming.slice(first.length, 4).map(g => `<div class="subrow">${ico('bolt')}${esc(g.artist)}<span class="subrow__venue">${esc(g.venue || '')}</span><span class="mono">${esc(fmtDay(g.date))}</span></div>`).join('');
   // Counts down to the doors (7pm when they aren't known). Never a plain data-date attribute: tickClock() overwrites those.
-  const tick = n.in_days > 0 ? `<span class="hero__tick" data-gig-at="${esc(`${n.date}T${/^\d{2}:\d{2}$/.test(n.doors || '') ? n.doors : '19:00'}`)}"></span>` : '';
+  const doors = first.map(g => g.doors).filter(t => /^\d{2}:\d{2}$/.test(t || '')).sort()[0] || '19:00';    // the earliest of the day's doors
+  const tick = n.in_days > 0 ? `<span class="hero__tick" data-gig-at="${esc(`${n.date}T${doors}`)}"></span>` : '';
   return {
     meta: `${d.count} booked`,
     body: `<div class="hero"><span class="hero__count">${hero.count}</span><span class="hero__unit">${hero.unit}</span>${tick}</div>
-      <div class="hero__name">${esc(n.artist)}</div>
-      <div class="hero__sub">${esc(where)} · ${esc(fmtDay(n.date))}${n.doors ? ` · doors ${esc(n.doors)}` : ''} · <a class="feed__link" href="${esc(gcalUrl(n))}" target="_blank" rel="noopener" title="Add to Google Calendar">diary</a></div>
+      ${first.map(g => `<div class="hero__name">${esc(g.artist)}</div>
+      <div class="hero__sub">${esc([g.venue, g.city].filter(Boolean).join(', '))} · ${esc(fmtDay(g.date))}${g.doors ? ` · doors ${esc(g.doors)}` : ''} · <a class="feed__link" href="${esc(gcalUrl(g))}" target="_blank" rel="noopener" title="Add to Google Calendar">diary</a></div>`).join('')}
       ${others}${expandedList}`,
   };
 }

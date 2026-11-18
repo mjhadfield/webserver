@@ -14,7 +14,7 @@ html[data-skin="lcars"] .sx__top .btn { --lc-t: var(--lc-2); }
 html[data-skin="lcars"] .sx__tabs { gap: 5px; }
 html[data-skin="lcars"] .sx__tabs button { --lc-t: var(--lc-2); justify-content: flex-end; gap: 10px; height: 40px; padding: 0 16px 0 14px;
   border: 0; border-radius: 20px 4px 4px 20px; font: 500 15px/1 var(--lc-font); letter-spacing: .1em; color: var(--silver);
-  background: color-mix(in srgb, var(--lc-t) 12%, transparent); transition: color .2s, background-color .2s, transform .12s; }
+  background: color-mix(in srgb, var(--lc-t) 12%, transparent); transition: background-color .2s, transform .12s; }   /* no color fade: see settings.css */
 html[data-skin="lcars"] .sx__tabs button .i { order: 1; width: 17px; height: 17px; color: var(--lc-t); }
 html[data-skin="lcars"] .sx__tabs button:nth-child(6n+2) { --lc-t: var(--lc-5); }
 html[data-skin="lcars"] .sx__tabs button:nth-child(6n+3) { --lc-t: var(--lc-4); }

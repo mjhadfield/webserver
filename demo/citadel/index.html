@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/music.css">
 <link rel="stylesheet" href="css/news.css">
 <link rel="stylesheet" href="demo.css">
+<link rel="stylesheet" href="css/stats.css">
 <link rel="stylesheet" href="css/lcars.css">
 </head>
 <body>
@@ -27,8 +28,10 @@
     <a href="#media" data-view="media" title="Media"><svg class="i"><use href="#i-film"/></svg><span class="rail__label">Media</span></a>
     <a href="#music" data-view="music" title="Companion"><svg class="i"><use href="#i-disc"/></svg><span class="rail__label">Companion</span></a>
     <a href="#listen" data-view="listen" title="Music"><svg class="i"><use href="#i-wave"/></svg><span class="rail__label">Music</span></a>
+    <a href="#casino" data-view="casino" title="Casino"><svg class="i"><use href="#i-spade"/></svg><span class="rail__label">Casino</span></a>
     <a href="#ai" data-view="ai" title="Odysseus"><svg class="i"><use href="#i-spark"/></svg><span class="rail__label">Odysseus</span></a>
     <a href="#house" data-view="house" title="House"><svg class="i"><use href="#i-tool"/></svg><span class="rail__label">House</span></a>
+    <a href="#stats" data-view="stats" title="Fleet"><svg class="i"><use href="#i-fleet"/></svg><span class="rail__label">Fleet</span></a>
     <span class="spacer"></span>
     <a href="#curate" data-view="curate" title="Curate (Music Maintenance)"><svg class="i"><use href="#i-tag"/></svg><span class="rail__label">Curate</span></a>
     <a href="#settings" data-view="settings" class="rail__settings" title="Settings"><svg class="i"><use href="#i-gear"/></svg><span class="rail__label">Settings</span></a>
@@ -36,9 +39,9 @@
 
   <main class="main">
     <header class="top">
-      <div class="top__brand"><button class="top__logo" type="button" data-alerts-toggle aria-expanded="false" aria-controls="alerts" aria-label="Reminders" title="Reminders"><svg class="i"><use href="#i-logo"/></svg><span class="top__badge" id="alerts-count" hidden></span></button><span class="wordmark">Citadel</span><span class="hud" id="host-label"></span><span class="chip demo-chip" title="A frozen copy of my home dashboard: nothing here is live or saved">Snapshot · 17 Nov 2026 · read-only</span></div>
+      <div class="top__brand"><button class="top__logo" type="button" data-alerts-toggle aria-expanded="false" aria-controls="alerts" aria-label="Reminders" title="Reminders"><svg class="i"><use href="#i-logo"/></svg><span class="top__badge" id="alerts-count" hidden></span></button><span class="wordmark">Citadel</span><span class="hud" id="host-label"></span><span class="chip demo-chip" title="A frozen copy of my home dashboard: nothing here is live or saved">Snapshot · 18 Nov 2026 · read-only</span></div>
       <div class="top__mid"><nav class="shortcuts" id="shortcuts" aria-label="Bookmarks" hidden></nav><div class="bmbar" id="bm-bar" hidden></div><dl class="readout" id="readout" role="button" tabindex="0" aria-label="Monitoring" title="Monitoring"></dl><section class="mu-bar" id="mu-bar" aria-label="Now playing"></section></div>
-      <div class="top__right"><a class="btn btn--icon top__settings" href="#settings" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></a><button class="btn look-btn" type="button" data-mode-toggle aria-label="Switch to Day" title="Switch to Day"><svg class="i"><use href="#i-sun"/></svg><span class="look-btn__word">Day</span></button><button class="btn look-btn" type="button" data-theme-menu aria-haspopup="menu" aria-expanded="false" aria-label="Theme" title="Theme"><svg class="i"><use href="#i-palette"/></svg><span class="look-btn__word">Citadel</span><svg class="i look-btn__chev"><use href="#i-down"/></svg></button><span class="hud hud--plain badge-role"><span class="dot" id="conn-dot" title="connecting…"></span><span id="device-label">Owner device</span></span></div>
+      <div class="top__right"><a class="btn btn--icon top__settings" href="#settings" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></a><span class="look-group" id="look-group"><button class="btn look-btn" type="button" data-mode-toggle aria-label="Switch to Day" title="Switch to Day"><svg class="i"><use href="#i-sun"/></svg><span class="look-btn__word">Day</span></button><button class="btn look-btn" type="button" data-theme-menu aria-haspopup="menu" aria-expanded="false" aria-controls="style-bar" aria-label="Style" title="Style"><svg class="i"><use href="#i-palette"/></svg><span class="look-btn__word">Style</span><svg class="i look-btn__chev"><use href="#i-down"/></svg></button></span><div class="bmbar stylebar" id="style-bar" hidden></div><span class="hud hud--plain badge-role"><span class="dot" id="conn-dot" title="connecting…"></span><span id="device-label">Owner device</span></span></div>
     </header>
     <section class="view is-active" id="view-home" data-view="home">
       <section class="alerts" id="alerts" aria-label="Reminders"></section>
@@ -47,7 +50,7 @@
     <section class="view" id="view-news" data-view="news" aria-label="News"></section>
     <section class="view" id="view-media" data-view="media" aria-label="Media">
       <div class="frame-shell" hidden><iframe id="media-frame" title="Media" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
-      <div class="demo-na"><svg class="i"><use href="#i-film"/></svg><b>Not available in the online demo</b><span>Media is a Jellyfin server running locally</span></div>
+      <div class="demo-na has-shot" style="background-image:url(&quot;img/demo-na/media.jpg&quot;)"><div class="demo-na__card"><svg class="i"><use href="#i-film"/></svg><b>Not available in the online demo</b><span>Media is a Jellyfin server running locally</span></div></div>
     </section>
     <section class="view" id="view-music" data-view="music" aria-label="Companion">
       <div class="frame-shell"><iframe id="music-frame" title="Music Companion" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
@@ -56,17 +59,22 @@
       <div class="frame-shell"><iframe id="sql-frame" title="SQL DB" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
     </section>
     <section class="view" id="view-listen" data-view="listen" aria-label="Music"></section>
+    <section class="view" id="view-casino" data-view="casino" aria-label="Casino">
+      <div class="frame-shell" hidden><iframe id="casino-frame" title="Casino World" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
+      <div class="demo-na has-shot" style="background-image:url(&quot;img/demo-na/casino.jpg&quot;)"><div class="demo-na__card"><svg class="i"><use href="#i-spade"/></svg><b>Not available in the online demo</b><span>This project can be viewed here: <a href="https://github.com/mjhadfield/CasinoWorld" target="_blank" rel="noopener">github.com/mjhadfield/CasinoWorld</a></span></div></div>
+    </section>
     <section class="view" id="view-ai" data-view="ai" aria-label="Odysseus">
       <div class="frame-shell" hidden><iframe id="ai-frame" title="Odysseus" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
-      <div class="demo-na"><svg class="i"><use href="#i-spark"/></svg><b>Not available in the online demo</b><span>Odysseus is an LLM container running locally</span></div>
+      <div class="demo-na has-shot" style="background-image:url(&quot;img/demo-na/ai.jpg&quot;)"><div class="demo-na__card"><svg class="i"><use href="#i-spark"/></svg><b>Not available in the online demo</b><span>Odysseus is an LLM container running locally</span></div></div>
     </section>
     <section class="view" id="view-house" data-view="house" aria-label="House">
       <div class="frame-shell" hidden><iframe id="house-frame" title="Home Improvements" allow="fullscreen" allowfullscreen></iframe></div>
-      <div class="demo-na"><svg class="i"><use href="#i-tool"/></svg><b>Not available in the online demo</b><span>This is too sensitive to share online</span></div>
+      <div class="demo-na has-shot" style="background-image:url(&quot;img/demo-na/house.jpg&quot;)"><div class="demo-na__card"><svg class="i"><use href="#i-tool"/></svg><b>Not available in the online demo</b><span>This is too sensitive to share online</span></div></div>
     </section>
+    <section class="view" id="view-stats" data-view="stats" aria-label="Fleet"></section>
     <section class="view" id="view-curate" data-view="curate" aria-label="Curate">
       <div class="frame-shell" hidden><iframe id="curate-frame" title="Music Maintenance"></iframe></div>
-      <div class="demo-na"><svg class="i"><use href="#i-tag"/></svg><b>Not available in the online demo</b><span>Curate is Music Companion's private maintenance tool on my home network.</span></div>
+      <div class="demo-na"><div class="demo-na__card"><svg class="i"><use href="#i-tag"/></svg><b>Not available in the online demo</b><span>Curate is Music Companion's private maintenance tool on my home network.</span></div></div>
     </section>
     <section class="view" id="view-settings" data-view="settings" aria-label="Settings">
       <div class="frame-shell"><iframe id="settings-frame" title="Settings"></iframe></div>
@@ -75,14 +83,16 @@
 </div>
 
 <nav class="tabbar" aria-label="Primary (mobile)">
-  <a href="#home" data-view="home" aria-current="page"><svg class="i"><use href="#i-home"/></svg>Home</a>
-  <a href="#news" data-view="news"><svg class="i"><use href="#i-news"/></svg>News</a>
-  <a href="#media" data-view="media"><svg class="i"><use href="#i-film"/></svg>Media</a>
-  <a href="#music" data-view="music"><svg class="i"><use href="#i-disc"/></svg>Companion</a>
-  <a href="#listen" data-view="listen"><svg class="i"><use href="#i-wave"/></svg>Music</a>
-  <a href="#ai" data-view="ai"><svg class="i"><use href="#i-spark"/></svg>Odysseus</a>
-  <a href="#house" data-view="house"><svg class="i"><use href="#i-tool"/></svg>House</a>
+  <a href="#home" data-view="home" aria-current="page"><svg class="i"><use href="#i-home"/></svg><span class="tabbar__label">Home</span></a>
+  <a href="#news" data-view="news"><svg class="i"><use href="#i-news"/></svg><span class="tabbar__label">News</span></a>
+  <a href="#media" data-view="media"><svg class="i"><use href="#i-film"/></svg><span class="tabbar__label">Media</span></a>
+  <a href="#music" data-view="music"><svg class="i"><use href="#i-disc"/></svg><span class="tabbar__label">Companion</span></a>
+  <a href="#listen" data-view="listen"><svg class="i"><use href="#i-wave"/></svg><span class="tabbar__label">Music</span></a>
+  <a href="#casino" data-view="casino"><svg class="i"><use href="#i-spade"/></svg><span class="tabbar__label">Casino</span></a>
+  <a href="#ai" data-view="ai"><svg class="i"><use href="#i-spark"/></svg><span class="tabbar__label">Odysseus</span></a>
+  <a href="#house" data-view="house"><svg class="i"><use href="#i-tool"/></svg><span class="tabbar__label">House</span></a>
 </nav>
+<nav class="more-sheet" id="more-sheet" aria-label="More pages" hidden></nav>
 
 <dialog class="book" id="book-gig" aria-labelledby="book-gig-title">
   <form class="book__form" novalidate>
