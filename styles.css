@@ -50,7 +50,7 @@
     color-scheme: dark;
 }
 
-/* Light theme -- Citadel's (HomeDashboard/web/css/tokens.css): sun-bleached parchment, rust
+/* Light theme -- Citadel's (Citadel/web/css/tokens.css): sun-bleached parchment, rust
    accent, deep-sea teal for "ok", dried-blood maroon for errors. */
 :root[data-theme="light"] {
     --bg: #f2e8d5;
