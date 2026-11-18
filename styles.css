@@ -956,6 +956,40 @@ body {
 
 .proj-card:hover .proj-card__read { transform: translateX(3px); }
 
+/* the primary project: the whole width of the grid, its screenshot beside the text */
+.proj-card--primary {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 22px;
+    align-items: center;
+    padding: 22px 24px;
+    border-color: var(--accent-dim);
+}
+
+.proj-card__text {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    height: 100%;
+}
+
+.proj-card--primary .proj-card__title { font-size: 1.4rem; }
+.proj-card--primary .proj-card__summary { font-size: 0.86rem; }
+
+.proj-card__cover {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: top left;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+}
+
 /* a draft: the tile is shown, but it isn't a link yet */
 .proj-card--draft,
 .proj-card--draft:hover {
@@ -1214,6 +1248,19 @@ body {
     height: 100%;
     object-fit: contain;
 }
+
+/* ::figrow[a b c] -- figures side by side, each its own numbered figure */
+.fig-row {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+    gap: 14px;
+    margin: 26px 0;
+    max-width: none !important;
+    align-items: start;
+}
+
+.fig-row .fig { margin: 0; }
+.fig-row figcaption { font-size: 0.72rem; }
 
 /* a video with its own controls: the frame isn't a button, a small "expand" chip opens it */
 div.fig__frame--video { cursor: default; }
@@ -1647,7 +1694,10 @@ body.is-max .footer { display: none; }
 
     .proj-head,
     .article__head { padding: 22px 18px 0; }
-    .proj-grid { grid-template-columns: 1fr; padding: 18px; }
+    .proj-grid { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+    .proj-card--primary { grid-template-columns: 1fr; padding: 18px 20px; }
+    .proj-card--primary .proj-card__cover { order: -1; }
+    .fig-row { grid-template-columns: 1fr; }
     .prose { padding: 4px 18px 32px; }
 
     .lb__scroll { padding: 10px; }

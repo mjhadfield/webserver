@@ -1,0 +1,78 @@
+{
+  "slug": "casino-world",
+  "title": "Casino World",
+  "summary": "A living 2D casino in the browser: walk the floor, sit down next to other players and NPCs, and play alongside dealers at a real table's pace. The successor to Python Casino.",
+  "tags": [
+    "Godot",
+    "GDScript",
+    "Python",
+    "FastAPI",
+    "Multiplayer"
+  ],
+  "repo": "https://github.com/mjhadfield/CasinoWorld",
+  "status": "published",
+  "started": "2026-10",
+  "updated": "2026-11-18",
+  "body": "## Background\nI don't mind a house edge, but I don't give casinos any more money than I need to. [Python Casino](#/projects/home-casino) was built so I could learn to play Blackjack properly, and Craps for the next time I'm in Vegas. Once that was effectively feature complete as a single player desktop game, the obvious next step was to make it feel like actually being in a casino: walking in, wandering round the tables, and sitting down next to other people.\n\nEvery card game's rules engine came straight across from Python Casino, tested against it to the penny over thousands of hands, so nothing changed in the move.\n\n::figure[floor-stage]\n\n## Open 24/7\nIt runs on my home server around the clock, whether anyone's playing or not. The NPCs come in, play, and go home bust, bored or ahead, and every bet they make is logged against the house edge it should have. Since I last reset the stats on 4 November:\n- 7,130 NPC visits, over 10,000 hours sat at the tables\n- 1.1 million rounds and 3.3 million bets\n- £143.5 million wagered (not real money, sadly)\n- The house kept £4.65 million, 3.24% of everything staked\n- 522 NPCs went home bust\n- Best single visit: +£105,250. Worst: −£119,906\n- The slots have spun almost 900,000 times and paid out 4,556 jackpots\n\n## The Master Table\nA break from realism, but virtual gaming has to have some advantages. One table deals every game: sit down and the dealer asks what you'd like to play. Anyone else sat there gets a vote, changes only happen between hands, and when the new game has fewer seats the chairs slide over with people still sat in them. There are three animations for the change, picked per table.\n\n::figrow[master-gold-dust master-fresh-cloth master-dealers-sweep]\n\n## Playing two boxes\nA **2nd Box** pill shows on any free chair beside you. Click it and every bet you make is matched on the second seat, which is dealt, decided and settled as a hand of its own.\n\n::figure[blackjack-two-boxes]\n\n## Craps\nCraps was the game I knew least about, and the whole point was to learn it properly, so I wanted the table to be right rather than just look right. It's played to Vegas rules, standing at the rail with up to eight players:\n- Every bet you'd find on a real table, from the line with 3-4-5x odds to the one-roll props\n- Paid in whole pounds. Chips go down in each bet's proper unit, so a £5 chip places the 6 for £6\n- The vig is taken like it is in a casino: out of the win on a buy bet, up front on a lay\n- The dice are planned on the server, so everyone sees the same throw bounce off the walls, the chips and the pucks\n\n::figure[craps-come-out]\n\n## The rest of the floor\n- Single zero Roulette, and every other card game from Python Casino\n- NPCs with their own style (Grinder, Casual or Gambler), traits like Whale or Card counter, favourite games and a budget\n- Dealers who work shifts, call the hands and commiserate when you bust\n- A slot design wizard, from the concept to cabinets on the floor\n- An admin page to build the casino room by room, design the tables and manage the NPCs\n\n## How it's built\nThe client is a Godot game exported to the web, so players just open a link. The server is a Python FastAPI app that runs the tables, the dealers and the NPCs, holds the wallets, and decides every result and every penny. The browser only draws what it's told.\n\nIt's not open to the public yet, but the code is on GitHub.\n",
+  "figures": {
+    "floor-stage": {
+      "src": "content/img/casino-world/floor-stage.webp",
+      "w": 1280,
+      "h": 720,
+      "title": "The casino floor",
+      "caption": "The Master Table on its raised stage, with Roulette and Craps in their pits below.",
+      "alt": "",
+      "hotspots": []
+    },
+    "master-gold-dust": {
+      "src": "content/img/casino-world/master-gold-dust.webm",
+      "w": 480,
+      "h": 288,
+      "title": "Gold dust",
+      "caption": "The printing breaks into gold dust and settles into the new layout.",
+      "alt": "",
+      "hotspots": [],
+      "loop": true
+    },
+    "master-fresh-cloth": {
+      "src": "content/img/casino-world/master-fresh-cloth.webm",
+      "w": 480,
+      "h": 288,
+      "title": "Fresh cloth",
+      "caption": "A new cloth rolls down from the dealer's side, uncovering the new game.",
+      "alt": "",
+      "hotspots": [],
+      "loop": true
+    },
+    "master-dealers-sweep": {
+      "src": "content/img/casino-world/master-dealers-sweep.webm",
+      "w": 480,
+      "h": 288,
+      "title": "Dealer's sweep",
+      "caption": "The printing flies into the chip tray seat by seat, then the new layout deals back out.",
+      "alt": "",
+      "hotspots": [],
+      "loop": true
+    },
+    "blackjack-two-boxes": {
+      "src": "content/img/casino-world/blackjack-two-boxes.webm",
+      "w": 800,
+      "h": 450,
+      "title": "Two boxes of Blackjack",
+      "caption": "Both stand, the dealer busts, and both win.",
+      "alt": "",
+      "hotspots": [],
+      "loop": true
+    },
+    "craps-come-out": {
+      "src": "content/img/casino-world/craps-come-out.webm",
+      "w": 800,
+      "h": 450,
+      "title": "A come-out roll",
+      "caption": "The dice bounce down the table, the point is set and the puck goes on.",
+      "alt": "",
+      "hotspots": [],
+      "loop": true
+    }
+  }
+}

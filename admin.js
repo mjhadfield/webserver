@@ -315,10 +315,11 @@
             field('live app — “launch” opens it inside the terminal', 'live', p.live, false, 'text', 'https://… or demo/citadel/ (blank: no launch button)') +
             field('button label', 'live_label', p.live_label, false, 'text', 'launch') +
             '<label class="field-check"><input type="checkbox" data-meta="live_max"' + (p.live_max ? ' checked' : '') + '> launch maximised</label>' +
+            '<label class="field-check"><input type="checkbox" data-meta="featured"' + (p.featured ? ' checked' : '') + '> primary tile on the projects page</label>' +
             '<label class="field"><span class="field__label">status</span><select data-meta="status"><option value="draft"' + (p.status === 'draft' ? ' selected' : '') + '>draft — shown as coming soon</option><option value="published"' + (p.status === 'published' ? ' selected' : '') + '>published</option></select></label>' +
             field('started', 'started', p.started, false, 'text', '2026-03') +
             '</div>' +
-            '<label class="field"><span class="field__label">write-up — markdown: ## heading · **bold** · *italic* · `code` · [link](https://…) · - list · ``` code block (```python or ```sql for colours) · ::figure[id] places an image · ::launch places the launch button</span>' +
+            '<label class="field"><span class="field__label">write-up — markdown: ## heading · **bold** · *italic* · `code` · [link](https://…) · - list · ``` code block (```python or ```sql for colours) · ::figure[id] places an image · ::figrow[a b c] places figures side by side · ::launch places the launch button</span>' +
             '<textarea class="md" data-meta="body" spellcheck="true">' + esc(p.body) + '</textarea></label>' +
             '</div><div class="editor__preview"><p class="editor__label">live preview</p><div data-role="preview"></div></div></div>' +
             '<div class="figman"><h3>Figures</h3>' +

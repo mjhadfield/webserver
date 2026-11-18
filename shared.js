@@ -18,7 +18,8 @@
     // ---------------------------------------------------------------------------------------
     // Markdown -- a deliberately small subset, no library: ## / ### headings, paragraphs, - and
     // 1. lists, ``` code blocks (```python / ```sql are colour-highlighted), > quotes, **bold**, *italic*, `code`, [links](url), and
-    // "::figure[id]" on its own line to place one of the project's figures.
+    // "::figure[id]" on its own line to place one of the project's figures, "::figrow[a b c]" to set
+    // several side by side (each still numbered and expandable).
     // ---------------------------------------------------------------------------------------
     function inline(s) {
         return esc(s)
@@ -108,6 +109,8 @@
         String(body || '').split('\n').forEach(function (line) {
             var m = line.match(/^::figure\[([\w-]+)\]\s*$/);
             if (m && figures && figures[m[1]]) ids.push(m[1]);
+            var row = line.match(/^::figrow\[([\w\- ]+)\]\s*$/);
+            if (row) row[1].split(/\s+/).forEach(function (id) { if (id && figures && figures[id]) ids.push(id); });
         });
         return ids;
     }
@@ -139,6 +142,13 @@
                 flushPara(); flushList();
                 var fig = figures && figures[m[1]];
                 out.push(fig ? figureHtml(m[1], fig, ++figNo) : '<p><code>missing figure: ' + esc(m[1]) + '</code></p>');
+            } else if ((m = line.match(/^::figrow\[([\w\- ]+)\]\s*$/))) {
+                flushPara(); flushList();
+                var cells = m[1].split(/\s+/).filter(Boolean).map(function (id) {
+                    var f = figures && figures[id];
+                    return f ? figureHtml(id, f, ++figNo) : '<p><code>missing figure: ' + esc(id) + '</code></p>';
+                });
+                out.push('<div class="fig-row" style="--cols:' + cells.length + '">' + cells.join('') + '</div>');
             } else if (/^::launch\s*$/.test(line)) {
                 flushPara(); flushList();
                 // the project's live app: a launch button (opens it in the terminal) and a new-tab link

@@ -129,7 +129,7 @@ class AdminServerTests(unittest.TestCase):
         self.assertEqual(saved["figures"]["a"]["hotspots"][0], {"x": 100, "y": 0, "note": "pin"})  # clamped to the image
         index = json.loads((self.tmp / "content/projects/index.json").read_text())
         self.assertEqual(index[-1]["slug"], "test-proj")
-        self.assertEqual(len(index), 5)
+        self.assertEqual(len(index), len(json.loads((REPO / "content/projects/index.json").read_text())) + 1)
 
     def test_bad_input_refused(self):
         self.login()
@@ -169,6 +169,21 @@ class AdminServerTests(unittest.TestCase):
         status, body, _ = self.req("PUT", "/api/projects/nolive", {"project": self.project(live_max=True)})
         self.assertNotIn("live_max", body["project"])   # nothing to launch, no flag
 
+    def test_featured_flag_and_cover(self):
+        self.login()
+        figs = {"v": {"src": "content/img/test-proj/v.webm", "w": 8, "h": 6, "title": "V"},
+                "a": {"src": "content/img/test-proj/a.png", "w": 8, "h": 6, "title": "A"}}
+        status, body, _ = self.req("PUT", "/api/projects/main", {"project": self.project(featured=True, figures=figs, body="::figure[v]\n\n::figure[a]")})
+        self.assertEqual((status, body["project"].get("featured")), (200, True))
+        entry = next(e for e in json.loads((self.tmp / "content/projects/index.json").read_text()) if e["slug"] == "main")
+        self.assertEqual((entry.get("featured"), entry.get("cover")), (True, "content/img/test-proj/a.png"))  # first still, not the video
+        for off in (False, "yes", None):
+            status, body, _ = self.req("PUT", "/api/projects/main", {"project": self.project(featured=off)})
+            self.assertNotIn("featured", body["project"], off)
+            entry = next(e for e in json.loads((self.tmp / "content/projects/index.json").read_text()) if e["slug"] == "main")
+            self.assertNotIn("featured", entry)
+            self.assertNotIn("cover", entry)
+
     def test_live_label(self):
         self.login()
         status, body, _ = self.req("PUT", "/api/projects/full", {"project": self.project(live="demo/citadel/", live_label="  demo ")})
@@ -201,7 +216,7 @@ class AdminServerTests(unittest.TestCase):
     def test_delete_and_reorder(self):
         self.login()
         self.assertEqual(self.req("PUT", "/api/projects-order", {"slugs": ["citadel"]})[0], 400)  # must list all
-        slugs = ["star-epr", "home-casino", "music-companion", "citadel"]
+        slugs = [e["slug"] for e in json.loads((self.tmp / "content/projects/index.json").read_text())][::-1]
         status, body, _ = self.req("PUT", "/api/projects-order", {"slugs": slugs})
         self.assertEqual([e["slug"] for e in body["index"]], slugs)
         status, body, _ = self.req("DELETE", "/api/projects/home-casino")

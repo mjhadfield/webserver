@@ -58,19 +58,31 @@
         views.projects.innerHTML =
             '<div class="proj-head">' + MH.cdBtn('#/', 'cd ~') +
             '<p class="section-label"><span class="prompt">$</span> ls -la ~/projects</p>' +
-            '<p class="tagline">A collection of personal projects and GitHub repos. I wish I could take all of the credit, but Claude co-wrote an awful lot (from my schema!). I am not a developer, just an integration guy obsessed with numbers.' + '<span class="cursor">_</span></p>' +
+            '<p class="tagline">A collection of personal projects and GitHub repos. I’m not a developer, but I’ve always been very technical, and I’ve never thrown away a piece of hardware since I built my first desktop PC 20 years ago. In late 2025 I migrated my estate over to Linux and started to take homelabbing a bit more seriously.' + '<span class="cursor">_</span></p>' +
             '</div>' +
-            (list ? '<div class="proj-grid">' + list.map(function (p) {
+            (list ? '<div class="proj-grid">' + primaryFirst(list).map(function (p) {
                 var draft = p.status === 'draft';
+                // the primary project: the full width of the grid, with its screenshot beside the text
+                var primary = p.featured && !draft;
                 // a draft: same tile, not a link -- no read permission yet (drwx------)
-                var inner = '<span class="proj-card__ls">' + (draft ? 'drwx------' : 'drwxr-xr-x') + '  mike  ' + esc(p.updated) + '  <b>' + esc(p.slug) + '/</b></span>' +
+                var inner = '<span class="proj-card__ls">' + (draft ? 'drwx------' : 'drwxr-xr-x') + '  mike  ' + esc(p.started || p.updated) + '  <b>' + esc(p.slug) + '/</b></span>' +
                     '<span class="proj-card__title">' + esc(p.title) + '</span>' +
                     '<span class="proj-card__summary">' + esc(p.summary) + '</span>' +
                     '<span class="proj-card__foot">' + MH.tagsHtml(p.tags) +
                     (draft ? '<span class="proj-card__soon">coming soon</span>' : '<span class="proj-card__read">read &rarr;</span>') + '</span>';
+                if (primary) {
+                    inner = '<span class="proj-card__text">' + inner + '</span>' +
+                        (p.cover ? '<img class="proj-card__cover" src="' + esc(p.cover) + '" alt="" loading="lazy" decoding="async">' : '');
+                }
                 return draft ? '<div class="proj-card proj-card--draft" aria-label="' + esc(p.title) + ' — coming soon">' + inner + '</div>'
-                    : '<a class="proj-card" href="#/projects/' + esc(p.slug) + '">' + inner + '</a>';
+                    : '<a class="proj-card' + (primary ? ' proj-card--primary' : '') + '" href="#/projects/' + esc(p.slug) + '">' + inner + '</a>';
             }).join('') + '</div>' : '');
+    }
+
+    // the primary (featured) project heads the grid; the rest keep their order underneath
+    function primaryFirst(list) {
+        var top = list.filter(function (p) { return p.featured && p.status !== 'draft'; });
+        return top.concat(list.filter(function (p) { return top.indexOf(p) < 0; }));
     }
 
     function renderArticle(slug, p) {

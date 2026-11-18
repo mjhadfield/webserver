@@ -1,13 +1,13 @@
 {
   "slug": "citadel",
-  "title": "Citadel Hub",
-  "summary": "A way for me to manage my digital life, with API integration for external services. Hosted locally, and served via a dashboard.",
+  "title": "Citadel",
+  "summary": "Bespoke homelab software. Monitors and controls all devices on my home network, and serves a dashboard for life admin, news, music, a media server, and personal projects. Integrated with several external APIs and local services, accessible on my home network or remotely via Tailscale.",
   "tags": [
+    "Self-Hosted",
+    "Homelab",
+    "Dashboard",
     "FastAPI",
-    "Python",
-    "JavaScript",
-    "HTML",
-    "CSS"
+    "Tailscale"
   ],
   "repo": "private",
   "live": "demo/citadel/",
@@ -15,8 +15,9 @@
   "live_max": true,
   "status": "published",
   "started": "2026-08",
-  "updated": "2026-11-17",
-  "body": "::figure[screenshot-20261117-home]\n\n## Try the demo\nA frozen, read-only snapshot of the real dashboard. Nothing in it is live or saved. The private parts (bookmarks, my calendar's entries, device addresses) are redacted, and the pages that only run on my home network are switched off.\n\n::launch\n\n## Why I built it\nI was sick of going to my council website every week to see which bins I needed to put out, surely I could automate that? Then I bought a record I already had on pre-order, relying on flagged emails just doesn't cut it in 2026. \n\nThe GitHub repo is currently private, while my secrets and API keys are .gitignored, I'm sill nervous about making this public without a thorough vetting. \n\n## How it works\nHosted locally on a linux server, it's open to any device on my network. It includes IP whitelisting and MAC address filtering so settings and sensitive information are only available from dedicated devices, while guest devices can have access to the media server. \n\nEach tile can be expanded to show a detailed view. Upcoming vinyl pre-orders show price comparisons, local services show activity logs, etc. \n\nThe music radar is tailored to me, fully integrated with my Music Companion project to only show information about artists I care about. \n\n## What it contains\nDashboard:\n- Google calendar integration (Google API)\n- Upcoming music releases (MusicBrainz API)\n- Upcoming vinyl preorders (Web scraping)\n- Gig radar of upcoming concerts (Ticketmaster API)\n- System monitoring for temperatures and disk space\n- A launchpad for local applications \n- Services monitoring and logging\n\nMedia server:\n- Hosted on a dedicated JellyFin install\n- Digitised TV and Film library\n- Extensive live concert archive\n\nMusic Companion:\n- Fully integrated Music Companion\n- See the project page for full details\n\nSettings:\n- Device enrolment and activity logs\n- Backups update schedule\n- Easy adding of new stores, news feeds, and local applications.\n\n## Vinyl\n::figure[screenshot-20261117-vinyl]\n\n## Settings\nI won't detail everything in here (there's a lot) but every aspect of the front page is customisable and maintainable through the settings page. Highlights include the below. \n\n::figure[screenshot-20261117-settings]\n\n::figure[screenshot-20261117-log]\n\n::figure[screenshot-20261117-devices]\n",
+  "updated": "2026-11-18",
+  "featured": true,
+  "body": "## Try the demo\nA frozen, read-only snapshot of the real dashboard. Nothing in it is live or saved. The private parts (bookmarks, calendar entries, device information) are redacted or use dummy data, and the pages that only run on my home network are switched off.\n\n::launch\n\n::figure[screenshot-20261117-home]\n\n## Why I built it\nI've made numerous attempts at a local dashboard (/intranet) over the years, but they've all been pretty terrible and I'd given up on them. LLMs have (ethics aside) removed a lot of the barriers to custom software, and this is a prime example of that.\n\nThe GitHub repo is currently private. While my secrets and API keys are .gitignored, I'm still hesitant to make it public in case I've missed something which could be a security concern.\n\n## How it works\nHosted locally on a linux server, it's open to any device on my network. It includes IP whitelisting and MAC address filtering so settings and sensitive information are only available from dedicated devices, while guest devices can have access to the media server. \n\nEach tile can be expanded to show a detailed view. Upcoming vinyl pre-orders show price comparisons, local services show activity logs, etc. \n\nThe music radar is tailored to me, fully integrated with my Music Companion project to only show information about artists I care about. \n\n## What it contains\nDashboard:\n- Google calendar integration (Google API)\n- Upcoming music releases (MusicBrainz API)\n- Upcoming vinyl preorders (Web scraping)\n- Gig radar of upcoming concerts (Ticketmaster API)\n- System monitoring for temperatures and disk space\n- A launchpad for local applications \n- Services monitoring and logging\n- Remote access to the other machines on my network (VNC)\n\nMedia server:\n- Hosted on a dedicated JellyFin install\n- Digitised TV and Film library\n- Extensive live concert archive\n\nMusic Companion:\n- Fully integrated Music Companion\n- See the project page for full details\n\nCasino World:\n- Hosted as its own page\n- See the project page for full details\n\nFleet:\n- Load and temperature history for every machine on my network\n- Heatmap, grid and overlay views\n- A live monitoring pop-out for my main desktop\n\nSettings:\n- Device enrolment and activity logs\n- Nightly backups to a second server, with a weekly off-site copy\n- Easy adding of new stores, news feeds, and local applications.\n\nLook and feel:\n- Day and Night palettes\n- An LCARS theme, with its own motion\n- Per-device navigation and page order\n\nAndroid app:\n- Opens Citadel full screen, at home or away over Tailscale\n\n## Vinyl\n::figure[screenshot-20261117-vinyl]\n\n## Settings\nI won't detail everything in here (there's a lot) but every aspect of the front page is customisable and maintainable through the settings page. Highlights include the below. \n\n::figure[screenshot-20261117-settings]\n\n::figure[screenshot-20261117-log]\n\n::figure[screenshot-20261117-devices]\n",
   "figures": {
     "screenshot-20261117-home": {
       "src": "content/img/citadel/screenshot-20261117-home.png",

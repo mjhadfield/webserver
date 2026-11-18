@@ -135,7 +135,17 @@ class Site:
 
     @staticmethod
     def index_entry(p: dict) -> dict:
-        return {k: p.get(k, "" if k != "tags" else []) for k in ("slug", "title", "summary", "tags", "status", "started", "updated")}
+        e = {k: p.get(k, "" if k != "tags" else []) for k in ("slug", "title", "summary", "tags", "status", "started", "updated")}
+        if p.get("featured") is True:
+            # the primary tile: wide, with the write-up's first image (a still, not a video) beside the text
+            e["featured"] = True
+            figs = p.get("figures") or {}
+            for m in re.finditer(r"^::fig(?:ure|row)\[([\w\- ]+)\]\s*$", str(p.get("body") or ""), re.M):
+                fid = next((f for f in m.group(1).split() if f in figs and not re.search(r"\.(webm|mp4)$", figs[f]["src"], re.I)), None)
+                if fid:
+                    e["cover"] = figs[fid]["src"]
+                    break
+        return e
 
     def clean_project(self, p: dict, slug: str) -> dict:
         if not isinstance(p, dict):
@@ -178,6 +188,7 @@ class Site:
                 figures[fid]["loop"] = bool(f.get("loop"))  # a video: "play like a GIF"
         out = {"slug": slug, "title": s("title"), "summary": s("summary"), "tags": [t.strip() for t in tags if t.strip()],
                "repo": repo, "status": p["status"], "started": s("started"), "updated": date.today().isoformat(),
+               **({"featured": True} if p.get("featured") is True else {}),  # the primary tile on the projects page
                "body": str(p.get("body") or ""), "figures": figures}
         if live:
             label = re.sub(r"\s+", " ", s("live_label"))[:24]  # the button's word ("demo"); blank or "launch" is the default

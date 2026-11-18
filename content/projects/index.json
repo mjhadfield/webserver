@@ -1,18 +1,20 @@
 [
   {
     "slug": "citadel",
-    "title": "Citadel Hub",
-    "summary": "A way for me to manage my digital life, with API integration for external services. Hosted locally, and served via a dashboard.",
+    "title": "Citadel",
+    "summary": "Bespoke homelab software. Monitors and controls all devices on my home network, and serves a dashboard for life admin, news, music, a media server, and personal projects. Integrated with several external APIs and local services, accessible on my home network or remotely via Tailscale.",
     "tags": [
+      "Self-Hosted",
+      "Homelab",
+      "Dashboard",
       "FastAPI",
-      "Python",
-      "JavaScript",
-      "HTML",
-      "CSS"
+      "Tailscale"
     ],
     "status": "published",
     "started": "2026-08",
-    "updated": "2026-09-27"
+    "updated": "2026-11-18",
+    "featured": true,
+    "cover": "content/img/citadel/screenshot-20261117-home.png"
   },
   {
     "slug": "music-companion",
@@ -29,16 +31,31 @@
     "updated": "2026-11-07"
   },
   {
+    "slug": "casino-world",
+    "title": "Casino World",
+    "summary": "A living 2D casino in the browser: walk the floor, sit down next to other players and NPCs, and play alongside dealers at a real table's pace. The successor to Python Casino.",
+    "tags": [
+      "Godot",
+      "GDScript",
+      "Python",
+      "FastAPI",
+      "Multiplayer"
+    ],
+    "status": "published",
+    "started": "2026-10",
+    "updated": "2026-11-18"
+  },
+  {
     "slug": "home-casino",
-    "title": "Hadfield Casino",
-    "summary": "Written entirely in Python with no additional assets. Complete with progression system, unlocks, themes, and detailed statistics. Want to learn how to count cards? I've got you covered.",
+    "title": "Python Casino",
+    "summary": "The foundation for Casino World. Nine table games in pure Python with no assets or installs. Its rules engines now drive every card game in Casino World, and it still runs standalone on anything with Python.",
     "tags": [
       "Python",
       "Tkinter"
     ],
     "status": "published",
     "started": "2026-08",
-    "updated": "2026-09-27"
+    "updated": "2026-11-18"
   },
   {
     "slug": "star-epr",
@@ -50,7 +67,7 @@
       "JavaScript"
     ],
     "status": "draft",
-    "started": "2025-06",
+    "started": "2024-06",
     "updated": "2026-09-27"
   }
 ]
