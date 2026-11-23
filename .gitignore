@@ -1,3 +1,8 @@
 # admin password hash -- local only, never commit
 .admin-password
 __pycache__/
+
+# agent instruction files: local only, never committed
+/AGENTS.md
+/CLAUDE.md
+/GEMINI.md
