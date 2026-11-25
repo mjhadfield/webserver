@@ -1,0 +1,76 @@
+/* ==========================================================================
+   Borg on the Settings page (html[data-family="borg"], linked from settings.html only).
+   borg.css brings the palette, concentric nodes and beveled card shape; this adds Settings' own pieces:
+   angular section tabs with gold active conduits, beveled cards with stepped crosshair rules, crisp inputs,
+   and glowing emerald switches. Scoped under html[data-family="borg"], so Citadel and LCARS are untouched.
+   ========================================================================== */
+
+html[data-family="borg"] .sx__top .hud { color: var(--brg-node); letter-spacing: .18em; }
+
+/* ---- section list: angular Borg console tabs ---------------------------------------------------------------------- */
+html[data-family="borg"] .sx__tabs { gap: 4px; }
+html[data-family="borg"] .sx__tabs button {
+  border: 1px solid color-mix(in srgb, var(--brg-frame) 22%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--brg-sub) 60%, transparent);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--brg-frame) 4%, var(--surface));
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  transition: color .18s, background-color .18s, border-color .18s;
+}
+html[data-family="borg"] .sx__tabs button .i { color: var(--brg-node); }
+html[data-family="borg"] .sx__tabs button:hover {
+  color: var(--silver-hi); border-color: color-mix(in srgb, var(--brg-node) 55%, transparent);
+  border-left-color: var(--brg-cyan);
+  background: color-mix(in srgb, var(--brg-node) 12%, var(--surface-2));
+}
+html[data-family="borg"] .sx__tabs button[aria-selected="true"] {
+  color: var(--brg-on); background: var(--brg-node); border-color: var(--brg-node); border-left-color: var(--brg-axis);
+  font-weight: 700;
+}
+html[data-family="borg"] .sx__tabs button[aria-selected="true"] .i { color: var(--brg-on); }
+
+/* ---- cards: stepped gold-to-emerald crosshair rule after title ---------------------------------------------------- */
+html[data-family="borg"] .sx__card .card__head { gap: 12px; }
+html[data-family="borg"] .sx__card .card__tools { flex: 1; justify-content: flex-end; }
+html[data-family="borg"] .sx__card .card__tools::before {
+  content: ""; flex: 1; min-width: 14px; height: 2px; order: -1;
+  background: linear-gradient(90deg, var(--brg-axis) 0 20px, color-mix(in srgb, var(--brg-frame) 45%, transparent) 20px, transparent);
+}
+html[data-family="borg"] .sx__sub { border-top-color: color-mix(in srgb, var(--brg-frame) 25%, var(--edge)); }
+
+/* ---- buttons & fields --------------------------------------------------------------------------------------------- */
+html[data-family="borg"] .sx .btn.is-on, html[data-family="borg"] .sx .btn.is-pinned,
+html[data-family="borg"] .sx .btn--toggle.is-on, html[data-family="borg"] .sx .btn[aria-pressed="true"] {
+  color: var(--brg-on); background: var(--brg-node); border-color: var(--brg-node); font-weight: 700;
+}
+html[data-family="borg"] .sx .btn.is-on .i, html[data-family="borg"] .sx .btn.is-pinned .i { color: var(--brg-on); }
+html[data-family="borg"] .sx .btn--danger:hover:not([disabled]) { color: #fff; background: var(--bad); border-color: var(--bad); }
+
+html[data-family="borg"] .sx .input {
+  border-radius: 0; border-color: color-mix(in srgb, var(--brg-frame) 32%, transparent); background: var(--well);
+}
+html[data-family="borg"] .sx .input:focus {
+  border-color: var(--brg-node); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brg-node) 18%, transparent);
+}
+html[data-family="borg"] .check input { border-radius: 0; border-color: color-mix(in srgb, var(--brg-frame) 45%, transparent); }
+html[data-family="borg"] .check input:checked { background: var(--brg-node); border-color: var(--brg-node); }
+html[data-family="borg"] .check input:checked::after { border-color: var(--brg-on); }
+
+/* ---- list rows & Appearance picker -------------------------------------------------------------------------------- */
+html[data-family="borg"] .item__icon {
+  border-radius: 0; border-color: color-mix(in srgb, var(--brg-frame) 38%, transparent);
+  color: var(--brg-node); background: color-mix(in srgb, var(--brg-frame) 10%, var(--bg));
+}
+html[data-family="borg"] .item--edit {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--brg-node) 10%, transparent), transparent 72%);
+  box-shadow: inset 3px 0 0 var(--brg-axis);
+}
+html[data-family="borg"] .themepick {
+  border-color: color-mix(in srgb, var(--brg-frame) 26%, transparent);
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+html[data-family="borg"] .themepick.is-current { border-color: var(--brg-node); box-shadow: inset 0 0 0 1px var(--brg-axis); }
+html[data-family="borg"] .themepick__name small { color: var(--brg-axis); }
+html[data-family="borg"] .half, html[data-family="borg"] .toks { border-color: color-mix(in srgb, var(--brg-frame) 28%, transparent); }
+html[data-family="borg"] .half legend, html[data-family="borg"] .toks summary { color: var(--brg-node); }
+html[data-family="borg"] .tok[data-set]::before { background: var(--brg-axis); }

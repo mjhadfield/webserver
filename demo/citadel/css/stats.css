@@ -8,9 +8,9 @@
 /* the Fleet overview: one colour per machine (its place in the list), and the heatmap's calm colour. Night: violet,
    silver, orchid, cyan, sky; heat runs violet → amber → red. Day keeps to Mike's palette: burnt orange, slate, oxblood,
    sepia, umber; heat runs slate → burnt orange → red, so a hot spot never looks like a calm one. */
-.rs { --rs-m1: #a78bfa; --rs-m2: #e6e9ee; --rs-m3: #f0abfc; --rs-m4: #67e8f9; --rs-m5: #93c5fd; --rs-heat: var(--accent); }
-:root[data-theme="light"] .rs { --rs-m1: #b5541f; --rs-m2: #3d5a73; --rs-m3: #8a2e2e; --rs-m4: #7d6b52; --rs-m5: #5c4a3a; --rs-heat: #3d5a73; }
-html[data-skin="lcars"] .rs .card { --rs-c1: var(--lc-c); }
+.rs { --rs-m1: var(--series-1); --rs-m2: var(--series-2); --rs-m3: var(--series-3); --rs-m4: var(--series-4); --rs-m5: var(--series-5); --rs-heat: var(--accent); }
+:root[data-mode="day"] .rs { --rs-heat: var(--ok); }
+html[data-family="lcars"] .rs .card { --rs-c1: var(--lc-c); }
 .rs__body { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: var(--gap); align-items: start; }
 .rs__sub { display: flex; align-items: center; gap: 8px 18px; flex-wrap: wrap; min-height: 18px;
   font: 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silver); }
@@ -44,11 +44,18 @@ html[data-skin="lcars"] .rs .card { --rs-c1: var(--lc-c); }
 .rs-spark path { fill: none; stroke: var(--accent); stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .rs-m__warn { font: 11px var(--font-mono); color: var(--warn); }
 .rs-m__warn::before { content: "● "; }
-html[data-skin="lcars"] .rs-m { border-radius: 18px 4px 4px 18px; border-left-width: 6px; }
-html[data-skin="lcars"] .rs-m[aria-pressed="true"] { border-color: var(--lc-frame); background: color-mix(in srgb, var(--lc-frame) 14%, var(--surface)); }
-html[data-skin="lcars"] .rs-m__head b { font: 500 18px/1 var(--lc-font); letter-spacing: .1em; text-transform: uppercase; }
-html[data-skin="lcars"] .rs-meter i span, html[data-skin="lcars"] .rs-spark path { background: var(--lc-frame); stroke: var(--lc-frame); }
-html[data-skin="lcars"] .rs-meter.is-hot i span { background: var(--warn); }
+html[data-family="lcars"] .rs-m { border-radius: 18px 4px 4px 18px; border-left-width: 6px; }
+html[data-family="lcars"] .rs-m[aria-pressed="true"] { border-color: var(--lc-frame); background: color-mix(in srgb, var(--lc-frame) 14%, var(--surface)); }
+html[data-family="lcars"] .rs-m__head b { font: 500 18px/1 var(--lc-font); letter-spacing: .1em; text-transform: uppercase; }
+html[data-family="lcars"] .rs-meter i span, html[data-family="lcars"] .rs-spark path { background: var(--lc-frame); stroke: var(--lc-frame); }
+html[data-family="lcars"] .rs-meter.is-hot i span { background: var(--warn); }
+/* LCARS 25: the machine buttons are its 6px tiles with a top cap, like the panels beside them (lcars25.css .card), not
+   classic LCARS's rounded left elbow (Mike, 2026-11-24). The picked machine lights its whole edge and takes a wash. */
+html[data-family="lcars"][data-theme="lcars25"] .rs-m { border-radius: 6px; border: 1px solid color-mix(in srgb, var(--lc-frame) 28%, var(--edge));
+  border-top: 2px solid var(--lc-frame); transition: border-color .18s var(--lc-ease), background .18s var(--lc-ease); }
+html[data-family="lcars"][data-theme="lcars25"] .rs-m:hover { border-color: color-mix(in srgb, var(--lc-frame) 64%, var(--edge)); border-top-color: var(--lc-frame); }
+html[data-family="lcars"][data-theme="lcars25"][data-mode="day"] .rs-m:not([aria-pressed="true"]):not(:hover) { border-color: color-mix(in srgb, var(--lc-frame) 40%, var(--edge)); border-top-color: var(--lc-frame); }
+html[data-family="lcars"][data-theme="lcars25"] .rs-m[aria-pressed="true"] { border-color: var(--lc-frame); background: color-mix(in srgb, var(--lc-frame) 12%, var(--surface)); }
 
 /* ---- the picked machine ---- */
 .rs-detail { display: grid; gap: var(--gap); align-content: start; min-width: 0; }
@@ -56,7 +63,7 @@ html[data-skin="lcars"] .rs-meter.is-hot i span { background: var(--warn); }
 .rs-dhead h2 { margin: 0; font: 600 26px/1 var(--font-display); color: var(--silver-hi); }
 .rs-ctl { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-left: auto; }
 .rs-ctl .seg[hidden] { display: none; }
-html[data-skin="lcars"] .rs-dhead h2 { font: 500 34px/1 var(--lc-font); letter-spacing: .08em; text-transform: uppercase; color: var(--lc-frame); }
+html[data-family="lcars"] .rs-dhead h2 { font: 500 34px/1 var(--lc-font); letter-spacing: .08em; text-transform: uppercase; color: var(--lc-frame); }
 .rs__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); align-items: stretch; }
 .rs-card--spikes, .rs__grid > .rs-empty { grid-column: 1 / -1; }
 @media (max-width: 1400px) {
@@ -75,7 +82,7 @@ html[data-skin="lcars"] .rs-dhead h2 { font: 500 34px/1 var(--lc-font); letter-s
 .rs-disk__pct { min-width: 3.2em; text-align: right; font: 600 13px var(--font-mono); color: var(--silver-hi); }
 .rs-disk__pct.is-hot { color: var(--warn); }
 .rs-disk__sub { grid-column: 2 / -1; margin-top: -4px; font: 11px var(--font-mono); color: var(--silver-dim); }
-html[data-skin="lcars"] .rs-disk__bar, html[data-skin="lcars"] .rs-disk__bar i { border-radius: 2px 5px 5px 2px; }
+html[data-family="lcars"] .rs-disk__bar, html[data-family="lcars"] .rs-disk__bar i { border-radius: 2px 5px 5px 2px; }
 
 /* high CPU pins on the Load chart */
 .rs-mark { position: absolute; top: -6px; bottom: 0; width: 0; border-left: 1px dashed color-mix(in srgb, var(--warn) 70%, transparent); pointer-events: none; }
@@ -136,7 +143,7 @@ html[data-skin="lcars"] .rs-disk__bar, html[data-skin="lcars"] .rs-disk__bar i {
   .rs-ctl { margin-left: 0; width: 100%; }
   .rs-dhead .seg { width: 100%; display: flex; }
   .rs-dhead .seg button { flex: 1; padding-left: 2px; padding-right: 2px; white-space: nowrap; font-size: 12px; letter-spacing: .02em; }
-  html[data-skin="lcars"] .rs-dhead .seg button { font-size: 12px; letter-spacing: .02em; padding-left: 2px; padding-right: 2px; }
+  html[data-family="lcars"] .rs-dhead .seg button { font-size: 12px; letter-spacing: .02em; padding-left: 2px; padding-right: 2px; }
   .rs-spikes { grid-template-columns: minmax(0, 1fr); }
 
   .rs-chart { height: 150px; margin-left: 44px; margin-right: 12px; }
@@ -145,9 +152,9 @@ html[data-skin="lcars"] .rs-disk__bar, html[data-skin="lcars"] .rs-disk__bar i {
 }
 
 /* LCARS: the chart cards keep the skin's card look; the plot's ink follows its frame colour */
-html[data-skin="lcars"] .rs-gridline { stroke: color-mix(in srgb, var(--lc-frame) 30%, transparent); }
-html[data-skin="lcars"] .rs-tip { border-radius: 10px; border-color: var(--lc-frame); }
-html[data-skin="lcars"] .rs-proc__bar i { background: var(--lc-frame); }
+html[data-family="lcars"] .rs-gridline { stroke: color-mix(in srgb, var(--lc-frame) 30%, transparent); }
+html[data-family="lcars"] .rs-tip { border-radius: 10px; border-color: var(--lc-frame); }
+html[data-family="lcars"] .rs-proc__bar i { background: var(--lc-frame); }
 
 /* ---- the Fleet overview (stats.js "the Fleet overview") ---- */
 .rs-fleet .rs-m--fleet { margin-bottom: 6px; }
@@ -185,8 +192,8 @@ button.rs-heat__lbl:hover b { color: var(--accent-soft); }
   background: linear-gradient(90deg, color-mix(in srgb, var(--rs-heat) 12%, var(--well)), var(--rs-heat) 82%, var(--heat-2) 85%); }
 .rs-ramp i.is-temp { background: linear-gradient(90deg, color-mix(in srgb, var(--rs-heat) 12%, var(--well)), color-mix(in srgb, var(--rs-heat) 70%, var(--well)) 66%, var(--heat-2) 67% 83%, var(--heat-3) 84%); }
 .rs-ftime:not(:empty) + .rs-ramp { margin-left: 12px; }
-html[data-skin="lcars"] .rs-heat__lbl b { font: 500 17px/1 var(--lc-font); letter-spacing: .1em; text-transform: uppercase; }
-html[data-skin="lcars"] .rs-strip { border-radius: 4px 11px 11px 4px; }
+html[data-family="lcars"] .rs-heat__lbl b { font: 500 17px/1 var(--lc-font); letter-spacing: .1em; text-transform: uppercase; }
+html[data-family="lcars"] .rs-strip { border-radius: 4px 11px 11px 4px; }
 
 /* Grid: a machine per row, a figure per column */
 .rs-fgrid { display: grid; grid-template-columns: 170px repeat(var(--cols), minmax(0, 1fr)); }
@@ -210,9 +217,9 @@ html[data-skin="lcars"] .rs-strip { border-radius: 4px 11px 11px 4px; }
 .rs-gaxis > div { position: absolute; top: 4px; right: 12px; left: calc(3.4em + 36px); height: 14px; }
 .rs-gaxis > div > span:first-child { left: 0; }
 .rs-gaxis > div > span.is-end { left: 100%; }
-html[data-skin="lcars"] .rs-gh { font: 500 14px/1 var(--lc-font); letter-spacing: .14em; color: var(--lc-c); }
-html[data-skin="lcars"] .rs-gname b { font: 500 18px/1 var(--lc-font); letter-spacing: .1em; text-transform: uppercase; }
-html[data-skin="lcars"] :is(.rs-fgrid, .rs-grow) > * { border-top-color: color-mix(in srgb, var(--lc-frame) 22%, transparent); }
+html[data-family="lcars"] .rs-gh { font: 500 14px/1 var(--lc-font); letter-spacing: .14em; color: var(--lc-c); }
+html[data-family="lcars"] .rs-gname b { font: 500 18px/1 var(--lc-font); letter-spacing: .1em; text-transform: uppercase; }
+html[data-family="lcars"] :is(.rs-fgrid, .rs-grow) > * { border-top-color: color-mix(in srgb, var(--lc-frame) 22%, transparent); }
 
 /* Overlay: a line per machine; pointing at a name picks its line out */
 .rs-flegend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; font-size: 12px; color: var(--silver); }
@@ -241,7 +248,7 @@ html[data-skin="lcars"] :is(.rs-fgrid, .rs-grow) > * { border-top-color: color-m
   .rs-gcell .rs-gline { grid-row: auto; grid-column: 1; height: 34px; }
   .rs-gcell__v { min-width: 0; font-size: 16px; }
   .rs-heat { grid-template-columns: 84px minmax(0, 1fr) 46px; gap: 6px 8px; padding-left: 12px; padding-right: 12px; }
-  .rs-heat__lbl b, html[data-skin="lcars"] .rs-heat__lbl b { font-size: 13px; }
+  .rs-heat__lbl b, html[data-family="lcars"] .rs-heat__lbl b { font-size: 13px; }
   .rs-heat__lbl small { display: none; }
   .rs-heat__v { font-size: 13px; }
   .rs-heat__axis span:nth-child(even) { display: none; }

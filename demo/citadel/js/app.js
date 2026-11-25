@@ -4,11 +4,14 @@ import { cards, ui, selectedSlug } from './cards.js';
 import { vinylUi } from './content-cards.js';
 import { Shell } from './shell.js';
 import { $, $$, esc, gcalUrl, hostUrl, ico, safeUrl, tickClock, tickUptimes, toast } from './util.js';
-import { THEMES, currentLook, currentSkin, currentTheme, look, mode, setLook, setMode, syncThemes } from './theme.js';
+import { THEMES, currentLook, currentLookV1, currentTheme, family, mode, setMode, setStyle, setTheme, style, stylesForFamily, syncStyles, theme } from './theme.js';
 import * as music from './music.js';
 import * as news from './news.js';
 import * as stats from './stats.js';
+import * as audio from './audio.js';
+import * as routines from './routines.js';
 import * as motion from './motion.js';
+import './volume.js';                      // the header's GoXLR volume buttons (Line out, Vinyl)
 
 let state = null;
 const shell = new Shell($('#grid'), cards, id => renderCard(id));
@@ -24,7 +27,7 @@ let monitoring = null;
 let machines = null, monTicks = 0;
 async function pollMachines() {
   try { machines = (await api.get('/api/owner/machines')).machines; } catch { /* keep the last list */ }
-  renderCard('monitoring');
+  if (monVisible()) renderCard('monitoring');
 }
 
 function renderCard(id) {
@@ -102,7 +105,7 @@ async function dismissAlert(key) {
   if (!a) return;
   // LCARS: the reminder shrinks away first (lcars.css .is-going); the timeout covers reduced motion, where no animation runs
   const el = $(`[data-alert-dismiss="${CSS.escape(key)}"]`)?.closest('.alert');
-  if (el && currentSkin() === 'lcars') {
+  if (el && family() === 'lcars') {
     el.classList.add('is-going');
     await new Promise(done => { el.addEventListener('animationend', done, { once: true }); setTimeout(done, 400); });
   }
@@ -127,6 +130,34 @@ async function restoreAlert(key) {
   try { await api.post('/api/owner/alerts/restore', { key }); }
   catch (err) { toast(`Couldn't undo: ${err.message}`); }
   await load();
+}
+
+// On a desktop wallpaper (?wall: an always-behind Brave window whose KWin rule forbids fullscreen) framed pages may
+// not ask for fullscreen. Brave would blow the frame up to fill the window, never get KWin's go-ahead, and stay stuck
+// there until a reload (Jellyfin's fullscreen button did this, 2026-11-23). The permission has to go before any
+// frame loads, which holds because every frame's src is set later by script.
+if (new URLSearchParams(location.search).has('wall')) {
+  for (const f of document.querySelectorAll('iframe')) {
+    f.removeAttribute('allowfullscreen');
+    const allow = (f.getAttribute('allow') || '').split(';').map(s => s.trim()).filter(s => s && s !== 'fullscreen');
+    f.setAttribute('allow', [...allow, "fullscreen 'none'"].join('; '));
+  }
+  // Gaming's wallpaper runs in a Brave profile of its own, without Mike's logins, so its new-window links (Bookmarks,
+  // tiles, news) open as tabs in his own Brave instead: the hub runs `brave <url>` on this PC (Mike, 2026-11-23). Only a
+  // page on this PC itself may (NZXT's wallpaper keeps its own windows), so ask once first. Links inside framed apps
+  // belong to their own pages and still open in the wallpaper's profile.
+  api.get('/api/owner/browser').then(({ here }) => {
+    if (!here) return;
+    const handOver = e => {
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      const a = e.target.closest?.('a[target="_blank"][href]');
+      if (!a || !/^https?:$/.test(a.protocol)) return;
+      e.preventDefault();
+      api.post('/api/owner/browser/open', { url: a.href }).catch(err => toast(`Couldn't open it in Brave: ${err.message}`));
+    };
+    document.addEventListener('click', handOver, true);
+    document.addEventListener('auxclick', handOver, true);
+  }).catch(() => {});
 }
 
 // The Media page's iframe is created once in the HTML and its src is set exactly once, here — never
@@ -165,7 +196,7 @@ function setMusicSrc() {
   const url = pageUrl('for_music');
   if (!url) return;
   const sep = url.includes('?') ? '&' : '?';
-  musicFrame.src = `${url}${sep}theme=${currentTheme()}`;
+  musicFrame.src = `${url}${sep}citadel_mode=${mode()}&citadel_theme=${theme()}`;
   try { MUSIC_ORIGIN = new URL(url).origin; } catch { /* keep the default */ }
   musicSrcSet = true;
 }
@@ -183,16 +214,23 @@ function maintenanceOrigin() {
   try { return proj ? new URL(hostUrl(proj.url.replace('{host}', state.ip || location.hostname))).origin : null; } catch { return null; }
 }
 function tellFrames() {
-  const look = currentLook();
+  const v2 = currentLook();
+  const postV2 = (frame, origin) => {
+    if (!origin) return;
+    frame.contentWindow?.postMessage(v2, origin);
+  };
   if (musicSrcSet) {
-    musicFrame.contentWindow?.postMessage(look, MUSIC_ORIGIN);
-    const maint = maintenanceOrigin();
-    if (maint) musicFrame.contentWindow?.postMessage(look, maint);
+    postV2(musicFrame, MUSIC_ORIGIN);
+    postV2(musicFrame, maintenanceOrigin());
   }
-  if (sqlSrcSet && sqlOrigin) sqlFrame.contentWindow?.postMessage(look, sqlOrigin);
-  if (aiSrcSet && aiOrigin) aiFrame.contentWindow?.postMessage(look, aiOrigin);
-  if (houseSrcSet && houseOrigin) houseFrame.contentWindow?.postMessage(look, houseOrigin);
-  if (curateSrcSet) curateFrame.contentWindow?.postMessage(look, maintenanceOrigin());
+  if (sqlSrcSet) postV2(sqlFrame, sqlOrigin);
+  // Odysseus stays on contract v1 permanently (Mike, 2026-11-23).
+  if (aiSrcSet && aiOrigin) aiFrame.contentWindow?.postMessage(currentLookV1(), aiOrigin);
+  if (houseSrcSet) postV2(houseFrame, houseOrigin);
+  if (labelsSrcSet) postV2(labelsFrame, labelsOrigin);
+  if (holodeckSrcSet) postV2(holodeckFrame, holodeckOrigin);
+  if (labSrcSet) postV2(labFrame, labOrigin);
+  if (curateSrcSet) postV2(curateFrame, maintenanceOrigin());
 }
 musicFrame.addEventListener('load', tellFrames);
 
@@ -205,7 +243,7 @@ function setCurateSrc() {
   if (curateSrcSet) return;
   const origin = maintenanceOrigin();
   if (!origin) return;
-  curateFrame.src = `${origin}/?theme=${currentTheme()}`;
+  curateFrame.src = `${origin}/?citadel_mode=${mode()}&citadel_theme=${theme()}`;
   curateSrcSet = true;
 }
 curateFrame.addEventListener('load', tellFrames);
@@ -215,7 +253,7 @@ function setSqlSrc() {
   const url = pageUrl('for_sql');
   if (!url) return;
   const sep = url.includes('?') ? '&' : '?';
-  sqlFrame.src = `${url}${sep}theme=${currentTheme()}`;
+  sqlFrame.src = `${url}${sep}citadel_mode=${mode()}&citadel_theme=${theme()}`;
   try { sqlOrigin = new URL(url).origin; } catch { sqlOrigin = null; }
   sqlSrcSet = true;
 }
@@ -245,11 +283,66 @@ function setHouseSrc() {
   const link = state.links.find(l => l.for_house);
   if (!link) return;
   const sep = link.url.includes('?') ? '&' : '?';
-  houseFrame.src = `${link.url}${sep}citadel_theme=${currentTheme()}`;
+  houseFrame.src = `${link.url}${sep}citadel_mode=${mode()}&citadel_theme=${theme()}`;
   try { houseOrigin = new URL(link.url).origin; } catch { houseOrigin = null; }
   houseSrcSet = true;
 }
 houseFrame.addEventListener('load', tellFrames);
+
+// And for the Labels page (ZebraLab, a link). Follows Citadel's theme like House (custom colours included).
+const labelsFrame = $('#labels-frame');
+let labelsSrcSet = false, labelsOrigin = null;
+function setLabelsSrc() {
+  if (labelsSrcSet) return;
+  const link = state.links.find(l => l.for_labels);
+  if (!link) return;
+  const sep = link.url.includes('?') ? '&' : '?';
+  labelsFrame.src = `${link.url}${sep}citadel_mode=${mode()}&citadel_theme=${theme()}`;
+  try { labelsOrigin = new URL(link.url).origin; } catch { labelsOrigin = null; }
+  labelsSrcSet = true;
+}
+labelsFrame.addEventListener('load', tellFrames);
+
+// And for the Holodeck page (retro games emulator, a link). Follows Citadel's theme like Labels.
+// When Citadel itself is opened on loopback (127.0.0.1 / localhost on Gaming) and the link points at Gaming's
+// LAN address, rewrite the frame host to loopback too so browsers treat the iframe as a secure context and
+// allow the Gamepad API (controllers).
+const holodeckFrame = $('#holodeck-frame');
+let holodeckSrcSet = false, holodeckOrigin = null;
+function setHolodeckSrc() {
+  if (holodeckSrcSet) return;
+  const link = state.links.find(l => l.for_holodeck);
+  if (!link) return;
+  let url = link.url;
+  try {
+    const parsed = new URL(url);
+    if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') && state.ip && parsed.hostname === state.ip) {
+      parsed.hostname = location.hostname;
+      url = parsed.toString();
+    }
+    holodeckOrigin = parsed.origin;
+  } catch { holodeckOrigin = null; }
+  const sep = url.includes('?') ? '&' : '?';
+  holodeckFrame.src = `${url}${sep}citadel_mode=${mode()}&citadel_theme=${theme()}`;
+  holodeckSrcSet = true;
+}
+holodeckFrame.addEventListener('load', tellFrames);
+
+// And for the HomeLab page (Home Assistant on Probe-1, a link). Follows Citadel's theme like Labels: Home Assistant
+// loads a small bridge (~/Projects/HomeLab/home-assistant/citadel-theme) that turns the same message into its own
+// Citadel themes.
+const labFrame = $('#lab-frame');
+let labSrcSet = false, labOrigin = null;
+function setLabSrc() {
+  if (labSrcSet) return;
+  const link = state.links.find(l => l.for_lab);
+  if (!link) return;
+  const sep = link.url.includes('?') ? '&' : '?';
+  labFrame.src = `${link.url}${sep}citadel_mode=${mode()}&citadel_theme=${theme()}`;
+  try { labOrigin = new URL(link.url).origin; } catch { labOrigin = null; }
+  labSrcSet = true;
+}
+labFrame.addEventListener('load', tellFrames);
 
 // And for the Casino page (Casino World, a link). A Godot game with its own look, so no theme hand-off.
 const casinoFrame = $('#casino-frame');
@@ -353,7 +446,7 @@ function renderReadout() {
   if (!el || !state) return;
   const m = monitoring, up = state.widgets?.system?.data?.uptime_s;
   const cpuT = m?.cpu?.temp?.package, gpuT = m?.gpu?.temp, cpu = m?.cpu?.percent, gpu = m?.gpu?.percent;
-  const vram = m?.gpu?.mem_total_mb ? m.gpu.mem_used_mb / m.gpu.mem_total_mb * 100 : null, ram = m?.mem ? m.mem.used / m.mem.total * 100 : null;
+  const vram = m?.gpu?.mem_total_mb && m.gpu.mem_used_mb != null ? m.gpu.mem_used_mb / m.gpu.mem_total_mb * 100 : null, ram = m?.mem ? m.mem.used / m.mem.total * 100 : null;
   const t1 = v => v.toFixed(1), p1 = v => `${v.toFixed(1)}%`;
   const cells = [                                                   // fmt: number -> text, so LCARS can roll between readings
     { k: 'CPU °C', n: cpuT, fmt: t1 },
@@ -378,6 +471,14 @@ function openMonitoring(e) {
 $('#readout').addEventListener('click', openMonitoring);
 $('#readout').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMonitoring(e); } });
 
+// Lazy first-visit loaders for embedded iframes: each sets its src once (never reassigned on later refreshes, so
+// navigating away and back keeps playback/session state), without loading all 10 apps in the background on ?wall#home.
+const FRAME_LOADERS = {
+  media: setMediaSrc, music: setMusicSrc, sql: setSqlSrc, ai: setAiSrc,
+  house: setHouseSrc, labels: setLabelsSrc, holodeck: setHolodeckSrc,
+  lab: setLabSrc, casino: setCasinoSrc, curate: setCurateSrc,
+};
+
 // True while renderAll redraws the cards from new state, so LCARS can show which cards' data changed (motion.js); not
 // for redraws from opening, filtering or searching a card, or Monitoring's own 2 s poll.
 let freshData = false;
@@ -387,13 +488,7 @@ function renderAll() {
   freshData = true;
   try { cards.forEach(c => renderCard(c.id)); } finally { freshData = false; }
   renderAlerts();
-  setMediaSrc();
-  setMusicSrc();
-  setSqlSrc();
-  setAiSrc();
-  setHouseSrc();
-  setCasinoSrc();
-  setCurateSrc();
+  FRAME_LOADERS[lastView]?.();
   renderNav(state.navigation);
   music.onState(state);
   $('#host-label').textContent = `${state.host} · ${location.hostname}`;
@@ -405,20 +500,23 @@ function renderAll() {
 // through there instead would mean every tick triggers a full dashboard refresh (including two systemctl calls
 // for project status) just for one tile. The server-side reading itself is a background loop now too (see
 // app/monitor.py) — this fetch just reads its latest cached value, no live sensor read in the request at all.
+// Not offsetParent: an expanded card is position: fixed, whose offsetParent is null wherever the viewport contains it
+// (every screen ≤1500px), so the open Monitoring card froze. getClientRects() is empty only when it isn't rendered.
+const monVisible = () => ($('#monitoring')?.getClientRects().length ?? 1) > 0;
 async function pollMonitoring() {
   if (!state || document.hidden || VIEWS.includes(location.hash.slice(1)) && location.hash !== '#home') return;   // the tile is on Home only
   try { monitoring = await api.get('/api/owner/monitoring'); } catch { /* keep the last good reading, don't blank the tile over one dropped request */ }
   if (monTicks++ % 15 === 0) pollMachines();
-  renderCard('monitoring');
+  if (monVisible()) renderCard('monitoring');
   renderReadout();
 }
 
 // ---- view router (Home / News / Media / Companion / SQL DB / Music / Casino / Odysseus / House / Stats) --------------------------------------------------------------
-const VIEWS = ['home', 'news', 'media', 'music', 'sql', 'listen', 'casino', 'ai', 'house', 'stats', 'curate', 'settings'];
+const VIEWS = ['home', 'news', 'media', 'music', 'sql', 'listen', 'casino', 'ai', 'house', 'labels', 'holodeck', 'lab', 'routines', 'stats', 'curate', 'audio', 'settings'];
 // While an embedded page is showing, the phone keyboard shrinks the screen (interactive-widget=resizes-content) rather
 // than sliding over it, so the pinned page (dashboard.css, .main:has(...)) ends just above the keyboard and a chat box
 // at the bottom of it stays visible. Only on those pages: Home, News and Music keep the browser's default.
-const FRAME_VIEWS = ['media', 'music', 'sql', 'casino', 'ai', 'house', 'curate', 'settings'];
+const FRAME_VIEWS = ['media', 'music', 'sql', 'casino', 'ai', 'house', 'labels', 'holodeck', 'lab', 'curate', 'settings'];
 const viewportMeta = $('meta[name="viewport"]');
 const VIEWPORT = viewportMeta.content;
 // Settings opens inside the dashboard, framed like the embedded pages (it's Citadel's own page, same origin). It loads
@@ -439,10 +537,38 @@ function openSettings() {
   w.location.reload();
 }
 
+// LCARS 25's header row (lcars25.css; hidden in the other themes): the page's number and name as the rail shows them,
+// and on a framed app where it comes from (the frame's title, when it says more than the page's name) with Reload and
+// Open in new tab. Home has its bookmarks and readout there instead. Reload sets the frame's address again (the apps are
+// on other origins, so their own location can't be reached), which takes it back to the page Citadel opened.
+function renderTopCtx() {
+  const v = document.documentElement.dataset.page, ctx = $('#top-ctx');
+  const view = $(`.view[data-view="${v}"]`), frame = view?.querySelector('.frame-shell iframe');
+  ctx.hidden = !view || v === 'home';
+  if (ctx.hidden) return;
+  const links = $$('.rail a[data-view]').filter(a => !a.hidden), i = links.findIndex(a => a.dataset.view === v);
+  const label = $(`.rail a[data-view="${v}"] .rail__label`)?.textContent || view.getAttribute('aria-label') || v;
+  $('#top-page').textContent = i >= 0 ? `${String(i + 1).padStart(2, '0')} · ${label}` : label;
+  const own = frame && v !== 'settings';
+  $('#top-src').textContent = own && frame.title.toLowerCase() !== label.toLowerCase() ? frame.title : '';
+  $('#top-acts').hidden = !own;
+}
+const activeFrame = () => $('.view.is-active .frame-shell iframe');
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-frame-reload]')) {
+    const f = activeFrame(), src = f?.getAttribute('src');
+    if (src) f.src = src;
+  } else if (e.target.closest('[data-frame-open]')) {
+    const src = activeFrame()?.getAttribute('src');
+    if (src) open(safeUrl(new URL(src, location.href).href), '_blank', 'noopener');
+  }
+});
+
 function route() {
   const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
   if (v === 'settings' && lastView !== 'settings') openSettings();
   lastView = v;
+  if (state) FRAME_LOADERS[v]?.();
   viewportMeta.content = FRAME_VIEWS.includes(v) ? `${VIEWPORT}, interactive-widget=resizes-content` : VIEWPORT;
   document.documentElement.dataset.page = v;         // the header's middle slot follows it (shortcuts, or the Music page's player)
   $$('.view').forEach(el => el.classList.toggle('is-active', el.dataset.view === v));
@@ -450,9 +576,12 @@ function route() {
   slideDir = null;
   moreSheet(false);
   markCurrent();
+  renderTopCtx();
   music.onView(v);                                  // the Music page (music.js) only polls Spotify while it's on screen
   news.onView(v);                                   // the News page (news.js) loads its own stories when shown
   stats.onView(v);                                  // the Fleet page (stats.js): machine history from the collector on NZXT
+  audio.onView(v);                                  // the Audio page (audio.js): the GoXLR, through the hub
+  routines.onView(v);                               // the Routines page (routines.js): Home Assistant's routine times
 }
 function markCurrent() {
   $$('.rail a[data-view], .tabbar a[data-view], #more-sheet a[data-view]').forEach(a => {
@@ -482,12 +611,21 @@ function renderNav(nav) {
     $('.rail__label', a).textContent = p.label;
     a.title = p.label === p.default ? a.dataset.title : p.label;
     a.hidden = !p.rail;
+    // its group, for Citadel's department brackets (dashboard.css); the fixed pages at the foot are Ops, Home has none
+    a.dataset.group = p.movable ? (p.group || '') : (p.id === 'home' ? '' : 'ops');
     // in turn, so they end up in the saved order between Home and the gap. Hidden ones wait at the very end, out of the
     // way of LCARS lining up whichever page follows Home (lcars.css) and of the boot animation's one-after-another.
     if (!p.rail) railEnd.after(a); else if (p.movable) spacer.before(a);
   }
+  // Desktop rail groups (Settings → Navigation): a small heading before each group's first page on the rail. The pages
+  // come already sorted into their groups; ones with no group sit above the first heading. Phones have no rail.
+  $$('.rail .rail__group').forEach(h => h.remove());
+  for (const g of nav.groups || []) {
+    const first = nav.pages.find(p => p.rail && p.group === g.id);
+    if (first) $(`.rail a[data-view="${first.id}"]`)?.insertAdjacentHTML('beforebegin', `<span class="rail__group" data-group="${esc(g.id)}">${esc(g.label)}</span>`);
+  }
   const shown = nav.pages.filter(p => $(`.view[data-view="${p.id}"]`));
-  const icon = p => (p.id === 'home' && currentSkin() === 'lcars' ? 'logo' : p.icon);    // as placeLcars does
+  const icon = p => (p.id === 'home' && document.documentElement.dataset.family === 'lcars' ? 'logo' : p.icon);    // as placeLcars does
   const link = p => `<a href="#${esc(p.id)}" data-view="${esc(p.id)}"><svg class="i"><use href="#i-${esc(icon(p))}"/></svg><span class="tabbar__label">${esc(p.label)}</span></a>`;
   const rest = shown.filter(p => !p.phone);
   more.innerHTML = rest.map(link).join('');
@@ -495,6 +633,7 @@ function renderNav(nav) {
     + (rest.length ? `<button type="button" class="tabbar__more" data-more aria-expanded="false" aria-controls="more-sheet"><svg class="i"><use href="#i-grid"/></svg><span class="tabbar__label">More</span></button>` : '');
   moreSheet(false);
   markCurrent();
+  renderTopCtx();
   if (booted) requestAnimationFrame(layoutRail);       // the first page under Home may have changed (LCARS lines it up)
 }
 
@@ -564,19 +703,30 @@ function syncLookButtons() {
     modeBtn.setAttribute('aria-label', `Switch to ${to}`); modeBtn.title = `Switch to ${to}`;
   }
 }
-function swatch(t) {
-  const h = t[mode()];
-  if (!h) return `<span class="tm__sw tm__sw--${esc(t.id)}"></span>`;                          // a built-in theme: CSS knows its colours
-  return `<span class="tm__sw tm__sw--${esc(t.skin)}" style="--sw-bg:${esc(h.panel)};--sw-ac:${esc(h.accent)}">${h.background?.file ? `<img src="backgrounds/${esc(h.background.file)}" alt="">` : ''}</span>`;
+function themeSwatch(t) {
+  return `<span class="tm__sw tm__sw--${esc(t.id)}"></span>`;
 }
-// Style's panel hangs from the pair (Day/Night + Style, #look-group) and spans both. Open, the pair joins into one
+function styleSwatch(s, fam) {
+  const h = s[mode()];
+  if (s.id === 'standard') return `<span class="tm__sw tm__sw--${esc(fam)}"></span>`;
+  return `<span class="tm__sw tm__sw--${esc(fam)}" style="--sw-bg:${esc(h.panel)};--sw-ac:${esc(h.accent)}">${h.background?.file ? `<img src="backgrounds/${esc(h.background.file)}" alt="">` : ''}</span>`;
+}
+// Theme's panel hangs from the pair (Day/Night + Theme, #look-group) and spans both. Open, the pair joins into one
 // cap over it (.look-group.is-open: the gap filled, only the outer top corners rounded).
 const styleBar = $('#style-bar'), lookGroup = $('#look-group');
 const placeStyles = () => placeDrop(styleBar, themeBtn);
 function renderStyles() {
-  const cur = look();
-  const tile = (t, i) => `<button class="bm" type="button" role="menuitemradio" aria-checked="${t.id === cur}" data-use-theme="${esc(t.id)}" style="--d:${80 + i * 22}ms">${swatch(t)}<span><b>${esc(t.name)}</b></span></button>`;
-  styleBar.innerHTML = `<div class="bmbar__list" role="menu" aria-label="Style">${[...THEMES, ...(state?.appearance?.themes || [])].map(tile).join('')}</div>`
+  const curTheme = theme(), curFam = family(), curStyle = style();
+  const builtins = stylesForFamily(curFam);
+  const customs = (state?.appearance?.styles || []).filter(s => s.family === curFam);
+  const themeTiles = THEMES.map((t, i) => `<button class="bm" type="button" role="menuitemradio" aria-checked="${t.id === curTheme}" data-use-theme="${esc(t.id)}" style="--d:${80 + i * 22}ms">${themeSwatch(t)}<span><b>${esc(t.name)}</b></span></button>`);
+  const styleItems = [
+    ...builtins.map(s => ({ ...s, key: s.id })),
+    ...customs.map(s => ({ ...s, key: `c:${s.id}` })),
+  ];
+  const baseI = THEMES.length;
+  const styleTiles = styleItems.map((s, i) => `<button class="bm" type="button" role="menuitemradio" aria-checked="${s.key === curStyle}" data-use-style="${esc(s.key)}" style="--d:${80 + (baseI + i) * 22}ms">${styleSwatch(s, curFam)}<span><b>${esc(s.name)}</b></span></button>`);
+  styleBar.innerHTML = `<div class="bmbar__list" role="menu" aria-label="Theme">${themeTiles.join('')}<div class="stylebar__sep" role="separator"></div>${styleTiles.join('')}</div>`
     + '<a class="bmbar__edit" href="/settings#appearance">Customise</a>';
 }
 /** Open/close the Style panel (no argument: toggle). It's drawn afresh on each open, so the lit theme is current. */
@@ -602,53 +752,86 @@ document.addEventListener('keydown', e => {
 // LCARS motion that CSS can't trigger by itself (lcars.css, Motion). Boot: html.lc-boot for a moment after the first
 // load in LCARS and whenever a device switches to LCARS. Page change: the rail button bumps and html.lc-sweep runs a
 // light along the body's bar.
-let lastSkin = null, booted = false;
+let lastTheme = null, booted = false;
 function restartClass(el, cls, ms) {
   el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
   clearTimeout(el[`_${cls}`]); el[`_${cls}`] = setTimeout(() => el.classList.remove(cls), ms);
 }
-function bootLcars() { if (currentSkin() === 'lcars') restartClass(document.documentElement, 'lc-boot', 2200); }
+function bootLcars() {
+  const fam = document.documentElement.dataset.family;
+  if (fam === 'lcars') restartClass(document.documentElement, 'lc-boot', 2200);
+  else if (fam === 'borg') restartClass(document.documentElement, 'brg-boot', 1400);
+}
 document.addEventListener('click', e => {
   const link = e.target.closest('.rail a[data-view]');
-  if (!link || currentSkin() !== 'lcars') return;
-  restartClass(link, 'is-bump', 300);
-  restartClass(document.documentElement, 'lc-sweep', 700);
+  if (!link) return;
+  const fam = document.documentElement.dataset.family;
+  if (fam === 'lcars') {
+    restartClass(link, 'is-bump', 300);
+    restartClass(document.documentElement, 'lc-sweep', 700);
+  } else if (fam === 'borg') {
+    restartClass(document.documentElement, 'brg-pulse', 600);
+  }
 });
 
 function placeLcars() {
-  if (currentSkin() === 'lcars' && lastSkin === 'citadel') bootLcars();     // switched to LCARS just now
-  lastSkin = currentSkin();
+  const { theme: th, family: fam } = document.documentElement.dataset;
+  const lc = fam === 'lcars';
+  if (lastTheme !== null && th !== lastTheme && (lc || fam === 'borg')) bootLcars();
+  lastTheme = th;
   const top = $('.top'), strip = $('#alerts'), readout = $('#readout');
-  // the reminders sit in the header in LCARS, and on phones in both themes (their drawer, see alertsDrawer)
-  if (currentSkin() === 'lcars' || phone.matches) { if (strip.parentElement !== top) top.append(strip); }
+  // the reminders sit in the header in LCARS, and on phones in every theme (their drawer, see alertsDrawer)
+  if (lc || phone.matches) { if (strip.parentElement !== top) top.append(strip); }
   else if (strip.parentElement.id !== 'view-home') $('#view-home').prepend(strip);
-  if (currentSkin() === 'lcars') { if (readout.parentElement !== top) top.append(readout); }
+  if (lc) { if (readout.parentElement !== top) top.append(readout); }
   else if (readout.parentElement === top) $('#mu-bar').before(readout);
   // LCARS has no separate logo at the top of the rail: Home wears it instead (rail and phone tab bar alike)
   // (the rail and tab bar links only: the Home page section is [data-view="home"] too, and holds every card's icons)
-  $$('.rail [data-view="home"] use, .tabbar [data-view="home"] use').forEach(u => u.setAttribute('href', currentSkin() === 'lcars' ? '#i-logo' : '#i-home'));
+  $$('.rail [data-view="home"] use, .tabbar [data-view="home"] use').forEach(u => u.setAttribute('href', lc ? '#i-logo' : '#i-home'));
+  // LCARS 25 on desktop keeps the GoXLR volumes, Day/Night and Theme in a console under Home (lcars25.css), so the
+  // header's row is all the page's. Same elements, just moved: their listeners and drop-downs go with them (the
+  // drop-downs measure the button wherever it is). Everywhere else they go back into the header, in their old places.
+  const vols = $('#vol-group'), look = $('#look-group');
+  if (th === 'lcars25' && !phone.matches) {
+    if (vols.parentElement !== railConsole) { railConsole.append(vols, look); $('.rail a[data-view="home"]').after(railConsole); }
+  } else if (vols.parentElement === railConsole) {
+    $('#vol-bar').before(vols); $('#style-bar').before(look);
+    // and the empty console off the rail: left after Home, it took the place of "the first item after Home" that the
+    // LCARS rail pushes down to the page body, so after a switch from LCARS 25 the pages rode up under Home (2026-11-23)
+    railConsole.remove();
+  }
   layoutRail();
 }
+const railConsole = Object.assign(document.createElement('div'), { className: 'rail__console' });
 
-// LCARS rail: Home sits level with the middle of the header, and the other pages start where the page body does.
-// The header's height moves (the reminders show on Home only, and wrap), so it's measured, and re-measured whenever the
-// header changes size. Positions are taken relative to the shell, which scrolls with the header. Under the 1440p zoom
-// the measured (zoomed) pixels are divided back down to the rail's own CSS pixels.
+// LCARS rail: Home sits level with the middle of the header (top-aligned by lcars25.css in LCARS 25), and the other
+// pages start where the page body does. The header's height moves (the reminders show on Home only, and wrap), so it's
+// measured, and re-measured whenever the header changes size. Positions are taken relative to the shell, which scrolls
+// with the header. Under the 1440p zoom the measured (zoomed) pixels are divided back down to the rail's own CSS pixels.
 const rail = $('.rail');
 function layoutRail() {
   const view = $('.view.is-active');
-  if (currentSkin() !== 'lcars' || !rail.offsetParent || !view) { rail.style.removeProperty('--lc-home-top'); rail.style.removeProperty('--lc-body-top'); return; }
+  const { theme: th, family: fam } = document.documentElement.dataset;
+  if (fam !== 'lcars' || !rail.offsetParent || !view) { rail.style.removeProperty('--lc-home-top'); rail.style.removeProperty('--lc-body-top'); return; }
   const z = rail.getBoundingClientRect().width / parseFloat(getComputedStyle(rail).width) || 1;
   const s = $('.shell').getBoundingClientRect(), t = $('.top').getBoundingClientRect(), v = view.getBoundingClientRect();
-  // Home's layout height, not its on-screen box: switching to LCARS runs the boot animation, which grows the rail buttons
-  // from scaleY(0), so measured then its box is 0 tall and Home landed half its height too low
-  const homeH = parseFloat(getComputedStyle($('.rail [data-view="home"]')).height) * z;
-  rail.style.setProperty('--lc-home-top', `${Math.round((t.top - s.top + (t.height - homeH) / 2) / z)}px`);
-  rail.style.setProperty('--lc-body-top', `${Math.round((v.top - s.top) / z)}px`);
+  if (th === 'lcars25') {
+    rail.style.removeProperty('--lc-home-top');
+  } else {
+    // Home's layout height, not its on-screen box: switching to LCARS runs the boot animation, which grows the rail buttons
+    // from scaleY(0), so measured then its box is 0 tall and Home landed half its height too low
+    const homeH = parseFloat(getComputedStyle($('.rail [data-view="home"]')).height) * z;
+    rail.style.setProperty('--lc-home-top', `${Math.round((t.top - s.top + (t.height - homeH) / 2) / z)}px`);
+  }
+  // LCARS 25: the pages (and the spine beside them) start under the corner console, not level with the page body
+  const c = th === 'lcars25' && railConsole.isConnected && railConsole.childElementCount ? railConsole.getBoundingClientRect() : null;
+  rail.style.setProperty('--lc-body-top', `${Math.round(((c ? c.bottom + 4 : v.top) - s.top) / z)}px`);
 }
-new ResizeObserver(() => layoutRail()).observe($('.top'));
+const railRO = new ResizeObserver(() => layoutRail());
+railRO.observe($('.top'));
+railRO.observe(railConsole);   // LCARS 25: the GoXLR volumes arrive after first paint and add a row to the console
 addEventListener('resize', layoutRail);
-addEventListener('resize', () => { placeBookmarks(); placeStyles(); });
+addEventListener('resize', () => { placeBookmarks(); placeStyles(); if (monVisible()) renderCard('monitoring'); });
 addEventListener('hashchange', () => requestAnimationFrame(layoutRail));
 document.fonts?.ready.then(layoutRail);
 document.addEventListener('theme:change', () => { tellFrames(); syncLookButtons(); placeLcars(); if (isDropOpen(styleBar)) { styleBar.classList.remove('is-opening'); renderStyles(); placeStyles(); } });
@@ -668,13 +851,17 @@ document.addEventListener('keydown', e => {
   if (card) { e.preventDefault(); bookmarks(false, true); shell.toggle(card); }
 });
 
-let loading = null;
+let loading = null, startedSeen = null;
+const wall = new URLSearchParams(location.search).has('wall');   // NZXT's wallpaper (README: NZXT wallpaper)
 async function load() {
   if (loading) return loading;                       // coalesce bursts of events into one fetch
   loading = api.get('/api/owner/state').then(s => {
-    state = s; syncThemes(s.appearance?.themes); syncLookButtons(); renderAll();
+    // the wallpaper picks up a hub restart's new code by reloading; other pages never reload under you
+    if (wall && startedSeen && s.started !== startedSeen) { location.reload(); return; }
+    startedSeen = s.started;
+    state = s; syncStyles(s.appearance?.styles, s.appearance?.migrated_presets); syncLookButtons(); renderAll();
     // the first fill: the boot began at first paint (theme-init.js); let it finish, then take the class off
-    if (!booted) { booted = true; setTimeout(() => document.documentElement.classList.remove('lc-boot'), 1800); }
+    if (!booted) { booted = true; setTimeout(() => { document.documentElement.classList.remove('lc-boot', 'brg-boot'); $('.sweep')?.remove(); }, 1800); }
   }).catch(e => console.error(e)).finally(() => { loading = null; });
   return loading;
 }
@@ -732,8 +919,10 @@ bookForm.addEventListener('submit', async e => {
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-mode-toggle]')) { setMode(mode() === 'day' ? 'night' : 'day'); return; }
   if (e.target.closest('[data-theme-menu]')) { bookmarks(false); styles(); return; }
-  const use = e.target.closest('[data-use-theme]');
-  if (use) { styles(false, true); setLook(use.dataset.useTheme, state?.appearance?.themes); return; }   // a new skin re-lays the header: no fold-away
+  const useTheme = e.target.closest('[data-use-theme]');
+  if (useTheme) { styles(false, true); setTheme(useTheme.dataset.useTheme, state?.appearance?.styles); return; }   // a new theme re-lays the header: no fold-away
+  const useStyle = e.target.closest('[data-use-style]');
+  if (useStyle) { styles(false, true); setStyle(useStyle.dataset.useStyle, state?.appearance?.styles); return; }
   if (isDropOpen(styleBar) && (e.target.closest('#style-bar .bmbar__edit') || !e.target.closest('#style-bar'))) styles(false);
   if (!e.target.closest('#alerts, [data-alerts-toggle]')) alertsDrawer(false);   // a tap outside the reminders drawer closes it
   if (e.target.closest('[data-alerts-toggle]')) { alertsDrawer(); return; }

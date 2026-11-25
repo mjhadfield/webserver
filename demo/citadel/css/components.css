@@ -43,23 +43,37 @@
 .dim { color: var(--silver-mute); }
 
 /* ---- Card (chamfered, hairline border via gradient shell) -------------- */
+/* The chamfered clip-path sits on ::before (border) and ::after (fill) behind the card's content rather than on .card /
+   .card__in itself: a clip-path ancestor wrapping animated status dots or gauges forced Chromium to allocate a per-frame
+   GPU mask render pass for the whole card (2026-11-25). */
 .card {
   --c: var(--chamfer);
+  --card-bg: linear-gradient(135deg, color-mix(in srgb, var(--silver) 30%, transparent), color-mix(in srgb, var(--accent) 20%, transparent) 45%, color-mix(in srgb, var(--silver) 9%, transparent));
+  --card-fill: linear-gradient(180deg, var(--surface-2), var(--surface) 70%);
   position: relative;
+  isolation: isolate;
   display: flex;
   padding: 1px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--silver) 30%, transparent), color-mix(in srgb, var(--accent) 20%, transparent) 45%, color-mix(in srgb, var(--silver) 9%, transparent));
-  clip-path: polygon(0 0, calc(100% - var(--c)) 0, 100% var(--c), 100% 100%, var(--c) 100%, 0 calc(100% - var(--c)));
-  transition: background .3s var(--ease);
+  background: none;
 }
-.card:hover { background: linear-gradient(135deg, color-mix(in srgb, var(--silver) 38%, transparent), color-mix(in srgb, var(--accent-hi) 45%, transparent) 45%, color-mix(in srgb, var(--silver) 12%, transparent)); }
+.card::before, .card::after { content: ""; position: absolute; pointer-events: none; z-index: -1; }
+.card::before {
+  inset: 0;
+  background: var(--card-bg);
+  clip-path: polygon(0 0, calc(100% - var(--c)) 0, 100% var(--c), 100% 100%, var(--c) 100%, 0 calc(100% - var(--c)));
+}
+.card::after {
+  inset: 1px;
+  background: var(--card-fill);
+  clip-path: polygon(0 0, calc(100% - var(--c) + 0.4px) 0, 100% calc(var(--c) - 0.4px), 100% 100%, calc(var(--c) - 0.4px) 100%, 0 calc(100% - var(--c) + 0.4px));
+}
+.card:hover { --card-bg: linear-gradient(135deg, color-mix(in srgb, var(--silver) 38%, transparent), color-mix(in srgb, var(--accent-hi) 45%, transparent) 45%, color-mix(in srgb, var(--silver) 12%, transparent)); }
 .card__in {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, var(--surface-2), var(--surface) 70%);
-  clip-path: polygon(0 0, calc(100% - var(--c) + 0.4px) 0, 100% calc(var(--c) - 0.4px), 100% 100%, calc(var(--c) - 0.4px) 100%, 0 calc(100% - var(--c) + 0.4px));
 }
 /* small accent tick, top-left */
 .card__in::before {

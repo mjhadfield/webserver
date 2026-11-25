@@ -656,7 +656,7 @@ function renderBar() {
   el.style.setProperty('--p', `${t.duration ? pos / t.duration * 100 : 0}%`);
   el.innerHTML = `<div class="np">${art(t.artists[0] || t.name, t.image, t.image ? 'art--sp' : '')}<div class="np__main"${pl.fact ? ` title="${esc(pl.fact)}"` : ''}><div class="np__t">${t.url ? `<a href="${esc(safeUrl(t.url))}" target="_blank" rel="noopener">${esc(t.name)}</a>` : esc(t.name)}</div>
       <div class="np__a">${esc(t.artists.join(', '))}${t.album ? ` · ${esc(t.album)}` : ''}</div>${pl.fact ? `<div class="np__fact">${esc(pl.fact)}</div>` : ''}${spotifyMark(t.url)}</div>
-      <button class="btn btn--icon${pl.liked ? ' is-on' : ''}" type="button" data-mu-cmd="like" data-value="${!pl.liked}" title="${pl.liked ? 'Remove from' : 'Save to'} your library">${ico('heart')}</button>${spotifyMark(t.url, 'side__sp')}</div>
+      <button class="btn btn--icon${pl.liked ? ' is-on' : ''}" type="button" data-mu-cmd="like" data-value="${!pl.liked}" title="${pl.liked ? 'Remove from' : 'Save to'} your library">${ico('heart')}</button></div>
     <div class="ctl"><div class="ctl__b">
       <button class="btn btn--icon${pl.shuffle ? ' is-on' : ''}" type="button" data-mu-cmd="shuffle" data-value="${!pl.shuffle}" title="Shuffle">${ico('shuffle')}</button>
       <button class="btn btn--icon" type="button" data-mu-cmd="previous" title="Previous">${ico('prev')}</button>
@@ -664,7 +664,7 @@ function renderBar() {
       <button class="btn btn--icon" type="button" data-mu-cmd="next" title="Next">${ico('next')}</button>
       <button class="btn btn--icon${pl.repeat !== 'off' ? ' is-on' : ''}" type="button" data-mu-cmd="repeat" data-value="${{ off: 'context', context: 'track', track: 'off' }[pl.repeat] || 'off'}" title="Repeat: ${esc(pl.repeat)}">${ico('repeat')}</button></div>
       <div class="prog"><span data-mu-pos>${mmss(pos)}</span><span class="prog__bar" data-mu-seek><i style="width:${t.duration ? pos / t.duration * 100 : 0}%"></i></span><span>${mmss(t.duration)}</span></div></div>
-    <div class="side"><span class="dev"><button class="btn dev__btn is-live" type="button" data-mu-devices title="Playing on ${esc(pl.device.name)}">${ico(pl.device.type === 'Smartphone' ? 'phone' : 'desk')}<span>${esc(pl.device.name)}</span></button>${devMenuHtml()}</span>
+    <div class="side">${spotifyMark(t.url, 'side__sp')}<span class="dev"><button class="btn dev__btn is-live" type="button" data-mu-devices title="Playing on ${esc(pl.device.name)}">${ico(pl.device.type === 'Smartphone' ? 'phone' : 'desk')}<span>${esc(pl.device.name)}</span></button>${devMenuHtml()}</span>
       ${pl.device.volume != null ? `${ico('vol')}<input class="vol" type="range" min="0" max="100" value="${pl.device.volume}" data-mu-vol aria-label="Volume">` : ''}${sizer()}</div>`;
 }
 

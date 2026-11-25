@@ -2,7 +2,8 @@
 // returning HTML; forms submit to the validated owner API and the page re-renders from fresh config.
 import * as api from './api.js';
 import { $, $$, esc, ico, hhmm, ago, toast, isoOf } from './util.js';
-import { THEMES, applySpec, look, mode, setLook, setMode, specOf, syncThemes } from './theme.js';
+import { THEMES, FAMILY_LABEL, applySpec, family, familyOf, mode, setMode, setStyle, setTheme, specOf, style, stylesForFamily, syncStyles, theme } from './theme.js';
+import { GROUPS, TOKENS, alpha, derive, opacityOf, solid, tokensFor } from './palette.js';
 import * as motion from './motion.js';
 
 const TABS = [['links', 'Links', 'globe'], ['projects', 'Projects', 'grid'], ['remote', 'Remote access', 'desk'], ['widgets', 'Widgets', 'cal'], ['appearance', 'Appearance', 'sun'], ['navigation', 'Navigation', 'list'], ['music', 'Music', 'disc'], ['listen', 'Music page', 'wave'], ['news', 'News', 'news'], ['screens', 'Screens & devices', 'server'], ['maintenance', 'Maintenance & logs', 'gear'], ['about', 'About', 'chip']];
@@ -61,6 +62,9 @@ function linkForm(l = {}) {
       ${check('for_ai', 'Use as Odysseus view', l.for_ai, '')}
       ${check('for_house', 'Use as House view', l.for_house, '')}
       ${check('for_casino', 'Use as Casino view', l.for_casino, '')}
+      ${check('for_labels', 'Use as Labels view', l.for_labels, '')}
+      ${check('for_holodeck', 'Use as Holodeck view', l.for_holodeck, '')}
+      ${check('for_lab', 'Use as HomeLab view', l.for_lab, '')}
     </div>
     <div class="form-actions">${act('cancel', 'Cancel')}<button class="btn btn--solid" type="submit">Save link</button></div></form>`;
 }
@@ -320,7 +324,7 @@ function vinylCard() {
   const s = cfg.widgets.vinyl.settings;
   return card('Vinyl radar — pre-orders', 'Shopify stores: the address plus the pre-order collection (<code>store.example/collections/<b>pre-orders</b></code>). Juno: genre sections, e.g. <code>metal,rock</code>.',
     `${statusLine(live?.vinyl, 'vinyl')}<form class="form" data-form="vinyl" style="padding:0 18px 12px">
-      <div id="shops"><div class="field__l" style="display:grid;grid-template-columns:minmax(110px,1fr) minmax(200px,2fr) minmax(110px,1fr);gap:10px;padding:0 0 6px"><span>Store</span><span>Address</span><span>Pre-order collection / Juno sections</span></div>${s.shops.map(shopRow).join('')}</div>
+      <div id="shops"><div class="field__l shopcfg__head"><span>Store</span><span>Address</span><span>Pre-order collection / Juno sections</span></div>${s.shops.map(shopRow).join('')}</div>
       <div class="bar-actions" style="padding:10px 0 4px">${act('add-shop', `${ico('play')}Add store`, '', 'btn--go')}</div>
       <div class="form-actions">${act('refresh-widget', 'Sync now', 'data-id="vinyl"')}<button class="btn btn--solid" type="submit">Save</button></div></form>`);
 }
@@ -654,36 +658,45 @@ async function paintMaint() {
   const tabBtn = $('[data-tab="maintenance"]'); if (tabBtn) tabBtn.classList.toggle('has-attn', needsAttention());
 }
 
-// ---- Appearance: Day/Night, the theme, and custom themes -------------------------------------------------------------
-// A device picks its mode (Day/Night) and its theme (Citadel, LCARS or a custom one) — the same two choices as the
-// dashboard header. A custom theme is built on Citadel or LCARS and has a Day half and a Night half, each with its own
-// accent, panels and optional background picture.
+// ---- Appearance: Day/Night, Theme, and Styles -------------------------------------------------------------------------
+// A device picks its mode (Day/Night), its theme (Citadel, LCARS, LCARS 25 or Borg) and a style for that theme's family
+// (built-in Standard, COM/SCI/ENG/ENT for LCARS, or a custom style). Every style has a Day half and a Night half. Basic
+// sets each half's four colours (primary, secondary, third, panel), see-through panels and a background picture, and
+// palette.js works every other colour out from them; Advanced shows every colour token for both halves, and any one
+// changed there is kept as an override (half.tokens) while the rest keep following Basic.
 const FIT_LABELS = { cover: 'Fill the screen', contain: 'Show all of it', tile: 'Tile', center: 'Centre, actual size' };
 const MODE_LABEL = { day: 'Day', night: 'Night' };
-const SKIN_LABEL = { citadel: 'Citadel', lcars: 'LCARS' };
-const BUILTIN_LOOK = { citadel: { day: { panel: '#f8f0e2', accent: '#b5541f' }, night: { panel: '#0e0b14', accent: '#8b5cf6' } },
-  lcars: { day: { panel: '#f2e8d5', accent: '#b5541f' }, night: { panel: '#050407', accent: '#a78bfa' } } };
+const BASIC = [['accent', 'Primary'], ['secondary', 'Secondary'], ['third', 'Third'], ['panel', 'Panel']];
+const baseOf = (fam, m) => (cfg.appearance.base[fam] || cfg.appearance.base.citadel)[m];
+const overrides = s => Object.keys(s?.day?.tokens || {}).length + Object.keys(s?.night?.tokens || {}).length;
 
 function themePreview(t, m = mode()) {
-  const skin = t.skin || t.id, h = t[m] || BUILTIN_LOOK[skin]?.[m] || BUILTIN_LOOK.citadel[m];
-  const bg = h.background?.file ? `<img src="/backgrounds/${esc(h.background.file)}" alt="">` : '';
-  return `<span class="tp${skin === 'lcars' ? ' tp--lcars' : ''}" style="--tp-panel:${esc(h.panel)};--tp-accent:${esc(h.accent)};--tp-base:${m === 'day' ? '#f2e8d5' : '#07060a'}">${bg}
+  const isThemeTile = 'family' in t && !t.day && !t.night;
+  const fam = t.family || familyOf(t.id);
+  const std = stylesForFamily(fam)[0];
+  const h = t[m] || std[m];
+  const bg = h.background?.file ? `<img src="backgrounds/${esc(h.background.file)}" alt="">` : '';
+  const base = m === 'day' ? (fam === 'borg' ? '#e8efe9' : '#f2e8d5') : (fam === 'borg' ? '#030704' : '#07060a');
+  const cls = t.id === 'lcars25' ? ' tp--lcars tp--lcars25' : fam === 'lcars' ? ' tp--lcars' : fam === 'borg' ? ' tp--borg' : '';
+  const panelCol = isThemeTile && fam === 'lcars' && m === 'night' ? '#050407' : h.panel;
+  const accentCol = isThemeTile && t.id === 'lcars25' && m === 'night' ? '#8577e0' : h.accent;
+  return `<span class="tp${cls}" style="--tp-panel:${esc(panelCol)};--tp-accent:${esc(accentCol)};--tp-base:${base}">${bg}
     <span class="tp__card"><span class="tp__tick"></span><span class="tp__line"></span><span class="tp__line tp__line--short"></span></span></span>`;
 }
 
 const pct = (n, v, min, max, step) => `<span class="range"><input type="range" name="${n}" min="${min}" max="${max}" step="${step}" value="${v}"><output>${v}%</output></span>`;
-function halfFields(m, h = {}) {
-  const bg = h.background || {};
-  const panel = h.panel || cfg.appearance.base_panel[m], accent = h.accent || cfg.appearance.base_accent[m];
+function halfFields(m, h = {}, fam = 'citadel') {
+  const bg = h.background || {}, base = baseOf(fam, m);
+  const colour = ([k, label]) => { const v = h[k] || base[k];
+    return field(label, `<span class="colour"><input type="color" name="${m}_${k}" value="${esc(v)}"><code>${esc(v)}</code>${k === 'panel' ? act('panel-reset', 'Reset', `data-half="${m}" title="Back to ${MODE_LABEL[m]}’s own panel colour"`, 'btn--icon-text') : ''}</span>`, ''); };
   return `<fieldset class="half" data-half="${m}"><legend>${ico(m === 'day' ? 'sun' : 'moon')}${MODE_LABEL[m]}</legend>
     <div class="form-grid">
-      ${field('Accent colour', `<span class="colour"><input type="color" name="${m}_accent" value="${esc(accent)}"><code>${esc(accent)}</code></span>`, '')}
-      ${field('Panel colour', `<span class="colour"><input type="color" name="${m}_panel" value="${esc(panel)}"><code>${esc(panel)}</code>${act('panel-reset', 'Reset', `data-half="${m}" title="Back to ${MODE_LABEL[m]}’s own panel colour"`, 'btn--icon-text')}</span>`, '')}
+      ${BASIC.map(colour).join('')}
       ${field('Panel see-through', pct(`${m}_panel_opacity`, h.panel_opacity ?? 100, 30, 100, 5), '')}
     </div>
     <div class="field__l" style="margin-top:14px">Background picture</div>
     <div class="bgpick">
-      <span class="bgpick__thumb">${bg.file ? `<img src="/backgrounds/${esc(bg.file)}" alt="">` : '<span>None</span>'}</span>
+      <span class="bgpick__thumb">${bg.file ? `<img src="backgrounds/${esc(bg.file)}" alt="">` : '<span>None</span>'}</span>
       <label class="btn btn--go">${ico('plus')}Choose a picture…<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-bg-file data-half="${m}" hidden></label>
       ${act('bg-remove', 'Remove', `data-half="${m}"${bg.file ? '' : ' hidden'}`)}
       <input type="hidden" name="${m}_bg_file" value="${esc(bg.file || '')}">
@@ -695,86 +708,162 @@ function halfFields(m, h = {}) {
     <div class="checks">${check(`${m}_glow`, 'Accent glow in the corners', bg.glow !== false)}</div></fieldset>`;
 }
 
-function themeForm(t) {
-  return `<form class="form" data-form="theme" data-id="${esc(t.id || '')}">
-    <div class="form-grid">
-      ${field('Name', input('name', t.name || '', 'required maxlength="40" placeholder="e.g. Midnight blue"'))}
-      ${field('Built on', select('skin', cfg.appearance.skins.map(k => [k, SKIN_LABEL[k] || k]), t.skin || 'citadel'), 'Its layout, shapes and type; your colours go on top.')}
-      ${field('Preview', select('preview', [['night', 'Night'], ['day', 'Day']], mode()), 'Which half you see on this page while you edit.')}
-    </div>
-    <div class="halves">${halfFields('day', t.day)}${halfFields('night', t.night)}</div>
-    <p class="field__h" style="margin-top:6px">JPEG, PNG, WebP or GIF pictures, up to ${cfg.appearance.max_background_mb} MB. Previews live; nothing is kept until you save.</p>
-    <div class="form-actions">${act('cancel', 'Cancel')}<button class="btn btn--solid" type="submit">${t.id ? 'Save theme' : 'Create theme'}</button></div></form>`;
+/** Advanced: one row per colour token, a cell for Day and one for Night. A cell's value is filled in by paintTokens
+ * (Basic's when it isn't overridden); data-set marks an override. */
+function tokenCell(name, label, m, a, s) {
+  const set = s[m]?.tokens?.[name];
+  return `<span class="tok"${set ? ' data-set' : ''} data-tok="${esc(name)}" data-half="${m}"${set ? ` data-v="${esc(set)}"` : ''}>
+    <input type="color" aria-label="${MODE_LABEL[m]} ${esc(label)}">${a ? '<input type="range" min="0" max="100" step="1" aria-label="Opacity">' : ''}
+    <code></code><button type="button" class="tok__reset" data-do="tok-reset" title="Back to Basic">${ico('x')}</button></span>`;
+}
+function tokenTables(s) {
+  return GROUPS.map(([g, label, only]) => {
+    const rows = TOKENS.filter(x => x[2] === g).map(([name, l, , a]) => `<div class="tok-row"><span class="tok-row__l">${esc(l)}<small>${esc(name)}</small></span>
+      ${tokenCell(name, l, 'day', a, s)}${tokenCell(name, l, 'night', a, s)}</div>`).join('');
+    return `<details class="toks" open${only ? ` data-only="${only}"` : ''}><summary>${esc(label)}</summary>
+      <div class="tok-row tok-row--head"><span></span><span>${ico('sun')}Day</span><span>${ico('moon')}Night</span></div>${rows}</details>`;
+  }).join('');
 }
 
-/** The theme the editor form describes right now (for the live preview and for saving). */
-function readHalf(f, m) {
-  const el = n => f.elements[`${m}_${n}`];
-  return { accent: el('accent').value, panel: el('panel').value, panel_opacity: Number(el('panel_opacity').value),
-    background: { file: el('bg_file').value, fit: el('fit').value, dim: Number(el('dim').value), glow: el('glow').checked } };
+function styleForm(s, view = 'basic') {
+  const fam = s.family || family();
+  return `<form class="form" data-form="style" data-id="${esc(s.id || '')}" data-view="${view}" data-family="${fam}">
+    <div class="form-grid">
+      ${field('Name', input('name', s.name || '', 'required maxlength="40" placeholder="e.g. Midnight blue"'))}
+      ${field('Family', select('family', cfg.appearance.families.map(k => [k, FAMILY_LABEL[k] || k]), fam), 'LCARS styles work on both LCARS and LCARS 25.')}
+      ${field('Preview', select('preview', [['night', 'Night'], ['day', 'Day']], mode()))}
+    </div>
+    <div class="bar-actions modepick theme-views">${[['basic', 'Basic'], ['advanced', 'Advanced']].map(([k, l]) =>
+      `<button type="button" class="btn${k === view ? ' btn--go' : ''}" data-do="style-view" data-view="${k}" aria-pressed="${k === view}">${l}</button>`).join('')}
+      <button type="button" class="chip chip--new" data-do="style-view" data-view="advanced" data-tok-count hidden></button></div>
+    <div class="theme-basic"><div class="halves">${halfFields('day', s.day, fam)}${halfFields('night', s.night, fam)}</div>
+    <p class="field__h" style="margin-top:6px">JPEG, PNG, WebP or GIF pictures, up to ${cfg.appearance.max_background_mb} MB. Previews live; nothing is kept until you save.</p></div>
+    <div class="theme-adv">${tokenTables(s)}<div class="bar-actions">${act('tok-reset-all', 'Reset all to Basic')}</div></div>
+    <div class="form-actions">${act('cancel', 'Cancel')}<button class="btn btn--solid" type="submit">${s.id ? 'Save style' : 'Create style'}</button></div></form>`;
 }
-function readTheme(f) {
-  return { name: val(f, 'name'), skin: f.elements.skin.value, day: readHalf(f, 'day'), night: readHalf(f, 'night') };
+
+/** A token cell's value: its colour, with the opacity range's see-through when it has one. */
+function cellValue(c) {
+  const col = c.querySelector('input[type=color]').value, r = c.querySelector('input[type=range]');
+  return r ? alpha(col, Number(r.value)) : col;
 }
-function previewTheme(f) {
-  applySpec(specOf(readTheme(f)), f.elements.preview.value);
+/** The style the editor form describes right now (for the live preview and for saving). */
+function readHalf(f, m, fam) {
+  const el = n => f.elements[`${m}_${n}`], names = new Set(tokensFor(fam).map(x => x[0]));
+  const tokens = Object.fromEntries($$(`.tok[data-half="${m}"][data-set]`, f).filter(c => names.has(c.dataset.tok)).map(c => [c.dataset.tok, c.dataset.v || cellValue(c)]));
+  return { accent: el('accent').value, secondary: el('secondary').value, third: el('third').value, panel: el('panel').value, panel_opacity: Number(el('panel_opacity').value),
+    background: { file: el('bg_file').value, fit: el('fit').value, dim: Number(el('dim').value), glow: el('glow').checked }, tokens };
+}
+function readStyle(f) {
+  const fam = f.elements.family.value;
+  return { name: val(f, 'name'), family: fam, day: readHalf(f, 'day', fam), night: readHalf(f, 'night', fam) };
+}
+/** Fill Advanced's cells: overridden ones show their own value, the rest what Basic works out right now. */
+function paintTokens(f, s) {
+  const derived = { day: derive(s.day, 'day', s.family), night: derive(s.night, 'night', s.family) };
+  $$('.tok', f).forEach(c => {
+    const v = c.dataset.v || derived[c.dataset.half][c.dataset.tok] || '#000000';
+    const col = c.querySelector('input[type=color]'), r = c.querySelector('input[type=range]');
+    if (document.activeElement !== col) col.value = solid(v);
+    if (r && document.activeElement !== r) r.value = opacityOf(v);
+    c.querySelector('code').textContent = v;
+  });
+  const n = overrides(s), chip = $('[data-tok-count]', f);
+  chip.hidden = !n || f.dataset.view === 'advanced';
+  chip.textContent = `${n} advanced change${n === 1 ? '' : 's'}`;
+}
+function previewStyle(f) {
+  f.dataset.family = f.elements.family.value;
+  const s = readStyle(f);
+  applySpec(specOf(s, s.family), f.elements.preview.value);
+  paintTokens(f, s);
   $$('.range output', f).forEach(o => { o.textContent = `${o.previousElementSibling.value}%`; });
   $$('.colour', f).forEach(c => { c.querySelector('code').textContent = c.querySelector('input').value; });
 }
 
 function appearanceTab() {
-  const themes = cfg.appearance.themes, cur = look(), m = mode();
+  const customs = cfg.appearance.styles, curTheme = theme(), curFam = family(), curStyle = style(), m = mode();
+  const builtins = stylesForFamily(curFam);
+  const famCustoms = customs.filter(s => s.family === curFam);
   const modes = ['day', 'night'].map(k => `<button type="button" class="btn${k === m ? ' btn--go' : ''}" data-do="use-mode" data-mode="${k}" aria-pressed="${k === m}">${ico(k === 'day' ? 'sun' : 'moon')}${MODE_LABEL[k]}</button>`).join('');
-  const tiles = [...THEMES, ...themes].map(t => `<button type="button" class="themepick${t.id === cur ? ' is-current' : ''}" data-do="use-theme" data-id="${esc(t.id)}" aria-pressed="${t.id === cur}">
-      ${themePreview(t)}<span class="themepick__name">${esc(t.name)}${t.id === cur ? `<small>${ico('check')}On this device</small>` : ''}</span></button>`).join('');
-  const rows = themes.map(t => editing?.kind === 'theme' && editing.id === t.id ? `<li class="item item--edit">${themeForm(t)}</li>`
-    : `<li class="item"><span class="item__icon item__icon--theme">${themePreview(t)}</span>
-        <div class="item__main"><b>${esc(t.name)}</b>${t.id === cur ? '<span class="chip chip--new">This device</span>' : ''}<span class="chip">built on ${esc(SKIN_LABEL[t.skin] || t.skin)}</span>${t.day.background.file || t.night.background.file ? '<span class="chip">Background</span>' : ''}
-          <div class="item__sub">Day accent ${esc(t.day.accent)} · Night accent ${esc(t.night.accent)}</div></div>
-        <div class="item__acts">${act('edit-theme', 'Edit', `data-id="${esc(t.id)}"`)}${act('copy-theme', 'Duplicate', `data-id="${esc(t.id)}"`)}${act('delete-theme', 'Delete', `data-id="${esc(t.id)}" data-name="${esc(t.name)}"`, 'btn--danger')}</div></li>`).join('');
-  // LCARS only: how much it moves between page changes (motion.js), this device's own
-  const lv = motion.savedLevel(), motionRow = document.documentElement.dataset.skin !== 'lcars' ? ''
+  const themeTiles = THEMES.map(t => `<button type="button" class="themepick${t.id === curTheme ? ' is-current' : ''}" data-do="use-theme" data-id="${esc(t.id)}" aria-pressed="${t.id === curTheme}">
+      ${themePreview(t)}<span class="themepick__name">${esc(t.name)}${t.id === curTheme ? `<small>${ico('check')}On this device</small>` : ''}</span></button>`).join('');
+  const styleTiles = [
+    ...builtins.map(s => ({ ...s, key: s.id, family: curFam })),
+    ...famCustoms.map(s => ({ ...s, key: `c:${s.id}` })),
+  ].map(s => `<button type="button" class="themepick${s.key === curStyle ? ' is-current' : ''}" data-do="use-style" data-id="${esc(s.key)}" aria-pressed="${s.key === curStyle}">
+      ${themePreview(s)}<span class="themepick__name">${esc(s.name)}${s.key === curStyle ? `<small>${ico('check')}On this device</small>` : ''}</span></button>`).join('');
+  const rows = famCustoms.map(s => editing?.kind === 'style' && editing.id === s.id ? `<li class="item item--edit">${styleForm(s, editing.view)}</li>`
+    : `<li class="item"><span class="item__icon item__icon--theme">${themePreview(s)}</span>
+        <div class="item__main"><b>${esc(s.name)}</b>${`c:${s.id}` === curStyle ? '<span class="chip chip--new">This device</span>' : ''}${s.day.background.file || s.night.background.file ? '<span class="chip">Background</span>' : ''}${overrides(s) ? '<span class="chip">Advanced</span>' : ''}
+          <div class="item__sub">Day primary ${esc(s.day.accent)} · Night primary ${esc(s.night.accent)}</div></div>
+        <div class="item__acts">${act('edit-style', 'Edit', `data-id="${esc(s.id)}"`)}${act('copy-style', 'Duplicate', `data-id="${esc(s.id)}"`)}${act('delete-style', 'Delete', `data-id="${esc(s.id)}" data-name="${esc(s.name)}"`, 'btn--danger')}</div></li>`).join('');
+  // LCARS and Borg: how much it moves between page changes (motion.js), this device's own
+  const lv = motion.savedLevel(), motionRow = (curFam !== 'lcars' && curFam !== 'borg') ? ''
     : `<div class="bar-actions modepick modepick--motion"><span class="field__l">Motion</span>${motion.LEVEL_NAMES.map(([k, label]) =>
       `<button type="button" class="btn${k === lv ? ' btn--go' : ''}" data-do="use-motion" data-level="${k}" aria-pressed="${k === lv}">${label}</button>`).join('')}</div>`;
-  // LCARS only: the screen overlay over everything (theme-init.js sets html[data-lc-overlay]; lcars.css draws it)
+  // LCARS family only: the screen overlay over everything (theme-init.js sets html[data-lc-overlay]; lcars.css draws it)
   const ovCur = (() => { try { return localStorage.getItem('lc-overlay') || 'scan'; } catch { return 'scan'; } })();
-  const overlayRow = document.documentElement.dataset.skin !== 'lcars' ? ''
+  const overlayRow = curFam !== 'lcars' ? ''
     : `<div class="bar-actions modepick modepick--motion"><span class="field__l">Overlay</span>${LC_OVERLAYS.map(([k, label]) =>
       `<button type="button" class="btn${k === ovCur ? ' btn--go' : ''}" data-do="use-overlay" data-overlay="${k}" aria-pressed="${k === ovCur}">${label}</button>`).join('')}</div>`;
-  const adding = editing?.kind === 'theme' && editing.id === 'new' ? `<li class="item item--edit">${themeForm(editing.seed || {})}</li>` : '';
-  return card('This device',
-    'Day or Night, and which theme. The same two buttons sit in the dashboard’s header.',
-    `<div class="bar-actions modepick">${modes}</div><div class="themepicks">${tiles}</div>${motionRow}${overlayRow}`)
-    + card('Custom themes',
-    'A variant of Citadel or LCARS, with its own Day and Night colours and pictures.',
-    `<div class="bar-actions">${act('new-theme', `${ico('plus')}New theme`, '', 'btn--go')}</div><ul class="items">${adding}${rows}</ul>
-     ${themes.length || adding ? '' : '<p class="sx__intro" style="padding-top:0">No custom themes yet.</p>'}`);
+  const adding = editing?.kind === 'style' && editing.id === 'new' ? `<li class="item item--edit">${styleForm(editing.seed || { family: curFam }, editing.view)}</li>` : '';
+  return card('Theme', '',
+    `<div class="bar-actions modepick">${modes}</div><div class="themepicks">${themeTiles}</div>${motionRow}${overlayRow}`)
+    + card(`${FAMILY_LABEL[curFam]} styles`, '',
+    `<div class="themepicks">${styleTiles}</div>
+     <div class="bar-actions modepick modepick--motion"><span class="field__l">New style</span>${builtins.map(s => act('new-style', `${ico('plus')}${esc(s.name)}`, `data-from="${esc(s.id)}"`)).join('')}</div>
+     <ul class="items">${adding}${rows}</ul>`);
 }
 
 // ---- Navigation: page names, which pages a phone has tabs for (the rest go under More), which the desktop rail shows,
-// and the order. Every device shares one set unless a device saves its own. Home stays first, with a phone tab and on
-// the rail; Settings stays on the rail; Curate and Settings keep their place at the foot of the rail. ------------------
+// the order, and the desktop rail's groups (each page sits under one, or none). Every device shares one set unless a
+// device saves its own. Home stays first, with a phone tab and on the rail; Settings stays on the rail; Curate, Audio
+// and Settings keep their place at the foot of the rail (Ops). Up and down move a page within its group; its Group
+// choice moves it to another, on save. ------------------------------------------------------------------------------
 let navScope = null;                    // 'shared' | 'device': which set the tab is editing
-const navRow = p => `<div class="nav-row" data-nav data-id="${esc(p.id)}"${p.movable ? ' data-movable' : ''}>
+const navSet = () => { const n = cfg.navigation; return navScope === 'device' ? (n.device || n.shared) : n.shared; };
+const navRow = (p, groups) => `<div class="nav-row" data-nav data-id="${esc(p.id)}"${p.movable ? ' data-movable' : ''}>
   <span class="sc-row__preview">${ico(p.icon)}</span>
   ${input('nav_label', p.label, `maxlength="${cfg.navigation.max_label}" placeholder="${esc(p.default)}" aria-label="Name"`)}
+  ${p.movable && groups.length ? select('nav_group', [['', 'No group'], ...groups.map(g => [g.id, g.label])], p.group).replace('<select', '<select aria-label="Group"') : '<span></span>'}
   <span class="nav-row__checks">
     <label class="check"><input type="checkbox" name="nav_phone"${p.phone ? ' checked' : ''}${p.id === 'home' ? ' disabled' : ''}><span>On phones</span></label>
     <label class="check"><input type="checkbox" name="nav_rail"${p.rail ? ' checked' : ''}${p.id === 'home' || p.id === 'settings' ? ' disabled' : ''}><span>On desktop</span></label>
   </span>
   <span class="sc-row__tools">${p.movable ? act('nav-up', ico('up'), 'aria-label="Move up" title="Move up"', 'btn--icon') + act('nav-down', ico('down'), 'aria-label="Move down" title="Move down"', 'btn--icon') : ''}</span></div>`;
 
+const navGroupRow = (g = { id: `g${Date.now().toString(36)}`, label: '' }) => `<div class="nav-row nav-row--group" data-navgroup data-id="${esc(g.id)}">
+  <span class="sc-row__preview">${ico('list')}</span>
+  ${input('ng_label', g.label, `maxlength="${cfg.navigation.max_label}" required aria-label="Group name"`)}
+  <span class="sc-row__tools">${act('ng-up', ico('up'), 'aria-label="Move up" title="Move up"', 'btn--icon')}${act('ng-down', ico('down'), 'aria-label="Move down" title="Move down"', 'btn--icon')}${act('ng-drop', 'Remove', '', 'btn--danger')}</span></div>`;
+// The page list under the same headings as the rail: pages with no group straight under Home, then each group, then Ops
+function navRows({ pages, groups }) {
+  const names = Object.fromEntries(groups.map(g => [g.id, g.label]));
+  let last = '';
+  return pages.map(p => {
+    const g = p.movable ? p.group : p.id === 'home' ? '' : 'ops';
+    const head = g && g !== last ? `<div class="nav-head">${esc(names[g] || 'Ops')}</div>` : '';
+    last = g;
+    return head + navRow(p, groups);
+  }).join('');
+}
+
 function navigationTab() {
   const n = cfg.navigation, inUse = n.device ? 'device' : 'shared';
   navScope ??= inUse;
-  const pages = navScope === 'device' ? (n.device || n.shared) : n.shared;
+  const set = navSet();
   const scopes = [['shared', 'Every device', 'users'], ['device', 'This device', 'phone']].map(([k, label, icon]) =>
     `<button type="button" class="btn${k === navScope ? ' btn--go' : ''}" data-do="nav-scope" data-scope="${k}" aria-pressed="${k === navScope}">${ico(icon)}${label}${k === inUse ? '<span class="chip chip--new">In use here</span>' : ''}</button>`).join('');
   return card('Pages', '',
     `<div class="bar-actions modepick">${scopes}</div>
     <form class="form" data-form="navigation" style="padding:0 18px 12px">
-      <div id="navs">${pages.map(navRow).join('')}</div>
-      <div class="form-actions">${navScope === 'device' && n.device ? act('nav-forget', 'Use every device’s') : ''}${act('nav-reset', 'Reset')}<button class="btn btn--solid" type="submit">Save</button></div></form>`);
+      <div id="navs">${navRows(set)}</div>
+      <div class="form-actions">${navScope === 'device' && n.device ? act('nav-forget', 'Use every device’s') : ''}${act('nav-reset', 'Reset')}<button class="btn btn--solid" type="submit">Save</button></div></form>`)
+  + card('Desktop groups', '',
+    `<form class="form" data-form="navgroups" style="padding:0 18px 12px">
+      <div id="navgroups">${set.groups.map(g => navGroupRow(g)).join('')}</div>
+      <div class="form-actions">${act('ng-add', `${ico('plus')}Add group`, set.groups.length >= n.max_groups ? 'disabled' : '', 'btn--go')}<button class="btn btn--solid" type="submit">Save</button></div></form>`);
 }
 
 // ---- About -----------------------------------------------------------------------------------------------------
@@ -787,7 +876,7 @@ function aboutTab() {
 
 // ---- rendering ---------------------------------------------------------------------------------------------------
 function render() {
-  if (editing?.kind !== 'theme') { syncThemes(cfg.appearance.themes); applySpec(); }   // ends any live preview; picks up edits made elsewhere
+  if (editing?.kind !== 'style') { syncStyles(cfg.appearance.styles, cfg.appearance.migrated_presets); applySpec(); }   // ends any live preview; picks up edits made elsewhere
   $('#tabs').innerHTML = TABS.map(([id, label, icon]) => `<button role="tab" data-tab="${id}" aria-selected="${id === tab}"${id === 'maintenance' && needsAttention() ? ' class="has-attn"' : ''}>${ico(icon)}${esc(label)}</button>`).join('');
   panel.innerHTML = { links: linksTab, projects: projectsTab, remote: remoteTab, widgets: () => shortcutsCard() + binsCard() + notificationsCard() + diaryCard(), appearance: appearanceTab, navigation: navigationTab, music: () => gigsCard() + artistsCard() + releasesCard() + vinylCard() + purchasesCard() + radarCard(), listen: musicPageTab, news: newsTab, screens: () => screensCard() + pairCard() + devicesCard() + enrolCard(), maintenance: maintenanceTab, about: aboutTab }[tab]();
   motion.phaseAll(panel);
@@ -821,14 +910,14 @@ panel.addEventListener('change', e => {
       .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.detail || `Upload failed (${r.status})`); return j; })
       .then(({ file: name }) => {
         f.elements[`${m}_bg_file`].value = name;
-        $('.bgpick__thumb', half).innerHTML = `<img src="/backgrounds/${esc(name)}" alt="">`;
+        $('.bgpick__thumb', half).innerHTML = `<img src="backgrounds/${esc(name)}" alt="">`;
         half.querySelector('[data-do="bg-remove"]').hidden = false;
-        previewTheme(f); toast('Picture added — save the theme to keep it');
+        previewStyle(f); toast('Picture added — save the style to keep it');
       }).catch(err => toast(err.message));
     return;
   }
-  const tf = e.target.closest('[data-form="theme"]');
-  if (tf) { previewTheme(tf); return; }
+  const sf = e.target.closest('[data-form="style"]');
+  if (sf) { previewStyle(sf); return; }
   const scMode = e.target.closest('[name=sc_mode]');
   if (scMode) {
     const row = scMode.closest('[data-sc]');
@@ -856,9 +945,11 @@ panel.addEventListener('change', e => {
 });
 let logTimer;
 panel.addEventListener('input', e => {
-  const tf = e.target.closest('[data-form="theme"]');
-  if (tf && !e.target.matches('[data-bg-file]')) {
-    previewTheme(tf);
+  const sf = e.target.closest('[data-form="style"]');
+  if (sf && !e.target.matches('[data-bg-file]')) {
+    const cell = e.target.closest('.tok');
+    if (cell) { cell.dataset.set = ''; cell.dataset.v = cellValue(cell); }       // changed in Advanced: now an override
+    previewStyle(sf);
     return;
   }
   const lq = e.target.closest('[data-log-q]');
@@ -877,7 +968,8 @@ panel.addEventListener('click', e => {
   const d = b.dataset;
   switch (b.dataset.do) {
     case 'cancel': editing = null; render(); break;
-    case 'use-theme': setLook(d.id, cfg.appearance.themes); render(); toast('Theme set for this device'); break;
+    case 'use-theme': setTheme(d.id, cfg.appearance.styles); render(); toast('Theme set for this device'); break;
+    case 'use-style': setStyle(d.id, cfg.appearance.styles); render(); toast('Style set for this device'); break;
     case 'use-mode': setMode(d.mode); render(); break;
     case 'use-motion': motion.saveLevel(d.level); render(); break;
     case 'use-overlay': {
@@ -885,12 +977,26 @@ panel.addEventListener('click', e => {
       if (d.overlay === 'scan') delete document.documentElement.dataset.lcOverlay; else document.documentElement.dataset.lcOverlay = d.overlay;
       render(); break;
     }
-    case 'new-theme': editing = { kind: 'theme', id: 'new', seed: { skin: look() === 'lcars' ? 'lcars' : 'citadel' } }; render(); $('[data-form="theme"] [name=name]')?.focus(); previewTheme($('[data-form="theme"]')); break;
-    case 'edit-theme': editing = { kind: 'theme', id: d.id }; render(); previewTheme($('[data-form="theme"]')); break;
-    case 'copy-theme': { const t = cfg.appearance.themes.find(x => x.id === d.id); editing = { kind: 'theme', id: 'new', seed: { ...t, id: '', name: `${t.name} copy`.slice(0, 40) } }; render(); previewTheme($('[data-form="theme"]')); break; }
-    case 'delete-theme': if (confirm(`Delete the “${d.name}” theme? Any device using it goes back to Citadel.`)) run(() => api.del(`/api/owner/appearance/themes/${d.id}`), 'Theme deleted'); break;
-    case 'panel-reset': { const f = b.closest('form'); f.elements[`${d.half}_panel`].value = cfg.appearance.base_panel[d.half]; previewTheme(f); break; }
-    case 'bg-remove': { const f = b.closest('form'); f.elements[`${d.half}_bg_file`].value = ''; $('.bgpick__thumb', b.closest('[data-half]')).innerHTML = '<span>None</span>'; b.hidden = true; previewTheme(f); break; }
+    case 'new-style': {
+      const curFam = family();
+      const base = stylesForFamily(curFam).find(x => x.id === d.from) || stylesForFamily(curFam)[0];
+      const seed = structuredClone(base);
+      seed.id = ''; seed.name = ''; seed.family = curFam;
+      editing = { kind: 'style', id: 'new', seed };
+      render(); $('[data-form="style"] [name=name]')?.focus(); previewStyle($('[data-form="style"]')); break;
+    }
+    case 'style-view': {
+      const f = b.closest('form'); f.dataset.view = d.view; if (editing) editing.view = d.view;
+      $$('.theme-views [data-view]:not([data-tok-count])', f).forEach(x => { const on = x.dataset.view === d.view; x.classList.toggle('btn--go', on); x.setAttribute('aria-pressed', on); });
+      previewStyle(f); break;
+    }
+    case 'tok-reset': { const c = b.closest('.tok'); delete c.dataset.set; delete c.dataset.v; previewStyle(b.closest('form')); break; }
+    case 'tok-reset-all': { const f = b.closest('form'); $$('.tok[data-set]', f).forEach(c => { delete c.dataset.set; delete c.dataset.v; }); previewStyle(f); break; }
+    case 'edit-style': editing = { kind: 'style', id: d.id }; render(); previewStyle($('[data-form="style"]')); break;
+    case 'copy-style': { const s = cfg.appearance.styles.find(x => x.id === d.id); editing = { kind: 'style', id: 'new', seed: { ...structuredClone(s), id: '', name: `${s.name} copy`.slice(0, 40) } }; render(); previewStyle($('[data-form="style"]')); break; }
+    case 'delete-style': if (confirm(`Delete the “${d.name}” style? Any device using it goes back to Standard.`)) run(() => api.del(`/api/owner/appearance/styles/${d.id}`), 'Style deleted'); break;
+    case 'panel-reset': { const f = b.closest('form'); f.elements[`${d.half}_panel`].value = baseOf(f.elements.family.value, d.half).panel; previewStyle(f); break; }
+    case 'bg-remove': { const f = b.closest('form'); f.elements[`${d.half}_bg_file`].value = ''; $('.bgpick__thumb', b.closest('[data-half]')).innerHTML = '<span>None</span>'; b.hidden = true; previewStyle(f); break; }
     case 'new-link': editing = { kind: 'link', id: 'new' }; render(); $('[data-form="link"] input')?.focus(); break;
     case 'edit-link': editing = { kind: 'link', id: Number(d.id) }; render(); break;
     case 'new-project': editing = { kind: 'project', id: 'new' }; render(); $('[data-form="project"] input')?.focus(); break;
@@ -991,8 +1097,12 @@ panel.addEventListener('click', e => {
     case 'nav-up': { const r = b.closest('[data-nav]'), o = r.previousElementSibling; if (o?.hasAttribute('data-movable')) o.before(r); b.focus(); break; }
     case 'nav-down': { const r = b.closest('[data-nav]'), o = r.nextElementSibling; if (o?.hasAttribute('data-movable')) o.after(r); b.focus(); break; }
     case 'nav-scope': navScope = d.scope; render(); break;
+    case 'ng-up': { const r = b.closest('[data-navgroup]'); r.previousElementSibling?.before(r); b.focus(); break; }
+    case 'ng-down': { const r = b.closest('[data-navgroup]'); r.nextElementSibling?.after(r); b.focus(); break; }
+    case 'ng-drop': b.closest('[data-navgroup]').remove(); $('[data-do="ng-add"]').disabled = false; break;
+    case 'ng-add': $('#navgroups').insertAdjacentHTML('beforeend', navGroupRow()); $('#navgroups [data-navgroup]:last-child [name=ng_label]')?.focus(); b.disabled = $$('#navgroups [data-navgroup]').length >= cfg.navigation.max_groups; break;
     case 'nav-forget': run(async () => { await api.del('/api/owner/navigation/device'); navScope = 'shared'; }, 'This device uses every device’s again'); break;
-    case 'nav-reset': if (confirm(`Put every page back to its own name, place and tabs${navScope === 'device' ? ' on this device' : ' for every device'}?`)) run(() => api.put('/api/owner/navigation', { pages: [], device: navScope === 'device' }), 'Navigation reset'); break;
+    case 'nav-reset': if (confirm(`Put every page back to its own name, place, tabs and group, and the groups back to Command, Science and Engineering${navScope === 'device' ? ' on this device' : ' for every device'}?`)) run(() => api.put('/api/owner/navigation', { pages: [], device: navScope === 'device' }), 'Navigation reset'); break;
     case 'sc-up': { const r = b.closest('[data-sc]'); if (r.previousElementSibling) r.previousElementSibling.before(r); break; }
     case 'sc-down': { const r = b.closest('[data-sc]'); if (r.nextElementSibling) r.nextElementSibling.after(r); break; }
     case 'sc-import': {
@@ -1024,13 +1134,20 @@ panel.addEventListener('submit', e => {
   const f = e.target, kind = f.dataset.form;
   if (kind === 'link') {
     const body = { name: val(f, 'name'), subtitle: val(f, 'subtitle'), url: val(f, 'url'), icon: val(f, 'icon'), health_url: val(f, 'health_url') || null,
-      is_primary: on(f, 'is_primary'), show_guest: on(f, 'show_guest'), tier: on(f, 'more') ? 'more' : 'main', pinned: on(f, 'pinned'), for_media: on(f, 'for_media'), for_music: on(f, 'for_music'), for_sql: on(f, 'for_sql'), for_ai: on(f, 'for_ai'), for_house: on(f, 'for_house'), for_casino: on(f, 'for_casino') };
+      is_primary: on(f, 'is_primary'), show_guest: on(f, 'show_guest'), tier: on(f, 'more') ? 'more' : 'main', pinned: on(f, 'pinned'), for_media: on(f, 'for_media'), for_music: on(f, 'for_music'), for_sql: on(f, 'for_sql'), for_ai: on(f, 'for_ai'), for_house: on(f, 'for_house'), for_casino: on(f, 'for_casino'), for_labels: on(f, 'for_labels'), for_holodeck: on(f, 'for_holodeck'), for_lab: on(f, 'for_lab') };
     const id = f.dataset.id;
     run(async () => { await (id ? api.put(`/api/owner/links/${id}`, body) : api.post('/api/owner/links', body)); editing = null; }, 'Link saved');
   } else if (kind === 'navigation') {
-    const pages = $$('[data-nav]', f).map(r => ({ id: r.dataset.id, label: $('[name=nav_label]', r).value.trim(), phone: $('[name=nav_phone]', r).checked, rail: $('[name=nav_rail]', r).checked }));
+    const pages = $$('[data-nav]', f).map(r => ({ id: r.dataset.id, label: $('[name=nav_label]', r).value.trim(), phone: $('[name=nav_phone]', r).checked, rail: $('[name=nav_rail]', r).checked,
+      ...($('[name=nav_group]', r) ? { group: $('[name=nav_group]', r).value } : {}) }));
     const device = navScope === 'device';
     run(() => api.put('/api/owner/navigation', { pages, device }), device ? 'Saved for this device' : 'Saved for every device');
+  } else if (kind === 'navgroups') {
+    // The groups alone: the pages go back as they're saved (a removed group's pages fall to no group)
+    const groups = $$('[data-navgroup]', f).map(r => ({ id: r.dataset.id, label: $('[name=ng_label]', r).value.trim() }));
+    const pages = navSet().pages.map(({ id, label, default: d, phone, rail, group }) => ({ id, label: label === d ? '' : label, phone, rail, group }));
+    const device = navScope === 'device';
+    run(() => api.put('/api/owner/navigation', { pages, groups, device }), device ? 'Groups saved for this device' : 'Groups saved for every device');
   } else if (kind === 'project') {
     let env;
     try { env = parseEnv(val(f, 'env')); } catch (err) { toast(err.message); return; }
@@ -1046,13 +1163,13 @@ panel.addEventListener('submit', e => {
   } else if (kind === 'remote') {
     const body = { name: val(f, 'name'), address: val(f, 'address'), viewer: val(f, 'viewer'), ssh_user: val(f, 'ssh_user'), always_on: f.elements.always_on.checked, mac: val(f, 'mac') }, id = f.dataset.id;
     run(async () => { await (id ? api.put(`/api/owner/remote/${id}`, body) : api.post('/api/owner/remote', body)); editing = null; }, 'Device saved');
-  } else if (kind === 'theme') {
-    const t = readTheme(f), id = f.dataset.id;
+  } else if (kind === 'style') {
+    const s = readStyle(f), id = f.dataset.id;
     run(async () => {
-      const saved = await (id ? api.put(`/api/owner/appearance/themes/${id}`, t) : api.post('/api/owner/appearance/themes', t));
+      const saved = await (id ? api.put(`/api/owner/appearance/styles/${id}`, s) : api.post('/api/owner/appearance/styles', s));
       editing = null;
-      if (!id) setLook(saved.id, [saved]);                 // a brand-new theme: use it here straight away
-    }, id ? 'Theme saved' : 'Theme created — now in use on this device');
+      if (!id && saved.family === family()) setStyle(`c:${saved.id}`, [saved]);   // a brand-new style in this family: use it straight away
+    }, id ? 'Style saved' : 'Style created');
   } else if (kind === 'shortcuts') {
     const shortcuts = $$('[data-sc]', f).map(r => ({
       id: r.dataset.id || undefined, label: r.querySelector('[name=sc_label]').value.trim(), url: r.querySelector('[name=sc_url]').value.trim(),
@@ -1153,5 +1270,5 @@ document.addEventListener('theme:change', () => { if (tab === 'appearance' && !e
 
 motion.init();
 await load();
-document.documentElement.classList.remove('lc-boot');    // the LCARS boot animation is the dashboard's; theme-init sets it everywhere
+document.documentElement.classList.remove('lc-boot', 'brg-boot');    // boot animations are the dashboard's; theme-init sets them everywhere
 if (addParam === 'gig') $('[data-form="gig"] input')?.focus();

@@ -13,9 +13,13 @@
 <link rel="stylesheet" href="css/dashboard.css">
 <link rel="stylesheet" href="css/music.css">
 <link rel="stylesheet" href="css/news.css">
-<link rel="stylesheet" href="demo.css">
 <link rel="stylesheet" href="css/stats.css">
+<link rel="stylesheet" href="css/audio.css">
+<link rel="stylesheet" href="css/routines.css">
 <link rel="stylesheet" href="css/lcars.css">
+<link rel="stylesheet" href="css/lcars25.css">
+<link rel="stylesheet" href="css/borg.css">
+<link rel="stylesheet" href="demo.css">
 </head>
 <body>
 <div class="sweep"></div>
@@ -24,24 +28,29 @@
   <nav class="rail" aria-label="Primary">
     <span class="rail__logo"><svg class="i"><use href="#i-logo"/></svg></span>
     <a href="#home" data-view="home" aria-current="page" title="Home"><svg class="i"><use href="#i-home"/></svg><span class="rail__label">Home</span></a>
-    <a href="#news" data-view="news" title="News"><svg class="i"><use href="#i-news"/></svg><span class="rail__label">News</span></a>
-    <a href="#media" data-view="media" title="Media"><svg class="i"><use href="#i-film"/></svg><span class="rail__label">Media</span></a>
-    <a href="#music" data-view="music" title="Companion"><svg class="i"><use href="#i-disc"/></svg><span class="rail__label">Companion</span></a>
-    <a href="#listen" data-view="listen" title="Music"><svg class="i"><use href="#i-wave"/></svg><span class="rail__label">Music</span></a>
-    <a href="#casino" data-view="casino" title="Casino"><svg class="i"><use href="#i-spade"/></svg><span class="rail__label">Casino</span></a>
-    <a href="#ai" data-view="ai" title="Odysseus"><svg class="i"><use href="#i-spark"/></svg><span class="rail__label">Odysseus</span></a>
-    <a href="#house" data-view="house" title="House"><svg class="i"><use href="#i-tool"/></svg><span class="rail__label">House</span></a>
-    <a href="#stats" data-view="stats" title="Fleet"><svg class="i"><use href="#i-fleet"/></svg><span class="rail__label">Fleet</span></a>
+    <a href="#stats" data-view="stats" data-group="command" title="Fleet"><svg class="i"><use href="#i-fleet"/></svg><span class="rail__label">Fleet</span></a>
+    <a href="#news" data-view="news" data-group="command" title="News"><svg class="i"><use href="#i-news"/></svg><span class="rail__label">News</span></a>
+    <a href="#music" data-view="music" data-group="command" title="Companion"><svg class="i"><use href="#i-disc"/></svg><span class="rail__label">Companion</span></a>
+    <a href="#listen" data-view="listen" data-group="science" title="Music"><svg class="i"><use href="#i-wave"/></svg><span class="rail__label">Music</span></a>
+    <a href="#media" data-view="media" data-group="science" title="Media"><svg class="i"><use href="#i-film"/></svg><span class="rail__label">Media</span></a>
+    <a href="#casino" data-view="casino" data-group="science" title="Casino"><svg class="i"><use href="#i-spade"/></svg><span class="rail__label">Casino</span></a>
+    <a href="#holodeck" data-view="holodeck" data-group="science" title="Holodeck"><svg class="i"><use href="#i-gamepad"/></svg><span class="rail__label">Holodeck</span></a>
+    <a href="#labels" data-view="labels" data-group="engineering" title="Labels"><svg class="i"><use href="#i-printer"/></svg><span class="rail__label">Labels</span></a>
+    <a href="#house" data-view="house" data-group="engineering" title="House"><svg class="i"><use href="#i-tool"/></svg><span class="rail__label">House</span></a>
+    <a href="#lab" data-view="lab" data-group="engineering" title="HomeLab"><svg class="i"><use href="#i-bulb"/></svg><span class="rail__label">HomeLab</span></a>
+    <a href="#routines" data-view="routines" data-group="engineering" title="Routines"><svg class="i"><use href="#i-alarm"/></svg><span class="rail__label">Routines</span></a>
+    <a href="#ai" data-view="ai" data-group="engineering" title="Odysseus"><svg class="i"><use href="#i-spark"/></svg><span class="rail__label">Odysseus</span></a>
     <span class="spacer"></span>
-    <a href="#curate" data-view="curate" title="Curate (Music Maintenance)"><svg class="i"><use href="#i-tag"/></svg><span class="rail__label">Curate</span></a>
-    <a href="#settings" data-view="settings" class="rail__settings" title="Settings"><svg class="i"><use href="#i-gear"/></svg><span class="rail__label">Settings</span></a>
+    <a href="#curate" data-view="curate" data-group="ops" title="Curate (Music Maintenance)"><svg class="i"><use href="#i-tag"/></svg><span class="rail__label">Curate</span></a>
+    <a href="#audio" data-view="audio" data-group="ops" title="Audio (GoXLR)"><svg class="i"><use href="#i-mixer"/></svg><span class="rail__label">Audio</span></a>
+    <a href="#settings" data-view="settings" data-group="ops" class="rail__settings" title="Settings"><svg class="i"><use href="#i-gear"/></svg><span class="rail__label">Settings</span></a>
   </nav>
 
   <main class="main">
     <header class="top">
-      <div class="top__brand"><button class="top__logo" type="button" data-alerts-toggle aria-expanded="false" aria-controls="alerts" aria-label="Reminders" title="Reminders"><svg class="i"><use href="#i-logo"/></svg><span class="top__badge" id="alerts-count" hidden></span></button><span class="wordmark">Citadel</span><span class="hud" id="host-label"></span><span class="chip demo-chip" title="A frozen copy of my home dashboard: nothing here is live or saved">Snapshot · 18 Nov 2026 · read-only</span></div>
-      <div class="top__mid"><nav class="shortcuts" id="shortcuts" aria-label="Bookmarks" hidden></nav><div class="bmbar" id="bm-bar" hidden></div><dl class="readout" id="readout" role="button" tabindex="0" aria-label="Monitoring" title="Monitoring"></dl><section class="mu-bar" id="mu-bar" aria-label="Now playing"></section></div>
-      <div class="top__right"><a class="btn btn--icon top__settings" href="#settings" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></a><span class="look-group" id="look-group"><button class="btn look-btn" type="button" data-mode-toggle aria-label="Switch to Day" title="Switch to Day"><svg class="i"><use href="#i-sun"/></svg><span class="look-btn__word">Day</span></button><button class="btn look-btn" type="button" data-theme-menu aria-haspopup="menu" aria-expanded="false" aria-controls="style-bar" aria-label="Style" title="Style"><svg class="i"><use href="#i-palette"/></svg><span class="look-btn__word">Style</span><svg class="i look-btn__chev"><use href="#i-down"/></svg></button></span><div class="bmbar stylebar" id="style-bar" hidden></div><span class="hud hud--plain badge-role"><span class="dot" id="conn-dot" title="connecting…"></span><span id="device-label">Owner device</span></span></div>
+      <div class="top__brand"><button class="top__logo" type="button" data-alerts-toggle aria-expanded="false" aria-controls="alerts" aria-label="Reminders" title="Reminders"><svg class="i"><use href="#i-logo"/></svg><span class="top__badge" id="alerts-count" hidden></span></button><span class="wordmark">Citadel</span><span class="hud" id="host-label"></span><span class="chip demo-chip" title="A frozen copy of my home dashboard (25 Nov 2026): nothing here is live or saved"><span class="demo-chip__full">Snapshot · 25 Nov 2026 · read-only</span><span class="demo-chip__short" aria-hidden="true">Demo · 25 Nov</span></span></div>
+      <div class="top__mid"><div class="top__ctx" id="top-ctx" hidden><span class="top__page" id="top-page"></span><span class="top__src" id="top-src"></span><span class="top__acts" id="top-acts" hidden><button class="btn top__act" type="button" data-frame-reload title="Reload"><svg class="i"><use href="#i-refresh"/></svg><span>Reload</span></button><button class="btn top__act" type="button" data-frame-open title="Open in a new tab"><svg class="i"><use href="#i-ext"/></svg><span>New tab</span></button></span></div><nav class="shortcuts" id="shortcuts" aria-label="Bookmarks" hidden></nav><div class="bmbar" id="bm-bar" hidden></div><dl class="readout" id="readout" role="button" tabindex="0" aria-label="Monitoring" title="Monitoring"></dl><section class="mu-bar" id="mu-bar" aria-label="Now playing"></section></div>
+      <div class="top__right"><a class="btn btn--icon top__settings" href="#settings" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></a><span class="vol-group" id="vol-group" hidden></span><div class="bmbar volbar" id="vol-bar" hidden></div><span class="look-group" id="look-group"><button class="btn look-btn" type="button" data-mode-toggle aria-label="Switch to Day" title="Switch to Day"><svg class="i"><use href="#i-sun"/></svg><span class="look-btn__word">Day</span></button><button class="btn look-btn" type="button" data-theme-menu aria-haspopup="menu" aria-expanded="false" aria-controls="style-bar" aria-label="Theme" title="Theme"><svg class="i"><use href="#i-palette"/></svg><span class="look-btn__word">Theme</span><svg class="i look-btn__chev"><use href="#i-down"/></svg></button></span><div class="bmbar stylebar" id="style-bar" hidden></div><span class="hud hud--plain badge-role"><span class="dot" id="conn-dot" title="connecting…"></span><span id="device-label">Owner device</span></span></div>
     </header>
     <section class="view is-active" id="view-home" data-view="home">
       <section class="alerts" id="alerts" aria-label="Reminders"></section>
@@ -56,7 +65,8 @@
       <div class="frame-shell"><iframe id="music-frame" title="Music Companion" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
     </section>
     <section class="view" id="view-sql" data-view="sql" aria-label="SQL DB">
-      <div class="frame-shell"><iframe id="sql-frame" title="SQL DB" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
+      <div class="frame-shell" hidden><iframe id="sql-frame" title="SQL DB" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
+      <div class="demo-na"><div class="demo-na__card"><svg class="i"><use href="#i-server"/></svg><b>Not available in the online demo</b><span>SQL DB is Music Companion's local database explorer on my home network.</span></div></div>
     </section>
     <section class="view" id="view-listen" data-view="listen" aria-label="Music"></section>
     <section class="view" id="view-casino" data-view="casino" aria-label="Casino">
@@ -71,11 +81,25 @@
       <div class="frame-shell" hidden><iframe id="house-frame" title="Home Improvements" allow="fullscreen" allowfullscreen></iframe></div>
       <div class="demo-na has-shot" style="background-image:url(&quot;img/demo-na/house.jpg&quot;)"><div class="demo-na__card"><svg class="i"><use href="#i-tool"/></svg><b>Not available in the online demo</b><span>This is too sensitive to share online</span></div></div>
     </section>
+    <section class="view" id="view-labels" data-view="labels" aria-label="Labels">
+      <div class="frame-shell" hidden><iframe id="labels-frame" title="ZebraLab" allow="fullscreen" allowfullscreen></iframe></div>
+      <div class="demo-na"><div class="demo-na__card"><svg class="i"><use href="#i-printer"/></svg><b>Not available in the online demo</b><span>ZebraLab is my local thermal label designer and postage printer.</span></div></div>
+    </section>
+    <section class="view" id="view-holodeck" data-view="holodeck" aria-label="Holodeck">
+      <div class="frame-shell" hidden><iframe id="holodeck-frame" title="Holodeck" allow="gamepad; autoplay; fullscreen" allowfullscreen></iframe></div>
+      <div class="demo-na"><div class="demo-na__card"><svg class="i"><use href="#i-gamepad"/></svg><b>Not available in the online demo</b><span>Holodeck is my local retro games library and browser emulator.</span></div></div>
+    </section>
+    <section class="view" id="view-lab" data-view="lab" aria-label="HomeLab">
+      <div class="frame-shell" hidden><iframe id="lab-frame" title="Home Assistant" allow="fullscreen" allowfullscreen></iframe></div>
+      <div class="demo-na"><div class="demo-na__card"><svg class="i"><use href="#i-bulb"/></svg><b>Not available in the online demo</b><span>HomeLab is my Home Assistant smart home controller, on my home network only.</span></div></div>
+    </section>
+    <section class="view" id="view-routines" data-view="routines" aria-label="Routines"></section>
     <section class="view" id="view-stats" data-view="stats" aria-label="Fleet"></section>
     <section class="view" id="view-curate" data-view="curate" aria-label="Curate">
       <div class="frame-shell" hidden><iframe id="curate-frame" title="Music Maintenance"></iframe></div>
       <div class="demo-na"><div class="demo-na__card"><svg class="i"><use href="#i-tag"/></svg><b>Not available in the online demo</b><span>Curate is Music Companion's private maintenance tool on my home network.</span></div></div>
     </section>
+    <section class="view" id="view-audio" data-view="audio" aria-label="Audio"></section>
     <section class="view" id="view-settings" data-view="settings" aria-label="Settings">
       <div class="frame-shell"><iframe id="settings-frame" title="Settings"></iframe></div>
     </section>

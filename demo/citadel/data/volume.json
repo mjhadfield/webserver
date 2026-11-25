@@ -1,0 +1,1 @@
+{"configured":true,"available":true,"channels":[{"id":"lineout","name":"Line out","curve":2.2,"volume":72,"muted":false,"restore":72},{"id":"vinyl","name":"Vinyl","curve":1.0,"volume":0,"muted":true,"restore":55}]}

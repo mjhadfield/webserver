@@ -69,21 +69,43 @@ export function uptimeText(seconds) {
 /** Live-tick every [data-since] (a running project's uptime) from the epoch seconds it started. */
 export function tickUptimes() {
   const now = Date.now() / 1000;
-  $$('[data-since]').forEach(el => { el.textContent = uptimeText(now - Number(el.dataset.since)); });
+  $$('[data-since]').forEach(el => {
+    const s = uptimeText(now - Number(el.dataset.since));
+    if (el.textContent !== s) el.textContent = s;
+  });
 }
 
 /** Live clock: fills every [data-clock]/[data-dow]/[data-dmy] currently in the page. */
+let clockDayKey = '', clockDateStr = '', clockDowStr = '', clockDmyStr = '';
 export function tickClock() {
   const d = new Date();
-  const t = `${pad(d.getHours())}:${pad(d.getMinutes())}<small>${pad(d.getSeconds())}</small>`;
-  $$('[data-clock]').forEach(el => { el.innerHTML = t; });
-  $$('[data-date]').forEach(el => { el.textContent = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); });
-  $$('[data-dow]').forEach(el => { el.textContent = d.toLocaleDateString('en-GB', { weekday: 'long' }); });
-  $$('[data-dmy]').forEach(el => { el.textContent = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); });
+  const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`, sec = pad(d.getSeconds());
+  $$('[data-clock]').forEach(el => {
+    let sm = el.firstElementChild;
+    if (!sm || sm.tagName !== 'SMALL' || el.firstChild?.nodeType !== 3) {
+      el.textContent = hm;
+      sm = document.createElement('small');
+      el.append(sm);
+    } else if (el.firstChild.data !== hm) {
+      el.firstChild.data = hm;
+    }
+    if (sm.textContent !== sec) sm.textContent = sec;
+  });
+  const dayKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  if (dayKey !== clockDayKey) {
+    clockDayKey = dayKey;
+    clockDateStr = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    clockDowStr = d.toLocaleDateString('en-GB', { weekday: 'long' });
+    clockDmyStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+  }
+  $$('[data-date]').forEach(el => { if (el.textContent !== clockDateStr) el.textContent = clockDateStr; });
+  $$('[data-dow]').forEach(el => { if (el.textContent !== clockDowStr) el.textContent = clockDowStr; });
+  $$('[data-dmy]').forEach(el => { if (el.textContent !== clockDmyStr) el.textContent = clockDmyStr; });
   // Next gig's ticking hours:minutes:seconds (shown by the LCARS theme): what's left after the whole days the card counts.
   $$('[data-gig-at]').forEach(el => {
     const left = Math.max(0, (new Date(el.dataset.gigAt) - d) / 1000);
-    el.textContent = `· ${pad(Math.floor(left % 86400 / 3600))}:${pad(Math.floor(left % 3600 / 60))}:${pad(Math.floor(left % 60))}`;
+    const s = `· ${pad(Math.floor(left % 86400 / 3600))}:${pad(Math.floor(left % 3600 / 60))}:${pad(Math.floor(left % 60))}`;
+    if (el.textContent !== s) el.textContent = s;
   });
 }
 

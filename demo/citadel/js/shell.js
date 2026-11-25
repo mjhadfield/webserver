@@ -49,7 +49,7 @@ export class Shell {
       ${chips || search ? `<div class="maxbar"${def.pinnedOpen ? '' : ' hidden'}>${fpick}${chips ? `<div class="fchips">${chips}</div>` : ''}${search}</div>` : ''}
       <div class="card__body${def.flush ? ' card__body--flush' : ''}"></div></div>`;
     this.grid.append(el);
-    this.cards.set(def.id, { el, def, meta: $('.meta', el), body: $('.card__body', el), last: null,
+    this.cards.set(def.id, { el, def, inner: $('.card__in', el), meta: $('.meta', el), body: $('.card__body', el), last: null,
       filter: first ?? null, search: '' });
   }
 
@@ -73,7 +73,7 @@ export class Shell {
     const on = c.def.pinnedOpen || c.el.classList.contains('is-max');
     $$('.more', c.body).forEach(e => { e.hidden = !on; });     // expanded-only content
     c.body.scrollTop = top;
-    this.clip();
+    this.clip(c);
   }
 
   // ---- expand / collapse -----------------------------------------------------------------------
@@ -155,16 +155,20 @@ export class Shell {
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && this.open) this.toggle(this.open); });
 
-    for (const c of this.cards.values()) c.body.addEventListener('scroll', () => this.clip(), { passive: true });
+    for (const c of this.cards.values()) c.body.addEventListener('scroll', () => this.clip(c), { passive: true });
     addEventListener('resize', () => this.clip());
     document.fonts?.ready.then(() => this.clip());
   }
 
   /** Fade the bottom edge of any card whose content is clipped. */
-  clip() {
-    for (const { body } of this.cards.values()) {
-      body.classList.toggle('is-clipped', body.scrollHeight > body.clientHeight + 2);
-      body.classList.toggle('at-end', body.scrollTop + body.clientHeight >= body.scrollHeight - 2);
+  clip(only = null) {
+    const list = only ? [only] : this.cards.values();
+    for (const { inner, body } of list) {
+      const clipped = body.scrollHeight > body.clientHeight + 2;
+      const atEnd = body.scrollTop + body.clientHeight >= body.scrollHeight - 2;
+      body.classList.toggle('is-clipped', clipped);
+      body.classList.toggle('at-end', atEnd);
+      inner?.classList.toggle('is-fade', clipped && !atEnd);
     }
   }
 }

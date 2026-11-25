@@ -279,7 +279,7 @@ function remote(s) {
   return { meta: `${list.filter(r => r.up).length} / ${list.length} on`, body: `<div class="tiles">${tiles}</div>` };
 }
 
-// ---- System -----------------------------------------------------------------------------------------------
+// ---- Storage (card id kept as "system": the widget still feeds uptime to Monitoring) ---------------------
 
 /** Every status check on the dashboard: web projects (their port) and links with a status address. */
 export function serviceChecks(s) {
@@ -288,6 +288,10 @@ export function serviceChecks(s) {
     ...s.links.filter(l => l.up !== null).map(l => ({ name: l.name, ok: l.up, detail: l.subtitle })),
   ];
 }
+
+// nvidia-smi says [N/A] for a reading it can't take (monitor._num -> null): show a dash rather than throw and stop every later card.
+const fx = (v, unit = '', d = 0) => v != null ? `${v.toFixed(d)}${unit}` : '—';
+const pctOf = (a, b) => a != null && b ? a / b * 100 : null;
 
 function bar(label, sub, value, pct, hot = false) {
   const v = Math.max(0, Math.min(100, Number(pct) || 0));
@@ -299,17 +303,10 @@ function system(s) {
   const w = s.widgets.system;
   if (!w.data?.disks) return { meta: '', body: empty('chip', 'Reading host…', w.error || '') };
   const d = w.data;
-  const checks = serviceChecks(s);
   const disks = d.disks.map(k => bar(k.name, k.mount, `${bytes(k.used)} / ${bytes(k.size)}`, k.percent, k.percent >= 85)).join('');
-  const mem = d.mem, memPct = mem.used / mem.total * 100;
   return {
     meta: `${esc(d.host)} · ${esc(s.ip)}${staleChip(w)}`,
-    body: `${disks}
-      ${d.cpu_percent != null ? `<div class="more" hidden>${bar('cpu', '', `${d.cpu_percent}%`, d.cpu_percent)}</div>` : ''}
-      <div class="more" hidden>${bar('memory', '', `${bytes(mem.used)} / ${bytes(mem.total)}`, memPct)}</div>
-      <dl class="kv"><dt>uptime</dt><dd>${esc(duration(d.uptime_s))}</dd><dt>load</dt><dd>${d.load.map(x => x.toFixed(2)).join(' · ')}</dd>
-        <dt>services</dt><dd>${checks.filter(c => c.ok).length} / ${checks.length} up</dd></dl>
-      <ul class="svcs">${checks.map(c => `<li class="svc more" hidden><span class="dot ${c.ok ? 'dot--ok' : ''}"></span><span>${esc(c.name)}</span><span class="mono dim">${esc(c.detail)}</span></li>`).join('')}</ul>`,
+    body: disks,
   };
 }
 
@@ -373,12 +370,12 @@ function monitoring(s, ctx) {
 
   if (!ctx.expanded) {
     const busiest = busiestCore(m.cpu.per_core);
-    const vramPct = m.gpu ? m.gpu.mem_used_mb / m.gpu.mem_total_mb * 100 : 0;
-    const powerPct = m.gpu?.power_limit_w ? m.gpu.power_w / m.gpu.power_limit_w * 100 : 0;
+    const vramPct = m.gpu ? pctOf(m.gpu.mem_used_mb, m.gpu.mem_total_mb) : null;
+    const powerPct = m.gpu ? pctOf(m.gpu.power_w, m.gpu.power_limit_w) : null;
     const gpuBars = m.gpu
-      ? `${bar('Usage', '', `${m.gpu.percent}%`, m.gpu.percent, m.gpu.percent >= 85)}
-         ${bar('VRAM', '', `${Math.round(vramPct)}%`, vramPct, vramPct >= 85)}
-         ${m.gpu.power_limit_w ? bar('Power', '', `${m.gpu.power_w.toFixed(0)} W`, powerPct, powerPct >= 90) : ''}`
+      ? `${bar('Usage', '', m.gpu.percent != null ? `${m.gpu.percent}%` : '—', m.gpu.percent, m.gpu.percent >= 85)}
+         ${bar('VRAM', '', vramPct != null ? `${Math.round(vramPct)}%` : '—', vramPct, vramPct >= 85)}
+         ${m.gpu.power_limit_w ? bar('Power', '', fx(m.gpu.power_w, ' W'), powerPct, powerPct >= 90) : ''}`
       : '<p class="dim">No GPU detected.</p>';
     const ms = s.machines || [];
     return {
@@ -404,9 +401,9 @@ function monitoring(s, ctx) {
   const mem = m.mem, swapPct = mem.swap_total ? mem.swap_used / mem.swap_total * 100 : 0;
   const gpuSection = m.gpu
     ? `<div class="mon-section">${secHead(`GPU · ${m.gpu.name}`, [['temp', m.gpu.temp, true]])}
-        ${bar('Usage', '', `${m.gpu.percent}%`, m.gpu.percent, m.gpu.percent >= 85)}
-        ${bar('VRAM', '', `${bytes(m.gpu.mem_used_mb * 1024 * 1024)} / ${bytes(m.gpu.mem_total_mb * 1024 * 1024)}`, m.gpu.mem_used_mb / m.gpu.mem_total_mb * 100)}
-        ${m.gpu.power_limit_w ? bar('Power', '', `${m.gpu.power_w.toFixed(0)} W / ${m.gpu.power_limit_w.toFixed(0)} W`, m.gpu.power_w / m.gpu.power_limit_w * 100) : ''}
+        ${bar('Usage', '', m.gpu.percent != null ? `${m.gpu.percent}%` : '—', m.gpu.percent, m.gpu.percent >= 85)}
+        ${bar('VRAM', '', m.gpu.mem_used_mb != null && m.gpu.mem_total_mb != null ? `${bytes(m.gpu.mem_used_mb * 1024 * 1024)} / ${bytes(m.gpu.mem_total_mb * 1024 * 1024)}` : '—', pctOf(m.gpu.mem_used_mb, m.gpu.mem_total_mb))}
+        ${m.gpu.power_limit_w ? bar('Power', '', `${fx(m.gpu.power_w, ' W')} / ${fx(m.gpu.power_limit_w, ' W')}`, pctOf(m.gpu.power_w, m.gpu.power_limit_w)) : ''}
       </div>`
     : `<div class="mon-section"><span class="hud">GPU</span><p class="dim">No NVIDIA GPU detected.</p></div>`;
 
@@ -418,8 +415,8 @@ function monitoring(s, ctx) {
         ${up != null ? `<dt>uptime</dt><dd>${esc(duration(up))}</dd>` : ''}
         <dt>services</dt><dd>${checks.filter(c => c.ok).length} / ${checks.length} up</dd>
         <dt>load (1/5/15m)</dt><dd>${m.load.map(x => x.toFixed(2)).join(' · ')}</dd>
-        ${m.gpu ? `<dt>GPU core clock</dt><dd>${m.gpu.clock_sm_mhz.toFixed(0)} MHz</dd>
-          <dt>GPU memory clock</dt><dd>${m.gpu.clock_mem_mhz.toFixed(0)} MHz</dd>
+        ${m.gpu ? `<dt>GPU core clock</dt><dd>${fx(m.gpu.clock_sm_mhz, ' MHz')}</dd>
+          <dt>GPU memory clock</dt><dd>${fx(m.gpu.clock_mem_mhz, ' MHz')}</dd>
           <dt>buffers + cached</dt><dd>${bytes(m.mem.buffers + m.mem.cached)}</dd>
           ${m.gpu.fan_percent != null ? `<dt>GPU fan</dt><dd>${m.gpu.fan_percent.toFixed(0)}%</dd>` : ''}` : ''}
         ${m.gpu ? '' : `<dt>buffers + cached</dt><dd>${bytes(m.mem.buffers + m.mem.cached)}</dd>`}</dl>
@@ -457,7 +454,8 @@ export const cards = [
   { id: 'projects', area: 'proj', label: 'Services', flush: true, render: projects,
     filters: [{ label: 'All', value: 'all' }, { label: 'Running', value: 'running' }, { label: 'Stopped', value: 'stopped' }] },
   { id: 'launchpad', area: 'launch', label: 'Launchpad', render: launchpad, search: true },
-  { id: 'system', area: 'sys', label: 'System', render: system },
+  // Disk usage only (id kept as "system": the widget still feeds uptime to Monitoring and Settings)
+  { id: 'system', area: 'sys', label: 'Storage', render: system },
   // No tile of its own on wide screens: the header readout opens it (dashboard.css .card--popout). Last, so it doesn't
   // take a number from the tiles.
   { id: 'monitoring', area: 'mon', cls: 'card--popout', label: 'Monitoring', render: monitoring },

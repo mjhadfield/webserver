@@ -1,0 +1,78 @@
+/* The Routines page (#view-routines, web/js/routines.js): when Home Assistant's routines run. One card per routine:
+   on/off, a big time, weekday toggles, the next run, Skip next and Run now. Built only from tokens, so every theme and
+   mode applies; LCARS inks each card in its own colour (--lc-c → --rt-c), as the Audio page does.
+   Everything is .rt* / [data-rt-*]; never reuse [data-act] or [data-date] (app.js and util.js treat those globally). */
+
+#view-routines.is-active { display: block; }
+.rt { --rt-c: var(--accent); --rt-on: var(--bg); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap); }
+html[data-family="lcars"] .rt .card { --rt-c: var(--lc-c); --rt-on: var(--lc-on); }
+/* the fixed 1080p/1440p layout doesn't scroll the page (dashboard.css), so the page body scrolls under the header */
+@media (min-width: 1800px) and (min-height: 860px) {
+  #view-routines.is-active { display: flex; flex-direction: column; min-height: 0; }
+  #view-routines > .rt { flex: 1; min-height: 0; overflow: auto; align-content: start; padding: 0 6px 2px 0; }
+}
+.rt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: var(--gap); align-items: start; }
+.rt-card { min-width: 0; }
+.rt-card .card__head { gap: 10px; }
+.rt-card .card__body { display: grid; gap: 12px; padding: 14px 16px 16px; min-width: 0; }
+.rt-card.is-off .rt-when { opacity: .55; }
+
+/* on/off, in the card's head (the Audio page's switch) */
+.rt-sw { display: inline-flex; align-items: center; gap: 8px; height: 28px; margin-left: auto; padding: 0 12px 0 8px; cursor: pointer;
+  font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--silver-mute); background: var(--surface); border: 1px solid var(--edge); }
+.rt-sw::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 1px solid currentColor; }
+.rt-sw:hover { border-color: var(--edge-strong); }
+.rt-sw[aria-pressed="true"] { color: var(--silver-hi); border-color: var(--rt-c); background: color-mix(in srgb, var(--rt-c) 16%, var(--surface)); }
+.rt-sw[aria-pressed="true"]::before { background: var(--rt-c); border-color: var(--rt-c); box-shadow: 0 0 8px var(--rt-c); }
+
+/* the time and the days */
+.rt-when { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 18px; }
+.rt-time { width: auto; min-width: 0; height: 52px; padding: 0 12px; font: 600 34px/1 var(--font-display); letter-spacing: .04em; color: var(--silver-hi);
+  background: var(--well); border: 1px solid var(--edge); color-scheme: dark; font-variant-numeric: tabular-nums; }
+html[data-mode="day"] .rt-time { color-scheme: light; }
+.rt-time:hover { border-color: var(--edge-strong); }
+.rt-time:focus-visible { outline: 2px solid var(--rt-c); outline-offset: 1px; }
+.rt-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; flex: 1 1 280px; min-width: 0; }
+.rt-day { height: 34px; min-width: 0; padding: 0; cursor: pointer; font: 600 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--silver-mute); background: var(--surface); border: 1px solid var(--edge); }
+.rt-day:hover { color: var(--silver-hi); border-color: var(--edge-strong); }
+.rt-day[aria-pressed="true"] { color: var(--rt-on); background: var(--rt-c); border-color: var(--rt-c); }
+
+/* next run, the buttons, last run */
+.rt-status { margin: 0; font: 13px var(--font-mono); letter-spacing: .06em; color: var(--silver); }
+.rt-status.is-skip { color: var(--warn); }
+.rt-acts { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; }
+.rt-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; cursor: pointer; white-space: nowrap;
+  font: 600 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--silver-mute); background: var(--surface); border: 1px solid var(--edge); }
+.rt-btn .i { width: 14px; height: 14px; }
+.rt-btn:hover:not(:disabled) { color: var(--silver-hi); border-color: var(--edge-strong); }
+.rt-btn:disabled { opacity: .45; cursor: default; }
+.rt-btn[aria-pressed="true"] { color: var(--silver-hi); border-color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, var(--surface)); }
+.rt-btn.is-armed { color: var(--rt-on); background: var(--rt-c); border-color: var(--rt-c); }
+.rt-last { margin-left: auto; font: 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silver-dim); }
+
+/* Home Assistant not answering, nothing set up */
+.rt-down { display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 16px; color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  background: color-mix(in srgb, var(--warn) 8%, var(--surface)); }
+.rt-down .i { width: 18px; height: 18px; flex: none; }
+.rt.is-down .rt-grid { opacity: .45; pointer-events: none; filter: saturate(.4); }
+.rt-note { margin: 0; padding: 14px 16px; color: var(--silver-mute); background: var(--surface); border: 1px solid var(--edge); }
+
+/* LCARS: the time and the buttons in the console's font; LCARS 25 rounds them like the Audio page's */
+html[data-family="lcars"] .rt-time { font-family: var(--lc-font); }
+html[data-family="lcars"] .rt-down { border: 0; border-left: 6px solid var(--warn); border-radius: 18px 4px 4px 18px; font: 500 17px var(--lc-font); letter-spacing: .08em; text-transform: uppercase; }
+html[data-family="lcars"][data-theme="lcars25"] .rt-sw,
+html[data-family="lcars"][data-theme="lcars25"] .rt-btn,
+html[data-family="lcars"][data-theme="lcars25"] .rt-day,
+html[data-family="lcars"][data-theme="lcars25"] .rt-time {
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--rt-c, var(--lc-frame)) 28%, var(--edge));
+}
+html[data-family="lcars"][data-theme="lcars25"] .rt-sw[aria-pressed="true"],
+html[data-family="lcars"][data-theme="lcars25"] .rt-day[aria-pressed="true"],
+html[data-family="lcars"][data-theme="lcars25"] .rt-btn.is-armed { border-color: var(--rt-c); }
+html[data-family="lcars"][data-theme="lcars25"] .rt-btn[aria-pressed="true"] { border-color: var(--warn); }
+@media (max-width: 760px) {
+  .rt-time { height: 48px; font-size: 30px; }
+  .rt-last { margin-left: 0; flex-basis: 100%; }
+}

@@ -4,12 +4,12 @@
 //    countdowns read the way they did that day however long ago it was built (and it isn't forever 3am);
 //  - /api/* GETs are answered from the saved JSON in data/ (anything not saved says so), every change is refused;
 //  - the event stream is a stub that "connects" and then never says anything changed;
-//  - it opens in LCARS at Night (the header buttons still switch, and a visitor's own pick is kept for next time);
+//  - it opens in LCARS 25 at Night (Standard style; the header buttons still switch, and a visitor's own pick is kept);
 //  - redacted bookmarks and Remote Access say they aren't part of the demo; Settings is a read-only snapshot
 //    (settings.html, which loads this file too).
 (function () {
   'use strict';
-  var SNAPSHOT = 1795039924741;
+  var SNAPSHOT = 1795595922062;
   var NOT_HERE = 'Not available in the online demo';
   var READ_ONLY = 'This is a read-only demo — nothing is saved';
   var DATA = new URL('data/', document.currentScript.src).href;
@@ -25,18 +25,21 @@
   }
   window.Date = DemoDate;
 
-  // ---- first visit: LCARS at Night (theme-init.js reads these next). The website's ?theme= is ignored on purpose.
-  // DEFAULTS_V moves visitors of an older build (which followed the website's Day/Night) onto the new default once.
-  var DEFAULTS_V = '2';
+  // ---- first visit: LCARS 25 at Night, Standard style (theme-init.js reads these next). The website's ?theme= is ignored.
+  // DEFAULTS_V moves visitors of an older build onto the new default once; their own later picks are kept.
+  var DEFAULTS_V = '4';
   try {
     if (localStorage.getItem('demo-defaults') !== DEFAULTS_V) {
-      localStorage.setItem('mode', 'night'); localStorage.setItem('look', 'lcars');
-      localStorage.removeItem('look-spec'); localStorage.removeItem('theme');
+      localStorage.setItem('mode', 'night'); localStorage.setItem('theme', 'lcars25'); localStorage.setItem('style', 'standard');
+      localStorage.removeItem('style-spec'); localStorage.removeItem('style-by-family');
+      localStorage.removeItem('look'); localStorage.removeItem('look-spec');
       localStorage.setItem('demo-defaults', DEFAULTS_V);
     }
   } catch (e) {
-    // storage blocked: theme-init.js can't read anything either, so put LCARS on the page by hand
-    document.documentElement.dataset.skin = 'lcars';
+    // storage blocked: theme-init.js can't read anything either, so put LCARS 25 on the page by hand
+    document.documentElement.dataset.mode = 'night';
+    document.documentElement.dataset.theme = 'lcars25';
+    document.documentElement.dataset.family = 'lcars';
   }
 
   // ---- the API, from saved files ------------------------------------------------------------------------------------
@@ -218,6 +221,7 @@
     if (/\/api\/owner\/(machines|stats\/(machines|series|spikes|disks))$/.test(url.pathname)) return fleetReply(url);
     var key = keyOf(url);
     if (key === 'monitoring') return monitoring();
+    if (key === 'audio_level') return reply(200, { level: -60 });
     return saved(key).then(function (text) {
       if (text === null) return reply(503, { detail: NOT_HERE });
       // the server's own "now" (bins' morning/evening wording, service uptimes) follows the demo clock too
@@ -278,6 +282,7 @@
     // Redacted bookmarks, and the Launchpad tiles of apps that only exist on the home network (their address was
     // removed: "#"). Inside Settings: a link to a dashboard page goes to that page of the dashboard around it.
     if (href.indexOf('https://redacted/') === 0) { e.preventDefault(); e.stopPropagation(); toast('Bookmarks are redacted in the online demo'); }
+    else if (href.indexOf('http://localhost:14564/') === 0) { e.preventDefault(); e.stopPropagation(); toast('The GoXLR utility runs on my PC only — ' + NOT_HERE.toLowerCase()); }
     else if (href.indexOf('/#') === 0 && window.parent !== window) { e.preventDefault(); e.stopPropagation(); window.parent.location.hash = href.slice(1); }
     else if (href === '/tv') { e.preventDefault(); e.stopPropagation(); toast('The TV screen isn’t part of the online demo'); }
     else if (href === '#' && a.target === '_blank') { e.preventDefault(); e.stopPropagation(); toast('That app runs on my home network only — ' + NOT_HERE.toLowerCase()); }
