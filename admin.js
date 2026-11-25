@@ -301,9 +301,21 @@
 
     function editorHtml(p) {
         var figIds = Object.keys(p.figures);
+        var stillIds = figIds.filter(function (id) { return !MH.isVideo(p.figures[id].src); });
         if (!S.fig || !p.figures[S.fig]) S.fig = figIds[0] || null;
         var f = S.fig && p.figures[S.fig];
+        var coverId = p.featured && p.cover && p.figures[p.cover] && !MH.isVideo(p.figures[p.cover].src) ? p.cover : '';
         var saveBtn = '<button class="btn btn--primary" type="button" data-act="save">save' + (S.dirty ? ' *' : '') + '</button>';
+        var coverSelect = p.featured
+            ? '<label class="field field--wide"><span class="field__label">banner image (projects page)</span><select data-meta="cover">' +
+              '<option value=""' + (!coverId ? ' selected' : '') + '>First image in write-up (default)</option>' +
+              stillIds.map(function (id) {
+                  var t = p.figures[id].title;
+                  var lbl = t && t !== id ? t + ' (' + id + ')' : id;
+                  return '<option value="' + esc(id) + '"' + (coverId === id ? ' selected' : '') + '>' + esc(lbl) + '</option>';
+              }).join('') +
+              '</select></label>'
+            : '';
         return toolbar('vim content/projects/' + p.slug + '.json',
                 '<button class="btn btn--small" type="button" data-act="back">← all projects</button>' +
                 (S.savedSlug && p.status === 'published' ? '<a class="btn btn--small" href="index.html#/projects/' + esc(S.savedSlug) + '" target="_blank" rel="noopener">view</a>' : '') + saveBtn) +
@@ -316,6 +328,7 @@
             field('button label', 'live_label', p.live_label, false, 'text', 'launch') +
             '<label class="field-check"><input type="checkbox" data-meta="live_max"' + (p.live_max ? ' checked' : '') + '> launch maximised</label>' +
             '<label class="field-check"><input type="checkbox" data-meta="featured"' + (p.featured ? ' checked' : '') + '> primary tile on the projects page</label>' +
+            coverSelect +
             '<label class="field"><span class="field__label">status</span><select data-meta="status"><option value="draft"' + (p.status === 'draft' ? ' selected' : '') + '>draft — shown as coming soon</option><option value="published"' + (p.status === 'published' ? ' selected' : '') + '>published</option></select></label>' +
             field('started', 'started', p.started, false, 'text', '2026-03') +
             '</div>' +
@@ -329,7 +342,8 @@
             figIds.map(function (id) {
                 var x = p.figures[id];
                 var thumb = MH.isVideo(x.src) ? '<video src="' + esc(x.src) + '" muted preload="metadata"></video>' : '<img src="' + esc(x.src) + '" alt="">';
-                return '<button type="button" class="figman__thumb" data-fig="' + esc(id) + '" aria-pressed="' + (id === S.fig) + '">' + thumb + '::figure[' + esc(id) + ']</button>';
+                var tag = coverId === id ? '<span class="figman__tag">banner</span>' : '';
+                return '<button type="button" class="figman__thumb" data-fig="' + esc(id) + '" aria-pressed="' + (id === S.fig) + '">' + thumb + '<span>::figure[' + esc(id) + ']</span>' + tag + '</button>';
             }).join('') +
             '<button type="button" class="btn btn--small" data-act="add-fig"' + (S.savedSlug ? '' : ' disabled') + '>+ add image / video</button>' +
             '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/svg+xml,video/webm,video/mp4,.webm,.mp4" data-role="file" hidden></div>' +
@@ -346,7 +360,8 @@
                 (MH.isVideo(f.src)
                     ? '<label class="field-check"><input type="checkbox" data-figflag="loop"' + (f.loop ? ' checked' : '') + '> play like a GIF — muted, looping, starts by itself while on screen (best for short clips)</label>' +
                       '<p class="figman__hint">Otherwise it shows its first frame with play controls. Pins aren’t available on videos.</p>'
-                    : '<span class="field__label">pins</span>' +
+                    : (p.featured ? '<label class="field-check"><input type="checkbox" data-act="fig-cover"' + (coverId === S.fig ? ' checked' : '') + '> use as projects page banner</label>' : '') +
+                      '<span class="field__label">pins</span>' +
                       (f.hotspots || []).map(function (h, i) {
                           return '<div class="note-row"><span class="num">' + (i + 1) + '</span><input type="text" data-note-i="' + i + '" value="' + esc(h.note) + '" placeholder="what this points at…"><button class="btn btn--small" type="button" data-del-pin="' + i + '" aria-label="Remove pin ' + (i + 1) + '">✕</button></div>';
                       }).join('') +
@@ -376,10 +391,16 @@
             }), 'saved');
         });
         rootEl.querySelectorAll('[data-meta]').forEach(function (el) {
-            el.addEventListener('input', function () {
+            el.addEventListener(el.tagName === 'SELECT' || el.type === 'checkbox' ? 'change' : 'input', function () {
                 var k = el.dataset.meta;
                 p[k] = el.type === 'checkbox' ? el.checked : k === 'tags' ? el.value.split(',').map(function (t) { return t.trim(); }).filter(Boolean)
                     : k === 'slug' ? el.value.trim().toLowerCase() : el.value;
+                if (k === 'featured' || k === 'cover') {
+                    if (k === 'featured' && !p.featured) delete p.cover;
+                    S.dirty = true;
+                    render();
+                    return;
+                }
                 markDirty();
                 paintPreview();
             });
@@ -436,6 +457,14 @@
         rootEl.querySelectorAll('[data-figflag]').forEach(function (el) {
             el.addEventListener('change', function () { f[el.dataset.figflag] = el.checked; markDirty(); paintPreview(); });
         });
+        var figCover = rootEl.querySelector('[data-act="fig-cover"]');
+        if (figCover) {
+            figCover.addEventListener('change', function () {
+                if (figCover.checked) p.cover = S.fig; else if (p.cover === S.fig) delete p.cover;
+                S.dirty = true;
+                render();
+            });
+        }
         rootEl.querySelector('[data-act="insert-fig"]').addEventListener('click', function () {
             var at = bodyEl.selectionStart || p.body.length;
             var before = p.body.slice(0, at), after = p.body.slice(at);
@@ -447,6 +476,7 @@
             if (!window.confirm('Remove figure ' + S.fig + ' from this write-up? (The file stays in content/img/.)')) return;
             var id = S.fig;
             delete p.figures[id];
+            if (p.cover === id) delete p.cover;
             p.body = p.body.split('\n').filter(function (l) { return l.trim() !== '::figure[' + id + ']'; }).join('\n');
             S.fig = null; S.dirty = true;
             render();

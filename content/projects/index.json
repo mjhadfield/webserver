@@ -12,9 +12,9 @@
     ],
     "status": "published",
     "started": "2026-08",
-    "updated": "2026-11-18",
+    "updated": "2026-11-25",
     "featured": true,
-    "cover": "content/img/citadel/screenshot-20261117-home.png"
+    "cover": "content/img/citadel/citadel-home.webp"
   },
   {
     "slug": "music-companion",
@@ -28,7 +28,9 @@
     ],
     "status": "published",
     "started": "2026-06",
-    "updated": "2026-11-07"
+    "updated": "2026-11-25",
+    "featured": true,
+    "cover": "content/img/music-companion/mc-home-stats.png"
   },
   {
     "slug": "casino-world",
@@ -43,7 +45,9 @@
     ],
     "status": "published",
     "started": "2026-10",
-    "updated": "2026-11-18"
+    "updated": "2026-11-25",
+    "featured": true,
+    "cover": "content/img/casino-world/floor-stage.webp"
   },
   {
     "slug": "home-casino",

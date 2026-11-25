@@ -172,14 +172,33 @@ class AdminServerTests(unittest.TestCase):
     def test_featured_flag_and_cover(self):
         self.login()
         figs = {"v": {"src": "content/img/test-proj/v.webm", "w": 8, "h": 6, "title": "V"},
-                "a": {"src": "content/img/test-proj/a.png", "w": 8, "h": 6, "title": "A"}}
+                "a": {"src": "content/img/test-proj/a.png", "w": 8, "h": 6, "title": "A"},
+                "b": {"src": "content/img/test-proj/b.webp", "w": 8, "h": 6, "title": "B"}}
+        # default: first still image in the write-up, skipping videos
         status, body, _ = self.req("PUT", "/api/projects/main", {"project": self.project(featured=True, figures=figs, body="::figure[v]\n\n::figure[a]")})
         self.assertEqual((status, body["project"].get("featured")), (200, True))
+        self.assertNotIn("cover", body["project"])
         entry = next(e for e in json.loads((self.tmp / "content/projects/index.json").read_text()) if e["slug"] == "main")
         self.assertEqual((entry.get("featured"), entry.get("cover")), (True, "content/img/test-proj/a.png"))  # first still, not the video
+
+        # explicit cover picks that figure (even if it isn't placed in the write-up body)
+        status, body, _ = self.req("PUT", "/api/projects/main", {"project": self.project(featured=True, cover="b", figures=figs, body="::figure[a]")})
+        self.assertEqual((status, body["project"].get("cover")), (200, "b"))
+        entry = next(e for e in json.loads((self.tmp / "content/projects/index.json").read_text()) if e["slug"] == "main")
+        self.assertEqual(entry.get("cover"), "content/img/test-proj/b.webp")
+
+        # video or unknown figure id is dropped and falls back to the first still
+        for bad in ("v", "missing", ""):
+            status, body, _ = self.req("PUT", "/api/projects/main", {"project": self.project(featured=True, cover=bad, figures=figs, body="::figure[a]")})
+            self.assertNotIn("cover", body["project"], bad)
+            entry = next(e for e in json.loads((self.tmp / "content/projects/index.json").read_text()) if e["slug"] == "main")
+            self.assertEqual(entry.get("cover"), "content/img/test-proj/a.png", bad)
+
+        # turning featured off drops both featured and cover
         for off in (False, "yes", None):
-            status, body, _ = self.req("PUT", "/api/projects/main", {"project": self.project(featured=off)})
+            status, body, _ = self.req("PUT", "/api/projects/main", {"project": self.project(featured=off, cover="b", figures=figs)})
             self.assertNotIn("featured", body["project"], off)
+            self.assertNotIn("cover", body["project"], off)
             entry = next(e for e in json.loads((self.tmp / "content/projects/index.json").read_text()) if e["slug"] == "main")
             self.assertNotIn("featured", entry)
             self.assertNotIn("cover", entry)

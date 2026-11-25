@@ -9,119 +9,178 @@
     "FastAPI",
     "Tailscale"
   ],
-  "repo": "private",
+  "repo": "https://github.com/mjhadfield/Citadel",
   "live": "demo/citadel/",
   "live_label": "demo",
   "live_max": true,
   "status": "published",
   "started": "2026-08",
-  "updated": "2026-11-18",
+  "updated": "2026-11-25",
   "featured": true,
-  "body": "## Try the demo\nA frozen, read-only snapshot of the real dashboard. Nothing in it is live or saved. The private parts (bookmarks, calendar entries, device information) are redacted or use dummy data, and the pages that only run on my home network are switched off.\n\n::launch\n\n::figure[screenshot-20261117-home]\n\n## Why I built it\nI've made numerous attempts at a local dashboard (/intranet) over the years, but they've all been pretty terrible and I'd given up on them. LLMs have (ethics aside) removed a lot of the barriers to custom software, and this is a prime example of that.\n\nThe GitHub repo is currently private. While my secrets and API keys are .gitignored, I'm still hesitant to make it public in case I've missed something which could be a security concern.\n\n## How it works\nHosted locally on a linux server, it's open to any device on my network. It includes IP whitelisting and MAC address filtering so settings and sensitive information are only available from dedicated devices, while guest devices can have access to the media server. \n\nEach tile can be expanded to show a detailed view. Upcoming vinyl pre-orders show price comparisons, local services show activity logs, etc. \n\nThe music radar is tailored to me, fully integrated with my Music Companion project to only show information about artists I care about. \n\n## What it contains\nDashboard:\n- Google calendar integration (Google API)\n- Upcoming music releases (MusicBrainz API)\n- Upcoming vinyl preorders (Web scraping)\n- Gig radar of upcoming concerts (Ticketmaster API)\n- System monitoring for temperatures and disk space\n- A launchpad for local applications \n- Services monitoring and logging\n- Remote access to the other machines on my network (VNC)\n\nMedia server:\n- Hosted on a dedicated JellyFin install\n- Digitised TV and Film library\n- Extensive live concert archive\n\nMusic Companion:\n- Fully integrated Music Companion\n- See the project page for full details\n\nCasino World:\n- Hosted as its own page\n- See the project page for full details\n\nFleet:\n- Load and temperature history for every machine on my network\n- Heatmap, grid and overlay views\n- A live monitoring pop-out for my main desktop\n\nSettings:\n- Device enrolment and activity logs\n- Nightly backups to a second server, with a weekly off-site copy\n- Easy adding of new stores, news feeds, and local applications.\n\nLook and feel:\n- Day and Night palettes\n- An LCARS theme, with its own motion\n- Per-device navigation and page order\n\nAndroid app:\n- Opens Citadel full screen, at home or away over Tailscale\n\n## Vinyl\n::figure[screenshot-20261117-vinyl]\n\n## Settings\nI won't detail everything in here (there's a lot) but every aspect of the front page is customisable and maintainable through the settings page. Highlights include the below. \n\n::figure[screenshot-20261117-settings]\n\n::figure[screenshot-20261117-log]\n\n::figure[screenshot-20261117-devices]\n",
+  "body": "## Try the demo\nA frozen, read-only snapshot of the real dashboard. Nothing in it is live or saved. The private parts (bookmarks, calendar entries, device information) are redacted or use dummy data, and the pages that only run on my home network are switched off.\n\n::launch\n\n::figure[citadel-home]\n\n## Why I built it\nI've made numerous attempts at a local dashboard (/intranet) over the years, but they've all been pretty terrible and I'd given up on them. LLMs have (ethics aside) removed a lot of the barriers to custom software, and this is a prime example of that.\n\nThe code is on GitHub if you want a look. It's built around my own setup (Salford bins, my Music Companion database, my local services) so it isn't meant as a drop-in install, though you're welcome to borrow bits.\n\n## How it works\nHosted locally on my Linux PC as a systemd service, open to any device on my network. There are no passwords: a device becomes an \"owner\" by opening a one-time enrolment link printed in the terminal on the host machine, which gives full access to settings and controls. Anything else on the WiFi just gets the guest page with the media server, and a TV can be paired with a short code for a read-only kiosk screen.\n\nEach tile can be expanded to show a detailed view. Upcoming vinyl pre-orders show price comparisons, local services show activity logs, etc.\n\nThe music radar is tailored to me, fully integrated with my [Music Companion](#/projects/music-companion) project to only show information about artists I care about.\n\nEverything syncs overnight, one job after another, so none of the external APIs or independent record shops get hammered. The projects it launches run as their own systemd units, so restarting Citadel doesn't kill anything. On a second PC (and my second monitor) it also runs full screen as a live desktop wallpaper.\n\n## What it contains\nDashboard:\n- Google Calendar integration (Google API)\n- Local council bin collections, with spoken reminders on the Echos the evening before via Home Assistant\n- Upcoming music releases (MusicBrainz API)\n- Upcoming vinyl pre-orders from independent shops and labels (web scraping)\n- Gig radar of upcoming concerts (Ticketmaster API)\n- Live temperature, resource and disk space monitoring\n- A launchpad for local applications\n- Services monitoring, start/stop controls and live logs\n- Remote access to the other machines on my network (VNC and Wake-on-LAN)\n\nNews and Music:\n- Personalised news reader with custom sections, an F1 spoiler shield, and up/down ranking that learns over time\n- Music page with Spotify playback control, playlist builder, Discover/Rediscover and predicted gig setlists (Setlist.fm)\n- Fully integrated [Music Companion](#/projects/music-companion) and its maintenance tool (Curate)\n\nFleet:\n- CPU, memory, GPU, temperature and disk history for every machine on my network, kept for a year by a lightweight collector on another box\n- Heatmap, grid and overlay views, plus a live monitoring pop-out for my main desktop\n\nAudio and Smart Home:\n- Full GoXLR mixer page (faders, routing matrix, effects, sampler, mic settings and LED lighting with a \"Match my theme\" button), plus quick Line out and Vinyl volume controls in the shell\n- Routines page for changing Home Assistant routine times, weekdays, on/off and \"skip next\" on the fly\n- Home Assistant (HomeLab) embedded as its own page\n\nLocal apps (framed inside Citadel and sharing its theme kit):\n- Media server (dedicated Jellyfin install with digitised TV, film and live concert archive)\n- [Casino World](#/projects/casino-world)\n- Holodeck (retro games library and browser emulator)\n- ZebraLab (thermal label designer and postage printer)\n- House (home renovation planner) and Odysseus (local LLM)\n\nLook and feel:\n- Four themes: Citadel, LCARS, LCARS 25 and Borg, each with Day and Night modes\n- Built-in colour variants (Standard, COM, SCI, ENG and ENT for LCARS; Obsidian and Neon for Borg), plus a custom style builder with background images\n- Per-device navigation, grouped rail sections (Command, Science, Engineering, Ops) and optional LCARS/Borg motion\n- Mobile layout with swipe navigation, an Android app over Tailscale, and a TV kiosk mode\n\nSettings:\n- Device enrolment, TV pairing and event logs\n- Nightly database backups, plus nightly backups to a second server with a weekly off-site copy\n- Easy adding of new stores, news feeds, projects and local applications\n\n## Themes\nEach device picks its own theme, style and Day/Night mode independently. Every embedded local app follows Citadel's theme too.\n\n::figrow[theme-lcars25-day theme-borg theme-citadel]\n\n## Vinyl\n::figure[citadel-vinyl]\n\n## Fleet\n::figure[citadel-fleet]\n\n## Audio and Routines\n::figure[citadel-audio]\n\n::figure[citadel-routines]\n\n## Settings\nI won't detail everything in here (there's a lot) but every aspect of the front page is customisable and maintainable through the settings page. Highlights include the below.\n\n::figure[citadel-settings]\n\n::figure[citadel-log]\n\n::figure[citadel-devices]\n",
   "figures": {
-    "screenshot-20261117-home": {
-      "src": "content/img/citadel/screenshot-20261117-home.png",
+    "citadel-home": {
+      "src": "content/img/citadel/citadel-home.webp",
       "w": 2560,
       "h": 1440,
-      "title": "Citadel Home Screen",
-      "caption": "Each tile can be clicked on to show a full screen variant with additional information, pinning, filtering, etc. ",
+      "title": "Citadel Home Screen (LCARS 25 Night)",
+      "caption": "Each tile can be clicked on to show a full screen variant with additional information, pinning, filtering, etc.",
       "alt": "",
       "hotspots": [
         {
-          "x": 40.0,
-          "y": 3.1,
+          "x": 4.0,
+          "y": 8.7,
+          "note": "Quick GoXLR volume controls (Line out and Vinyl) above the Day/Night and Theme switchers."
+        },
+        {
+          "x": 20.5,
+          "y": 3.8,
           "note": "Bookmarks drop-down, with my pinned bookmarks beside it (redacted here)."
         },
         {
-          "x": 65.7,
-          "y": 3.1,
+          "x": 62.2,
+          "y": 3.8,
           "note": "Temperature and resource monitoring for my primary desktop. Clicking the readout opens the full Monitoring panel."
         },
         {
-          "x": 17.7,
-          "y": 11.7,
-          "note": "Daily overview with an API link to my local council's website."
+          "x": 16.5,
+          "y": 13.3,
+          "note": "Daily overview with a link to my local council's website for bin collections."
         },
         {
-          "x": 41.2,
-          "y": 11.7,
-          "note": "My next live concert, hooked into ticketmaster"
+          "x": 39.4,
+          "y": 13.3,
+          "note": "My next live concert, hooked into Ticketmaster."
         },
         {
-          "x": 64.6,
-          "y": 11.7,
-          "note": "Google calendar integration (the entries are redacted here)"
+          "x": 62.2,
+          "y": 13.3,
+          "note": "Google Calendar integration (the entries are redacted here)."
         },
         {
-          "x": 88.0,
-          "y": 11.7,
-          "note": "Remote access to the other machines on my network, opened inside the dashboard."
+          "x": 85.0,
+          "y": 13.3,
+          "note": "Remote access to the other machines on my network, with one-click VNC and Wake-on-LAN."
         },
         {
-          "x": 21.6,
-          "y": 45.0,
-          "note": "Upcoming album releases based on my top 200 artists, information gathered from MusicBrainz and updated nightly."
+          "x": 19.2,
+          "y": 45.8,
+          "note": "Upcoming album releases based on my top 200 artists, gathered from MusicBrainz and updated nightly."
         },
         {
-          "x": 52.9,
-          "y": 45.0,
+          "x": 49.6,
+          "y": 45.8,
           "note": "Dual purpose showing both upcoming vinyl releases (updated nightly) and tracking purchases with release countdowns."
         },
         {
-          "x": 84.1,
-          "y": 45.0,
-          "note": "Ticketmaster integration for upcoming shows, clicking an event takes you directly to the ticket purchase page. "
+          "x": 80.1,
+          "y": 45.8,
+          "note": "Ticketmaster integration for upcoming shows, clicking an event takes you directly to the ticket purchase page."
         },
         {
-          "x": 21.6,
-          "y": 74.1,
-          "note": "Management of all scripts running locally, monitoring uptime and quick start/stop. Expanding this panel shows logs"
+          "x": 19.2,
+          "y": 74.3,
+          "note": "Management of all scripts running locally, monitoring uptime and quick start/stop. Expanding this panel shows logs."
         },
         {
-          "x": 52.9,
-          "y": 74.1,
-          "note": "Quickly launch applications and settings"
+          "x": 49.6,
+          "y": 74.3,
+          "note": "Quickly launch local applications and settings."
         },
         {
-          "x": 84.1,
-          "y": 74.1,
-          "note": "Local/Network storage warnings. A notification will be shown when a disk reaches 10% capacity remaining."
+          "x": 80.1,
+          "y": 74.3,
+          "note": "Local and network storage warnings. A notification is shown when a disk drops below 10% free."
         }
       ]
     },
-    "screenshot-20261117-settings": {
-      "src": "content/img/citadel/screenshot-20261117-settings.png",
-      "w": 1860,
-      "h": 1080,
+    "theme-lcars25-day": {
+      "src": "content/img/citadel/theme-lcars25-day.webp",
+      "w": 1440,
+      "h": 900,
+      "title": "LCARS 25 (Day)",
+      "caption": "Warm parchment Day palette with burnt orange, oxblood and slate accents.",
+      "alt": "",
+      "hotspots": []
+    },
+    "theme-borg": {
+      "src": "content/img/citadel/theme-borg.webp",
+      "w": 1440,
+      "h": 900,
+      "title": "Borg (Obsidian)",
+      "caption": "Obsidian hull, conduit navigation rail and emerald accents (also has a Neon variant).",
+      "alt": "",
+      "hotspots": []
+    },
+    "theme-citadel": {
+      "src": "content/img/citadel/theme-citadel.webp",
+      "w": 1440,
+      "h": 900,
+      "title": "Citadel",
+      "caption": "The original default theme, with grouped department brackets on the rail.",
+      "alt": "",
+      "hotspots": []
+    },
+    "citadel-vinyl": {
+      "src": "content/img/citadel/citadel-vinyl.webp",
+      "w": 2272,
+      "h": 1306,
+      "title": "Vinyl Radar",
+      "caption": "This has two sections, one for notification of new releases (with price comparisons, links take you directly to the store page). Anything purchased is added to the confirmed orders screen, with a countdown to release day.",
+      "alt": "",
+      "hotspots": []
+    },
+    "citadel-fleet": {
+      "src": "content/img/citadel/citadel-fleet.webp",
+      "w": 1600,
+      "h": 1000,
+      "title": "Fleet monitoring",
+      "caption": "CPU, GPU, memory, temperature and disk history across every machine on the network, with Heatmap, Grid and Overlay views (dummy data in the demo).",
+      "alt": "",
+      "hotspots": []
+    },
+    "citadel-audio": {
+      "src": "content/img/citadel/citadel-audio.webp",
+      "w": 1600,
+      "h": 1000,
+      "title": "Audio (GoXLR mixer)",
+      "caption": "Faders, routing matrix, effects, sampler, mic processing and front-panel LED lighting controlled from any device on the network.",
+      "alt": "",
+      "hotspots": []
+    },
+    "citadel-routines": {
+      "src": "content/img/citadel/citadel-routines.webp",
+      "w": 1600,
+      "h": 680,
+      "title": "Routines",
+      "caption": "Adjust Home Assistant routine times, weekdays, skip-next and manual triggers on the fly without touching Home Assistant's admin UI.",
+      "alt": "",
+      "hotspots": []
+    },
+    "citadel-settings": {
+      "src": "content/img/citadel/citadel-settings.webp",
+      "w": 1600,
+      "h": 980,
       "title": "Settings page",
-      "caption": "",
+      "caption": "Appearance, links, projects, widgets, navigation, news feeds, music services and backups are all edited in the browser.",
       "alt": "",
       "hotspots": []
     },
-    "screenshot-20261117-log": {
-      "src": "content/img/citadel/screenshot-20261117-log.png",
-      "w": 1422,
-      "h": 1182,
+    "citadel-log": {
+      "src": "content/img/citadel/citadel-log.webp",
+      "w": 948,
+      "h": 788,
       "title": "Event Logging",
-      "caption": "Each time a service is run it generates a log file, application errors are also logged for review. ",
+      "caption": "Each time a service or sync runs it writes to the event log, and application errors are logged for review.",
       "alt": "",
       "hotspots": []
     },
-    "screenshot-20261117-devices": {
-      "src": "content/img/citadel/screenshot-20261117-devices.png",
-      "w": 1422,
-      "h": 696,
+    "citadel-devices": {
+      "src": "content/img/citadel/citadel-devices.webp",
+      "w": 948,
+      "h": 876,
       "title": "Device management",
       "caption": "Owner devices which have full access and can enrol new devices.",
-      "alt": "",
-      "hotspots": []
-    },
-    "screenshot-20261117-vinyl": {
-      "src": "content/img/citadel/screenshot-20261117-vinyl.png",
-      "w": 2304,
-      "h": 545,
-      "title": "Vinyl Radar",
-      "caption": "This has two sections, one for notification of new releases (with price comparisons, links take you directly to the store page). Anything purchased is added to the confirmed orders screen, with a countdown to release day. ",
       "alt": "",
       "hotspots": []
     }

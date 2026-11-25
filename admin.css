@@ -230,6 +230,7 @@
 .figman__thumb img,
 .figman__thumb video { display: block; width: 100%; border-radius: 4px; margin-bottom: 4px; background: #000; }
 .figman__thumb[aria-pressed="true"] { border-color: var(--accent); color: var(--fg); }
+.figman__tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--accent-dim); color: var(--accent); font-size: 0.58rem; letter-spacing: 0.06em; text-transform: uppercase; vertical-align: middle; }
 
 .figman__canvas {
     position: relative;

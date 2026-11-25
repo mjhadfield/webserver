@@ -134,17 +134,25 @@ class Site:
         return self.projects / f"{slug}.json"
 
     @staticmethod
-    def index_entry(p: dict) -> dict:
+    def _is_still(fig: dict) -> bool:
+        return isinstance(fig, dict) and bool(fig.get("src")) and not re.search(r"\.(webm|mp4)$", str(fig["src"]), re.I)
+
+    @classmethod
+    def index_entry(cls, p: dict) -> dict:
         e = {k: p.get(k, "" if k != "tags" else []) for k in ("slug", "title", "summary", "tags", "status", "started", "updated")}
         if p.get("featured") is True:
-            # the primary tile: wide, with the write-up's first image (a still, not a video) beside the text
+            # the primary tile: wide, with the chosen banner image (or the write-up's first still) beside the text
             e["featured"] = True
             figs = p.get("figures") or {}
-            for m in re.finditer(r"^::fig(?:ure|row)\[([\w\- ]+)\]\s*$", str(p.get("body") or ""), re.M):
-                fid = next((f for f in m.group(1).split() if f in figs and not re.search(r"\.(webm|mp4)$", figs[f]["src"], re.I)), None)
-                if fid:
-                    e["cover"] = figs[fid]["src"]
-                    break
+            chosen = p.get("cover")
+            if isinstance(chosen, str) and chosen in figs and cls._is_still(figs[chosen]):
+                e["cover"] = figs[chosen]["src"]
+            else:
+                for m in re.finditer(r"^::fig(?:ure|row)\[([\w\- ]+)\]\s*$", str(p.get("body") or ""), re.M):
+                    fid = next((f for f in m.group(1).split() if f in figs and cls._is_still(figs[f])), None)
+                    if fid:
+                        e["cover"] = figs[fid]["src"]
+                        break
         return e
 
     def clean_project(self, p: dict, slug: str) -> dict:
@@ -186,9 +194,13 @@ class Site:
                             "alt": str(f.get("alt") or ""), "hotspots": spots}
             if re.search(r"\.(webm|mp4)$", src, re.I):
                 figures[fid]["loop"] = bool(f.get("loop"))  # a video: "play like a GIF"
+        cover = s("cover")
+        if not (p.get("featured") is True and cover in figures and self._is_still(figures[cover])):
+            cover = ""
         out = {"slug": slug, "title": s("title"), "summary": s("summary"), "tags": [t.strip() for t in tags if t.strip()],
                "repo": repo, "status": p["status"], "started": s("started"), "updated": date.today().isoformat(),
                **({"featured": True} if p.get("featured") is True else {}),  # the primary tile on the projects page
+               **({"cover": cover} if cover else {}),  # chosen figure id for the primary tile's banner
                "body": str(p.get("body") or ""), "figures": figures}
         if live:
             label = re.sub(r"\s+", " ", s("live_label"))[:24]  # the button's word ("demo"); blank or "launch" is the default

@@ -9,10 +9,10 @@
     "LastFM"
   ],
   "repo": "https://github.com/mjhadfield/music-companion",
-  "live": "https://mjhadfield.github.io/music-companion/",
-  "status": "published",
   "started": "2026-06",
-  "updated": "2026-11-07",
+  "updated": "2026-11-25",
+  "featured": true,
+  "cover": "mc-home-stats",
   "body": "## View Live\nHosted on a static GitHub page. Mobile friendly. \n\n::launch\n\n## Background\nMusic has been a fundamental part of my life for as long as I can remember, and I've always been a stats junkie. The goal was simple, an interactive rabbit hole of unified data. \n\nI've used a lot of services in the past, but datasets are incredibly messy. \"Remastered\" vs \"Special Edition\" vs \"Anniversary Edition\" makes this a real challenge when you have a dozens of variations of the same release. \n\nWorking top down, Artists have a unique ID, albums have a *release* ID and an *edition* ID, songs have a *master* ID and a *version* ID. \n\nOne SQL database, ~120k rows, infinite filtering. My digital statistics only go back to 2018, everything before that is lost to time.\n\n::figure[screenshot-20260927-110614]\n\n## Stats at a glance\nEvery number on every page can be clicked on to drill down deeper.\n\n::figure[mc-home-stats]\n\n::figure[mc-home-listening]\n\n::figure[mc-live-shows]\n\n## Harmonised Data\nPick a physical album off the shelf to get associated digital and live stats.\n\n::figure[mc-record-drawer]\n\n::figure[mc-album-page]\n\n::figure[mc-song-page]\n\n::figure[mc-artist-page]\n\n## Data imports and maintenance\nI started out this project doing a lot of this by hand with SQL inserts, but it was a complete nightmare. I created tools automate almost everything. One click updates to pull the latest additions, match and lookup missing IDs, merging duplicate entries. \n\nEverything is then put into lists for human review before being committed to the database. \n\n::figure[mc-maint-updates]\n\n::figure[screenshot-20260927-113155]\n\n::figure[mc-maint-workbench]\n\n::figure[mc-maint-live-sets]\n",
   "figures": {
     "screenshot-20260927-110614": {
@@ -199,5 +199,7 @@
         }
       ]
     }
-  }
+  },
+  "live": "https://mjhadfield.github.io/music-companion/",
+  "status": "published"
 }
