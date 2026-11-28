@@ -16,7 +16,7 @@ const logf = { level: 'warning', source: '', q: '' };                           
 let tab = TABS.some(t => t[0] === location.hash.slice(1)) ? location.hash.slice(1) : 'links';
 let editing = null;                     // {kind:'link'|'project', id} | {kind, id:'new'}
 let enrol = null;                       // last generated enrolment link
-let musicCfg = null, musicLink = null;   // the Music page's settings (GET /api/owner/music) and the last Spotify login link
+let musicCfg = null, musicLink = null, gcalLink = null;   // Music settings + last Spotify / Google Calendar login links
 let newsExtra = { learning: null, f1: null };   // the News page's learned topics + rules, and its F1 shield's status
 const svcTests = {};                    // service id -> {ok, message} from its Test button
 
@@ -139,7 +139,7 @@ function remoteForm(r = {}) {
     <div class="form-grid">
       ${field('Name', input('name', r.name, 'required maxlength="40" placeholder="e.g. Probe-1 desktop"'))}
       ${field('VNC address', input('address', r.address, 'required maxlength="253" spellcheck="false" placeholder="e.g. probe-1.local"'), 'Host name or IP address. Only for a server not on the usual port 5900: <code>host:1</code> is port 5901, <code>host::5905</code> is port 5905.')}
-      ${field('Viewer', select('viewer', [['krdc', 'KRDC (scales to the window)'], ['tigervnc', 'TigerVNC']], r.viewer || 'krdc'))}
+      ${field('Viewer', select('viewer', [['krdc', 'KRDC (scales to the window)'], ['tigervnc', 'TigerVNC'], ['none', 'None (monitoring only, no tile)']], r.viewer || 'krdc'))}
       ${field('Wake-on-LAN MAC address', input('mac', r.mac, 'maxlength="17" spellcheck="false" autocomplete="off" placeholder="blank = no wake"'))}
       ${field('Monitoring SSH user', input('ssh_user', r.ssh_user, 'maxlength="32" spellcheck="false" autocomplete="off" placeholder="blank = not monitored"'), 'Set up once with <code>tools/machines_setup.py</code>.')}
     </div>
@@ -152,7 +152,7 @@ function remoteTab() {
   const rows = list.map((r, i) => editing?.kind === 'remote' && editing.id === r.id
     ? `<li class="item item--edit">${remoteForm(r)}</li>`
     : `<li class="item"><span class="item__icon">${ico('desk')}</span>
-        <div class="item__main"><b>${esc(r.name)}</b><div class="item__sub">${esc(r.address)} · ${r.viewer === 'tigervnc' ? 'TigerVNC' : 'KRDC'}${r.mac ? ' · wakes' : ''}${r.ssh_user ? ' · monitored' : ''}${r.always_on ? ' · always on' : ''}</div></div>
+        <div class="item__main"><b>${esc(r.name)}</b><div class="item__sub">${esc(r.address)} · ${r.viewer === 'tigervnc' ? 'TigerVNC' : r.viewer === 'none' ? 'no remote desktop' : 'KRDC'}${r.mac ? ' · wakes' : ''}${r.ssh_user ? ' · monitored' : ''}${r.always_on ? ' · always on' : ''}</div></div>
         <div class="item__acts">
           ${act('move-remote', ico('up'), `data-i="${i}" data-d="-1" aria-label="Move up" ${i > 0 ? '' : 'disabled'}`, 'btn--icon')}
           ${act('move-remote', ico('down'), `data-i="${i}" data-d="1" aria-label="Move down" ${i < list.length - 1 ? '' : 'disabled'}`, 'btn--icon')}
@@ -205,6 +205,19 @@ function shortcutsCard() {
       <div class="form-actions">${act('refresh-widget', 'Refresh icons', 'data-id="shortcuts"')}<button class="btn btn--solid" type="submit">Save</button></div></form>`);
 }
 
+function weatherCard() {
+  const s = cfg.widgets.weather?.settings;
+  if (!s) return '';
+  return card('Weather — 5-day forecast',
+    'Open-Meteo (no API key needed). Leave location blank to reuse Gig Radar’s coordinates.',
+    `${statusLine(live?.weather, 'weather')}<form class="form" data-form="weather" style="padding:0 18px 12px">
+      <div class="form-grid">
+        ${field('Location (latitude, longitude)', input('latlong', s.latlong, 'placeholder="Leave blank to use Gig Radar’s location"'))}
+        ${field('Place label (optional)', input('place', s.place, 'maxlength="60" placeholder="e.g. Salford"'))}
+      </div>
+      <div class="form-actions">${act('refresh-widget', 'Sync now', 'data-id="weather"')}<button class="btn btn--solid" type="submit">Save</button></div></form>`);
+}
+
 function binsCard() {
   const s = cfg.widgets.bins.settings;
   const hours = Array.from({ length: 24 }, (_, h) => [h, `${String(h).padStart(2, '0')}:00`]);
@@ -243,14 +256,64 @@ const calRow = (c = {}) => `<div class="cal-row" data-cal data-id="${esc(c.id ||
   ${field('Name', input('cal_name', c.name || 'Calendar', 'maxlength="40"'))}
   ${field('Colour', select('cal_colour', cfg.colours, c.colour || 'violet'))}
   ${field('Secret iCal address', input('cal_url', '', `type="password" autocomplete="off" spellcheck="false" placeholder="${c.has_url ? '•••• saved — leave blank to keep' : 'https://calendar.google.com/…/basic.ics'}"`), '', 'wide-m')}
+  ${check('cal_home', 'Home tile', c.home !== false)}
   ${act('remove-cal', 'Remove', '', 'btn--danger')}</div>`;
+
+function googleCalendarCard() {
+  const s = cfg.widgets.diary.settings;
+  const g = s.google || {};
+  const syncedN = (g.calendars || []).filter(c => c.selected).length;
+  const homeN = (g.calendars || []).filter(c => c.selected && c.home).length;
+  const status = !g.configured
+    ? '<div class="status-line"><span class="dot"></span>Add a Google Cloud OAuth Client ID and Client secret, save, then Connect.</div>'
+    : g.expired
+      ? '<div class="status-line status-line--err"><span class="dot dot--bad"></span>Google Calendar sign-in has expired — Reconnect below.</div>'
+      : g.connected
+        ? `<div class="status-line"><span class="dot dot--ok"></span>Connected${g.account ? ` as ${esc(g.account)}` : ''} · ${syncedN} in Schedule, ${homeN} on Home tile</div>`
+        : '<div class="status-line"><span class="dot dot--warn"></span>Not connected yet.</div>';
+  const link = gcalLink ? `<div class="form-grid" style="margin-top:12px">${field('Open this in a browser on the Citadel PC', `<input class="input" readonly data-select-all value="${esc(gcalLink)}">`,
+    'Google only sends OAuth sign-ins back to 127.0.0.1, so finish on this PC. Afterwards every device sees your calendars.', 'wide')}</div>
+    <div class="form-actions"><a class="btn btn--go" href="${esc(gcalLink)}" target="_blank" rel="noopener">Open Google sign-in</a></div>` : '';
+  const calChecks = g.connected && (g.calendars || []).length
+    ? `<div class="checks" style="margin-top:14px"><span class="field__l">Calendars</span>
+        <div style="display:grid;gap:8px;margin-top:4px">${g.calendars.map(c =>
+          `<div data-gcal-row style="display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px;padding:8px 10px;border:1px solid var(--edge);background:var(--surface-2)">
+            <span style="display:inline-flex;align-items:center;gap:8px;flex:1 1 180px;min-width:0;font-weight:600;color:var(--silver-hi)">
+              <i style="display:inline-block;width:10px;height:10px;border-radius:2px;flex:none;background:${esc(c.colour || '#7986cb')}"></i>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.name)}</span>
+              ${c.primary ? '<span class="chip">Primary</span>' : ''}
+            </span>
+            <label class="check" style="margin:0"><input type="checkbox" name="gcal_pick" value="${esc(c.id)}"${c.selected ? ' checked' : ''}><span>Sync (Schedule)</span></label>
+            <label class="check" style="margin:0"><input type="checkbox" name="gcal_home" value="${esc(c.id)}"${c.selected && c.home ? ' checked' : ''}${c.selected ? '' : ' disabled'}><span>Home tile</span></label>
+          </div>`
+        ).join('')}</div></div>`
+    : '';
+  const colourPick = g.connected
+    ? `<div class="form-grid" style="margin-top:14px">${field('Event colours', select('colour_mode', [['google', "Google's own colours"], ['theme', 'Match Citadel theme']], g.colour_mode || 'google'))}</div>`
+    : '';
+  return card('Calendar — Google Calendar API',
+    'Google Calendar API (<a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a>). Set the OAuth consent screen to <b>In production</b> so refresh tokens do not expire after 7 days, and add this <b>Authorised redirect URI</b>:',
+    `<div style="padding:0 18px 10px"><input class="input" readonly data-select-all value="${esc(g.redirect_uri || '')}" aria-label="Redirect URI"></div>${status}${statusLine(live?.diary, 'diary')}
+    <form class="form" data-form="diary-google" style="padding:0 18px 12px">
+      <div class="form-grid">
+        ${field('Client ID', input('google_client_id', g.client_id || '', 'placeholder="…apps.googleusercontent.com" spellcheck="false"'))}
+        ${field('Client secret', input('google_client_secret', '', `type="password" autocomplete="off" spellcheck="false" placeholder="${g.has_client_secret ? '•••• saved — leave blank to keep' : 'paste it here'}"`))}
+      </div>
+      ${calChecks}${colourPick}
+      <div class="form-actions">
+        ${g.connected ? act('gcal-refresh', 'Refresh calendars') + act('gcal-logout', 'Disconnect', '', 'btn--danger') : ''}
+        ${g.configured ? act('gcal-login', g.connected || g.expired ? 'Reconnect' : 'Connect Google', '', 'btn--go') : ''}
+        ${act('refresh-widget', 'Sync now', 'data-id="diary"')}
+        <button class="btn btn--solid" type="submit">Save</button>
+      </div>${link}</form>`);
+}
 
 function diaryCard() {
   const s = cfg.widgets.diary.settings;
-  return card('Calendar — calendars',
-    'Google Calendar → Settings → your calendar → Integrate calendar → <i>Secret address in iCal format</i>.',
-    `${statusLine(live?.diary, 'diary')}<form class="form" data-form="diary" style="padding:0 18px 12px">
-      <div id="cals">${(s.calendars.length ? s.calendars : [{}]).map(calRow).join('')}</div>
+  return card('Calendar — iCal feeds & horizon',
+    'Optional secret iCal addresses for non-Google calendars (or alongside Google Calendar API above).',
+    `<form class="form" data-form="diary" style="padding:0 18px 12px">
+      <div id="cals">${s.calendars.length ? s.calendars.map(calRow).join('') : '<p class="field__h" data-cals-empty>No iCal feeds configured.</p>'}</div>
       <div class="bar-actions" style="padding:10px 0 0">${act('add-cal', `${ico('play')}Add calendar`, '', 'btn--go')}</div>
       <div class="form-grid" style="margin-top:14px">${field('Look ahead (days)', input('horizon_days', s.horizon_days, 'type="number" min="7" max="365"'))}</div>
       <div class="form-actions">${act('refresh-widget', 'Sync now', 'data-id="diary"')}<button class="btn btn--solid" type="submit">Save</button></div></form>`);
@@ -878,7 +941,7 @@ function aboutTab() {
 function render() {
   if (editing?.kind !== 'style') { syncStyles(cfg.appearance.styles, cfg.appearance.migrated_presets); applySpec(); }   // ends any live preview; picks up edits made elsewhere
   $('#tabs').innerHTML = TABS.map(([id, label, icon]) => `<button role="tab" data-tab="${id}" aria-selected="${id === tab}"${id === 'maintenance' && needsAttention() ? ' class="has-attn"' : ''}>${ico(icon)}${esc(label)}</button>`).join('');
-  panel.innerHTML = { links: linksTab, projects: projectsTab, remote: remoteTab, widgets: () => shortcutsCard() + binsCard() + notificationsCard() + diaryCard(), appearance: appearanceTab, navigation: navigationTab, music: () => gigsCard() + artistsCard() + releasesCard() + vinylCard() + purchasesCard() + radarCard(), listen: musicPageTab, news: newsTab, screens: () => screensCard() + pairCard() + devicesCard() + enrolCard(), maintenance: maintenanceTab, about: aboutTab }[tab]();
+  panel.innerHTML = { links: linksTab, projects: projectsTab, remote: remoteTab, widgets: () => shortcutsCard() + weatherCard() + binsCard() + notificationsCard() + googleCalendarCard() + diaryCard(), appearance: appearanceTab, navigation: navigationTab, music: () => gigsCard() + artistsCard() + releasesCard() + vinylCard() + purchasesCard() + radarCard(), listen: musicPageTab, news: newsTab, screens: () => screensCard() + pairCard() + devicesCard() + enrolCard(), maintenance: maintenanceTab, about: aboutTab }[tab]();
   motion.phaseAll(panel);
 }
 
@@ -900,6 +963,12 @@ $('#tabs').addEventListener('click', e => {
 });
 
 panel.addEventListener('change', e => {
+  const gpick = e.target.closest('input[name="gcal_pick"]');
+  if (gpick) {
+    const h = gpick.closest('[data-gcal-row]')?.querySelector('input[name="gcal_home"]');
+    if (h) { h.disabled = !gpick.checked; h.checked = gpick.checked; }
+    return;
+  }
   const file = e.target.closest('[data-bg-file]');
   if (file?.files?.[0]) {
     const f = file.closest('form'), half = file.closest('[data-half]'), m = file.dataset.half, pic = file.files[0];
@@ -1023,6 +1092,10 @@ panel.addEventListener('click', e => {
     case 'spotify-login': run(async () => { const r = await api.post('/api/owner/music/spotify/login'); musicLink = r.url;
       if (['127.0.0.1', 'localhost'].includes(location.hostname)) window.open(r.url, '_blank', 'noopener'); }, ['127.0.0.1', 'localhost'].includes(location.hostname) ? 'Opened Spotify’s login page' : 'Open the link below on the Citadel PC'); break;
     case 'spotify-logout': if (confirm('Disconnect Spotify? Playlists stay on your account; Citadel just stops updating them.')) run(async () => { await api.post('/api/owner/music/spotify/logout'); musicLink = null; }, 'Disconnected'); break;
+    case 'gcal-login': run(async () => { const r = await api.post('/api/owner/diary/google/login'); gcalLink = r.url;
+      if (['127.0.0.1', 'localhost'].includes(location.hostname)) window.open(r.url, '_blank', 'noopener'); }, ['127.0.0.1', 'localhost'].includes(location.hostname) ? 'Opened Google sign-in page' : 'Open the link below on the Citadel PC'); break;
+    case 'gcal-logout': if (confirm('Disconnect Google Calendar? Your calendars stay untouched; Citadel just stops syncing them.')) run(async () => { await api.post('/api/owner/diary/google/logout'); gcalLink = null; }, 'Disconnected'); break;
+    case 'gcal-refresh': run(async () => { await api.post('/api/owner/diary/google/calendars/refresh'); }, 'Calendar list refreshed'); break;
     case 'svc-test': b.disabled = true; b.textContent = 'Testing…';
       api.post(`/api/owner/music/services/${d.id}/test`).then(r => { svcTests[d.id] = r; render(); }).catch(err => toast(err.message)); break;
     case 'music-forget': if (confirm('Forget every Spotify match? They’ll be looked up again as playlists are built.')) run(async () => { const r = await api.del('/api/owner/music/matches'); toast(`Forgot ${r.forgotten} matches`); }); break;
@@ -1091,7 +1164,7 @@ panel.addEventListener('click', e => {
     case 'maint-refresh': paintMaint().then(() => toast('Refreshed')).catch(err => toast(err.message)); break;
     case 'log-level': logf.level = d.level; run(async () => {}); break;
     case 'log-clear': if (confirm('Clear the whole event log?')) run(() => api.del('/api/owner/logs'), 'Log cleared'); break;
-    case 'add-cal': $('#cals').insertAdjacentHTML('beforeend', calRow()); break;
+    case 'add-cal': $('[data-cals-empty]')?.remove(); $('#cals').insertAdjacentHTML('beforeend', calRow()); break;
     case 'sc-add': $('#scs').insertAdjacentHTML('beforeend', scRow()); $('#scs [data-sc]:last-child [name=sc_label]')?.focus(); break;
     case 'sc-remove': b.closest('[data-sc]').remove(); break;
     case 'nav-up': { const r = b.closest('[data-nav]'), o = r.previousElementSibling; if (o?.hasAttribute('data-movable')) o.before(r); b.focus(); break; }
@@ -1176,12 +1249,27 @@ panel.addEventListener('submit', e => {
       icon_mode: r.querySelector('[name=sc_mode]').value, icon: r.querySelector('[name=sc_icon]').value, image: r.querySelector('[name=sc_image]').value.trim(),
     })).filter(x => x.url || x.label);                                        // an untouched "Add shortcut" row is ignored
     run(() => api.put('/api/owner/widgets/shortcuts/settings', { show: on(f, 'sc_show'), shortcuts }), 'Shortcuts saved — fetching icons');
+  } else if (kind === 'weather') {
+    run(() => api.put('/api/owner/widgets/weather/settings', { latlong: val(f, 'latlong'), place: val(f, 'place') }), 'Weather saved — syncing');
   } else if (kind === 'bins') {
     run(() => api.put('/api/owner/widgets/bins/settings', { uprn: val(f, 'uprn'), put_out_hour: Number(val(f, 'put_out_hour')),
       alert_streams: Object.keys(cfg.streams).filter(k => on(f, `stream_${k}`)) }), 'Bins saved — syncing');
+  } else if (kind === 'diary-google') {
+    const body = { google_client_id: val(f, 'google_client_id') };
+    const sec = val(f, 'google_client_secret');
+    if (sec) body.google_client_secret = sec;
+    if (f.elements.colour_mode) body.colour_mode = val(f, 'colour_mode') || 'google';
+    if (cfg.widgets.diary.settings.google?.connected) {
+      const picked = $$('input[name="gcal_pick"]:checked', f).map(el => el.value);
+      const pickedSet = new Set(picked);
+      body.google_calendar_ids = picked;
+      body.google_home_calendar_ids = $$('input[name="gcal_home"]:checked', f).map(el => el.value).filter(id => pickedSet.has(id));
+    }
+    run(() => api.put('/api/owner/widgets/diary/settings', body), 'Google Calendar settings saved');
   } else if (kind === 'diary') {
     const calendars = $$('[data-cal]', f)
       .map(r => ({ id: r.dataset.id || undefined, name: r.querySelector('[name=cal_name]').value.trim() || 'Calendar', colour: r.querySelector('[name=cal_colour]').value,
+        home: r.querySelector('[name=cal_home]')?.checked !== false,
         ...(r.querySelector('[name=cal_url]').value.trim() ? { url: r.querySelector('[name=cal_url]').value.trim() } : {}) }))
       .filter(c => c.id || c.url);                                          // an untouched "Add calendar" row is ignored
     run(() => api.put('/api/owner/widgets/diary/settings', { calendars, horizon_days: Number(val(f, 'horizon_days')) || 93 }), 'Calendars saved — syncing');

@@ -80,7 +80,10 @@ html[data-family="lcars"] .rail [data-view="house"] { --lc-c: var(--lc-3); }
 html[data-family="lcars"] .rail [data-view="labels"] { --lc-c: var(--lc-2); }
 html[data-family="lcars"] .rail [data-view="holodeck"] { --lc-c: var(--lc-5); }
 html[data-family="lcars"] .rail [data-view="lab"] { --lc-c: var(--lc-4); }
+html[data-family="lcars"] .rail [data-view="controls"] { --lc-c: var(--lc-2); }
 html[data-family="lcars"] .rail [data-view="routines"] { --lc-c: var(--lc-1); }
+html[data-family="lcars"] .rail [data-view="schedule"] { --lc-c: var(--lc-6); }
+html[data-family="lcars"] .rail [data-view="padd"] { --lc-c: var(--lc-2); }
 html[data-family="lcars"] .rail [data-view="stats"] { --lc-c: var(--lc-1); }
 html[data-family="lcars"] .rail [data-view="curate"] { --lc-c: var(--lc-2); }
 html[data-family="lcars"] .rail [data-view="audio"] { --lc-c: var(--lc-3); }
@@ -448,18 +451,44 @@ html[data-family="lcars"] #grid > .card.is-max .maxbar { padding: 14px 16px 4px;
 /* ==========================================================================
    Inside the Home cards
    ========================================================================== */
-/* Now: an LCARS clock and bin key blocks */
-html[data-family="lcars"] .now .clock__time { font: 400 84px/.85 var(--lc-font); letter-spacing: .01em; font-variant-numeric: tabular-nums; }
-html[data-family="lcars"] .clock__time small { font-size: 30px; color: var(--lc-c); margin-left: 6px; }
-html[data-family="lcars"] .clock__date [data-dow] { font: 400 13px var(--lc-font); letter-spacing: .18em; }
-html[data-family="lcars"] .clock__date [data-dmy] { font: 400 26px var(--lc-font); }
-html[data-family="lcars"] .card.is-max .clock__time { font-size: 110px; }
+/* Now: an LCARS clock, 5-day weather strip and single-row bin key blocks */
+html[data-family="lcars"] .now .clock__time { font: 400 62px/.86 var(--lc-font); letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+html[data-family="lcars"] .clock__time small { font-size: 24px; color: var(--lc-c); margin-left: 5px; }
+html[data-family="lcars"] .clock__date [data-dow] { font: 400 12px var(--lc-font); letter-spacing: .18em; }
+html[data-family="lcars"] .clock__date [data-dmy] { font: 400 22px var(--lc-font); }
+html[data-family="lcars"] .card.is-max .clock__time { font-size: 96px; }
+@media (max-width: 760px) {
+  html[data-family="lcars"] .card.is-max .clock__time { font-size: 56px; }
+}
 html[data-family="lcars"] .now__label { display: flex; align-items: center; gap: 10px; border-top: 0; font: 500 13px var(--lc-font); letter-spacing: .16em; color: var(--lc-c); }
 html[data-family="lcars"] .now__label::before { content: none; }
 html[data-family="lcars"] .now__label::after { content: ""; flex: 1; height: 3px; border-radius: 0 3px 3px 0; background: color-mix(in srgb, var(--lc-c) 35%, transparent); }
-html[data-family="lcars"] .now .rows > li.bin { border-top: 0; padding-block: 4px; }
-html[data-family="lcars"] .bin__swatch { width: 30px; border-radius: 24px 0 0 24px; box-shadow: none; }
-html[data-family="lcars"] .bin__when { font: 400 15px/1.15 var(--lc-font); letter-spacing: .03em; }
+html[data-family="lcars"] .now__label--wx::after { order: 1; }
+html[data-family="lcars"] .now__label--wx .wx__now { order: 2; margin-left: 0; font: 500 13.5px/1 var(--lc-font); letter-spacing: .06em; text-transform: uppercase; color: var(--silver); }
+html[data-family="lcars"] .now__label--wx .wx__now .i { color: var(--lc-c); }
+html[data-family="lcars"] .wx__day { border: 0; border-radius: 12px 3px 3px 12px; background: color-mix(in srgb, var(--lc-c) 8%, var(--surface-2)); }
+html[data-family="lcars"] .wx__day--btn:hover, html[data-family="lcars"] .wx__day--btn:focus-visible { background: color-mix(in srgb, var(--lc-c) 16%, var(--surface-2)); }
+html[data-family="lcars"] .wx__day.is-today { background: color-mix(in srgb, var(--lc-c) 18%, var(--surface-2)); box-shadow: inset 3px 0 0 var(--lc-c); }
+html[data-family="lcars"] .wx__day.is-selected { background: color-mix(in srgb, var(--lc-c) 26%, var(--surface-2)); box-shadow: inset 4px 0 0 var(--lc-c); }
+html[data-family="lcars"] .wx__dow { font: 500 12px/1 var(--lc-font); letter-spacing: .12em; }
+html[data-family="lcars"] .wx__day.is-today .wx__dow, html[data-family="lcars"] .wx__day.is-today .i,
+html[data-family="lcars"] .wx__day.is-selected .wx__dow, html[data-family="lcars"] .wx__day.is-selected .i { color: var(--lc-c); }
+html[data-family="lcars"] .wx__temps { font: 500 15px/1 var(--lc-font); letter-spacing: .03em; }
+html[data-family="lcars"] .wx__lo { font-size: 13px; }
+html[data-family="lcars"] .wx__rain { font: 400 11.5px/1 var(--lc-font); letter-spacing: .05em; color: var(--lc-2); }
+html[data-family="lcars"] .wx__hourly { border: 0; border-radius: 14px 4px 4px 14px; background: color-mix(in srgb, var(--lc-c) 7%, var(--surface-2)); box-shadow: inset 4px 0 0 color-mix(in srgb, var(--lc-c) 55%, transparent); }
+html[data-family="lcars"] .wx__hhead { border-bottom-color: color-mix(in srgb, var(--lc-c) 22%, transparent); }
+html[data-family="lcars"] .wx__htitle { font: 500 13.5px/1 var(--lc-font); letter-spacing: .12em; color: var(--lc-c); }
+html[data-family="lcars"] .wx__htitle small { font: 400 13px/1 var(--lc-font); letter-spacing: .04em; }
+html[data-family="lcars"] .wx__hr { border: 0; border-radius: 8px 3px 3px 8px; background: color-mix(in srgb, var(--silver) 5%, var(--surface)); }
+html[data-family="lcars"] .wx__hr.is-now { background: color-mix(in srgb, var(--lc-c) 22%, var(--surface-2)); box-shadow: inset 3px 0 0 var(--lc-c); }
+html[data-family="lcars"] .wx__ht { font: 500 12px/1 var(--lc-font); letter-spacing: .08em; }
+html[data-family="lcars"] .wx__hr.is-now .wx__ht, html[data-family="lcars"] .wx__hr.is-now .i { color: var(--lc-c); }
+html[data-family="lcars"] .wx__htemp { font: 500 15px/1 var(--lc-font); }
+html[data-family="lcars"] .wx__hrain { font: 400 11.5px/1 var(--lc-font); color: var(--lc-2); }
+html[data-family="lcars"] .now:not(.is-max) .rows--bins > li.bin { border: 0; border-radius: 14px 4px 4px 14px; padding: 5px 10px 5px 6px; background: color-mix(in srgb, var(--sw) 10%, var(--surface-2)); }
+html[data-family="lcars"] .bin__swatch { width: 14px; border-radius: 10px 0 0 10px; box-shadow: none; }
+html[data-family="lcars"] .bin__when { font: 400 13px/1.15 var(--lc-font); letter-spacing: .04em; }
 html[data-family="lcars"] .chip { border-radius: 999px; font: 500 11px/1.4 var(--lc-font); letter-spacing: .12em; padding: 1px 9px; }
 html[data-family="lcars"] .chip--today, html[data-family="lcars"] .chip--fresh, html[data-family="lcars"] .chip--new { background: var(--lc-7); color: var(--lc-on); border-color: transparent; box-shadow: none; }
 html[data-family="lcars"] .cd--today { border-color: var(--lc-7); box-shadow: none; }
@@ -479,7 +508,7 @@ html[data-family="lcars"] #grid > .card.is-max.now .rows { gap: 10px; }
 html[data-family="lcars"] #grid > .card.is-max.now .rows > li:not(.note) { border: 0; border-radius: 26px 4px 4px 26px; }
 html[data-family="lcars"] #grid > .card.is-max.now .bin { min-height: 60px; padding: 0 18px 0 0; background: color-mix(in srgb, var(--sw) 10%, transparent); }
 html[data-family="lcars"] #grid > .card.is-max.now .bin__swatch { width: 40px; border-radius: 26px 0 0 26px; }
-html[data-family="lcars"] .bin__name { font: 500 18px/1.15 var(--lc-font); letter-spacing: .04em; }
+html[data-family="lcars"] .bin__name { font: 500 15.5px/1.15 var(--lc-font); letter-spacing: .04em; }
 html[data-family="lcars"] .bin__sub { font: 400 14px var(--lc-font); letter-spacing: .04em; }
 html[data-family="lcars"] #grid > .card.is-max.now .bin--due { background: color-mix(in srgb, var(--sw) 18%, transparent); }
 html[data-family="lcars"] #grid > .card.is-max.now .sched { align-items: center; gap: 16px; min-height: 52px; padding: 0 14px 0 0; background: color-mix(in srgb, var(--lc-c) 6%, transparent); }

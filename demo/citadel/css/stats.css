@@ -65,7 +65,7 @@ html[data-family="lcars"][data-theme="lcars25"] .rs-m[aria-pressed="true"] { bor
 .rs-ctl .seg[hidden] { display: none; }
 html[data-family="lcars"] .rs-dhead h2 { font: 500 34px/1 var(--lc-font); letter-spacing: .08em; text-transform: uppercase; color: var(--lc-frame); }
 .rs__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); align-items: stretch; }
-.rs-card--spikes, .rs__grid > .rs-empty { grid-column: 1 / -1; }
+.rs-card--spikes, .rs-card--wide, .rs__grid > .rs-empty { grid-column: 1 / -1; }
 @media (max-width: 1400px) {
   .rs__body { grid-template-columns: minmax(0, 1fr); }
   .rs-fleet { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
@@ -221,6 +221,18 @@ html[data-family="lcars"] .rs-gh { font: 500 14px/1 var(--lc-font); letter-spaci
 html[data-family="lcars"] .rs-gname b { font: 500 18px/1 var(--lc-font); letter-spacing: .1em; text-transform: uppercase; }
 html[data-family="lcars"] :is(.rs-fgrid, .rs-grow) > * { border-top-color: color-mix(in srgb, var(--lc-frame) 22%, transparent); }
 
+/* Specifications: a machine per row (name + model), then CPU / Graphics / Memory / System; shares the Grid's header and
+   name styles (.rs-gh, .rs-gname) */
+.rs-specs { display: grid; grid-template-columns: 170px minmax(0, 1.2fr) minmax(0, 1.05fr) minmax(0, .7fr) minmax(0, 1fr); }
+.rs-srow { display: contents; }
+.rs-specs > *, .rs-srow > * { min-width: 0; padding: 10px 12px; border-top: 1px solid var(--edge); }
+.rs-srow.is-off > * { opacity: .55; }
+.rs-scell { display: grid; align-content: center; gap: 3px; }
+.rs-scell b { font: 600 14px var(--font-display); color: var(--silver-hi); overflow-wrap: anywhere; }
+.rs-scell small { font: 10.5px var(--font-mono); color: var(--silver-dim); overflow-wrap: anywhere; }
+html[data-family="lcars"] .rs-specs > .rs-gh { font: 500 14px/1 var(--lc-font); letter-spacing: .14em; color: var(--lc-c); }
+html[data-family="lcars"] :is(.rs-specs, .rs-srow) > * { border-top-color: color-mix(in srgb, var(--lc-frame) 22%, transparent); }
+
 /* Overlay: a line per machine; pointing at a name picks its line out */
 .rs-flegend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; font-size: 12px; color: var(--silver); }
 .rs-flegend button { display: inline-flex; align-items: center; gap: 6px; padding: 2px 4px; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; white-space: nowrap; transition: opacity .15s; }
@@ -254,4 +266,10 @@ html[data-family="lcars"] :is(.rs-fgrid, .rs-grow) > * { border-top-color: color
   .rs-heat__axis span:nth-child(even) { display: none; }
   .rs-ramp i { width: 70px; }
   .rs-fpins { padding-left: 90px; }
+  /* Specifications: the name across the top, then the four figures two to a row, each with its own label */
+  .rs-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rs-specs > .rs-gh { display: none; }
+  .rs-srow > .rs-gname { grid-column: 1 / -1; padding: 12px 12px 2px !important; }
+  .rs-srow > .rs-scell { border-top: 0; padding: 4px 12px 10px; }
+  .rs-scell::before { content: attr(data-label); font: 10px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--silver-mute); }
 }

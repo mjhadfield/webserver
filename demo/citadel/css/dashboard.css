@@ -555,12 +555,79 @@ button.tile:disabled { cursor: default; opacity: .6; transform: none; }
 /* ==========================================================================
    Now card, schedule, services, log
    ========================================================================== */
-.now__clock { padding: 6px 16px 14px; }
-.now .clock__time { font-size: 58px; }
-.now .clock__date { font-size: 18px; }
-.now__label { padding: 11px 16px 4px; border-top: 1px solid var(--edge); }
+.now__clock { padding: 4px 16px 8px; }
+.now .clock__time { font-size: 46px; }
+.now .clock__date { font-size: 16px; }
+.now__label { display: flex; align-items: center; gap: 10px; padding: 7px 16px 4px; border-top: 1px solid var(--edge); }
+.now__label--wx .wx__now { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em; text-transform: none; color: var(--silver); white-space: nowrap; }
+.now__label--wx .wx__now .i { width: 15px; height: 15px; color: var(--accent-soft); }
+.now__label--wx .wx__now b { color: var(--silver-hi); font-weight: 600; }
+.wx__days { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 4px 14px 8px; }
+.wx__day { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 4px 4px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--surface-2) 70%, transparent); min-width: 0; }
+.wx__day--btn { appearance: none; font: inherit; color: inherit; text-align: center; width: 100%; cursor: pointer; transition: border-color .15s var(--ease), background .15s var(--ease); }
+.wx__day--btn:hover, .wx__day--btn:focus-visible { border-color: var(--edge-strong); background: color-mix(in srgb, var(--accent-wash) 60%, var(--surface-2)); outline: none; }
+.wx__day--btn:focus-visible { box-shadow: inset 0 0 0 1px var(--accent-hi); }
+.wx__day.is-today { border-color: color-mix(in srgb, var(--accent-hi) 48%, var(--edge)); background: color-mix(in srgb, var(--accent-wash) 75%, var(--surface-2)); }
+.wx__day.is-selected { border-color: var(--accent-hi); background: color-mix(in srgb, var(--accent-hi) 18%, var(--surface-2)); }
+.wx__dow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--silver-mute); }
+.wx__day.is-today .wx__dow, .wx__day.is-selected .wx__dow { color: var(--accent-soft); font-weight: 600; }
+.wx__day .i { width: 18px; height: 18px; color: var(--silver-hi); margin: 1px 0; }
+.wx__day.is-today .i, .wx__day.is-selected .i { color: var(--accent-soft); }
+.wx__temps { display: flex; align-items: baseline; gap: 4px; font-family: var(--font-mono); font-size: 12px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.wx__hi { color: var(--silver-hi); font-weight: 600; }
+.wx__lo { color: var(--silver-dim); font-size: 11px; }
+.wx__rain { font-family: var(--font-mono); font-size: 10px; line-height: 1.1; min-height: 11px; color: var(--accent-soft); opacity: .85; }
+.wx__cond { font-size: 12px; color: var(--silver); text-align: center; }
+.wx__days--full { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 8px 24px 14px; }
+.wx__days--full .wx__day { gap: 5px; padding: 12px 10px; }
+.wx__days--full .wx__dow { font-size: 11.5px; }
+.wx__days--full .wx__day .i { width: 26px; height: 26px; }
+.wx__days--full .wx__temps { font-size: 15px; gap: 6px; }
+.wx__days--full .wx__lo { font-size: 13px; }
+.wx__days--full .wx__rain { font-size: 11px; }
+.wx__hourly { margin: 0 24px 16px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--surface-2) 65%, transparent); }
+.wx__hhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--edge); }
+.wx__htitle { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-width: 0; font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent-soft); }
+.wx__htitle small { font-size: 11px; letter-spacing: .04em; text-transform: none; color: var(--silver-mute); }
+.wx__hclose { width: 26px; height: 26px; padding: 0; flex: none; }
+.wx__hours { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; padding: 10px 12px 12px; }
+.wx__hr { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 4px 6px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--surface) 75%, transparent); min-width: 0; }
+.wx__hr.is-past { opacity: .45; }
+.wx__hr.is-now { border-color: var(--accent-hi); background: color-mix(in srgb, var(--accent-wash) 85%, var(--surface-2)); }
+.wx__ht { font-family: var(--font-mono); font-size: 10.5px; color: var(--silver-mute); font-variant-numeric: tabular-nums; }
+.wx__hr.is-now .wx__ht { color: var(--accent-soft); font-weight: 600; }
+.wx__hr .i { width: 18px; height: 18px; color: var(--silver-hi); }
+.wx__hr.is-now .i { color: var(--accent-soft); }
+.wx__htemp { font-family: var(--font-mono); font-size: 13px; line-height: 1.1; font-weight: 600; color: var(--silver-hi); font-variant-numeric: tabular-nums; }
+.wx__hrain { font-family: var(--font-mono); font-size: 10px; line-height: 1.1; min-height: 11px; color: var(--accent-soft); opacity: .85; }
+@media (max-width: 1100px) {
+  .wx__hours { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .now__label--wx { flex-wrap: wrap; row-gap: 4px; }
+  .now__label--wx .wx__extra { display: none; }
+  .wx__days--full { display: flex; overflow-x: auto; gap: 6px; padding: 6px 14px 10px; scrollbar-width: thin; }
+  .wx__days--full .wx__day { flex: 0 0 96px; padding: 8px 6px; gap: 3px; }
+  .wx__days--full .wx__day .i { width: 20px; height: 20px; }
+  .wx__days--full .wx__temps { font-size: 13px; }
+  .wx__days--full .wx__cond { font-size: 11px; }
+  .wx__hourly { margin: 0 14px 12px; }
+  .wx__hours { display: flex; overflow-x: auto; gap: 6px; padding: 8px 10px 10px; scrollbar-width: thin; }
+  .wx__hr { flex: 0 0 60px; }
+}
+/* Single-row Next collections on the compact Now tile (2 side-by-side bins) */
+.now:not(.is-max) .rows--bins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 4px 14px 10px; }
+.now:not(.is-max) .rows--bins > li.bin { border: 1px solid var(--edge); padding: 6px 10px; gap: 9px; background: color-mix(in srgb, var(--sw, var(--silver-dim)) 7%, var(--surface-2)); min-width: 0; }
+.now:not(.is-max) .rows--bins > li.note { grid-column: 1 / -1; border: 0; padding: 6px 2px; }
+@media (max-width: 520px) {
+  .now:not(.is-max) .rows--bins { grid-template-columns: 1fr; }
+}
+.bin__main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.bin__name { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; line-height: 1.15; }
+.bin__name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bin__sub { font-size: 12.5px; color: var(--silver-mute); }
-.bin__name .chip { margin-left: 10px; vertical-align: 2px; }
+.bin__name .chip { margin-left: 0; flex: none; vertical-align: baseline; }
+.now:not(.is-max) .bin__when { margin-left: 0; text-align: left; font-size: 11px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sched { display: flex; align-items: center; gap: 18px; padding: 9px 16px; }
 .sched__d { flex: none; width: 96px; font-family: var(--font-mono); font-size: 12px; color: var(--silver-mute); }
 .sched__b { display: flex; flex-wrap: wrap; gap: 6px 22px; color: var(--silver-hi); }
@@ -679,11 +746,11 @@ body.has-max::before { content: ""; position: fixed; inset: 0; z-index: 80; back
 /* ==========================================================================
    Refinements: compact Now card, collection calendar, richer expanded views
    ========================================================================== */
-.now__clock { display: flex; align-items: flex-end; gap: 20px; padding: 6px 16px 12px; }
-.now .clock__time { font-size: 54px; }
-.now .clock__date { display: flex; flex-direction: column; margin: 0 0 3px; font-size: inherit; line-height: 1.15; }
-.clock__date [data-dow] { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--silver-mute); }
-.clock__date [data-dmy] { font-size: 20px; color: var(--silver-hi); }
+.now__clock { display: flex; align-items: flex-end; gap: 18px; padding: 4px 16px 8px; }
+.now .clock__time { font-size: 46px; }
+.now .clock__date { display: flex; flex-direction: column; margin: 0 0 2px; font-size: inherit; line-height: 1.15; }
+.clock__date [data-dow] { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--silver-mute); }
+.clock__date [data-dmy] { font-size: 18px; color: var(--silver-hi); }
 .proj { padding: 8px 16px; }
 
 .calm { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 28px; padding: 20px 24px 10px; }

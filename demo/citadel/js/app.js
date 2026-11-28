@@ -9,7 +9,10 @@ import * as music from './music.js';
 import * as news from './news.js';
 import * as stats from './stats.js';
 import * as audio from './audio.js';
+import * as controls from './controls.js';
 import * as routines from './routines.js';
+import * as schedule from './schedule.js';
+import * as padd from './padd.js';
 import * as motion from './motion.js';
 import './volume.js';                      // the header's GoXLR volume buttons (Line out, Vinyl)
 
@@ -512,7 +515,7 @@ async function pollMonitoring() {
 }
 
 // ---- view router (Home / News / Media / Companion / SQL DB / Music / Casino / Odysseus / House / Stats) --------------------------------------------------------------
-const VIEWS = ['home', 'news', 'media', 'music', 'sql', 'listen', 'casino', 'ai', 'house', 'labels', 'holodeck', 'lab', 'routines', 'stats', 'curate', 'audio', 'settings'];
+const VIEWS = ['home', 'news', 'media', 'music', 'sql', 'listen', 'casino', 'ai', 'house', 'labels', 'holodeck', 'lab', 'controls', 'routines', 'schedule', 'padd', 'stats', 'curate', 'audio', 'settings'];
 // While an embedded page is showing, the phone keyboard shrinks the screen (interactive-widget=resizes-content) rather
 // than sliding over it, so the pinned page (dashboard.css, .main:has(...)) ends just above the keyboard and a chat box
 // at the bottom of it stays visible. Only on those pages: Home, News and Music keep the browser's default.
@@ -581,7 +584,10 @@ function route() {
   news.onView(v);                                   // the News page (news.js) loads its own stories when shown
   stats.onView(v);                                  // the Fleet page (stats.js): machine history from the collector on NZXT
   audio.onView(v);                                  // the Audio page (audio.js): the GoXLR, through the hub
+  controls.onView(v);                               // the Controls page (controls.js): Home Assistant lights & scenes
   routines.onView(v);                               // the Routines page (routines.js): Home Assistant's routine times
+  schedule.onView(v);                               // the Unified Schedule page (schedule.js): Calendar, Gigs, F1, Bins, Releases, Vinyl, House, Poker
+  padd.onView(v);                                   // the PADD page (padd.js): cross-device Dropzone, Notes & Checklists, HA Shopping list
 }
 function markCurrent() {
   $$('.rail a[data-view], .tabbar a[data-view], #more-sheet a[data-view]').forEach(a => {
@@ -670,7 +676,7 @@ mainEl.addEventListener('touchstart', e => {
   if (!phone.matches || e.touches.length !== 1 || !builtIn(lastView)) return;
   const t = e.touches[0];
   if (t.clientX < 24 || t.clientX > innerWidth - 24) return;            // the screen's edges are the browser's back gesture
-  if (e.target.closest('input, textarea, select, dialog, .card.is-max, .top') || scrollsSideways(e.target)) return;
+  if (e.target.closest('input, textarea, select, dialog, [role="slider"], .card.is-max, .top') || scrollsSideways(e.target)) return;
   swipe = { x: t.clientX, y: t.clientY, at: e.timeStamp };
 }, { passive: true });
 mainEl.addEventListener('touchcancel', () => { swipe = null; }, { passive: true });
@@ -1050,6 +1056,24 @@ document.addEventListener('click', async e => {
     }
     return;
   }
+  const wxDay = e.target.closest('[data-wx-day]');
+  if (wxDay) {
+    const picked = wxDay.dataset.wxDay;
+    const card = $('#now');
+    if (card.classList.contains('is-max')) {
+      ui.wxDay = ui.wxDay === picked ? null : picked;
+      renderCard('now');
+    } else {
+      ui.wxDay = picked;
+      shell.toggle(card);
+    }
+    return;
+  }
+  if (e.target.closest('[data-wx-close]')) {
+    ui.wxDay = null;
+    renderCard('now');
+    return;
+  }
   const row = e.target.closest('.proj[data-select]');                      // pick a project to view its log (expanded view)
   if (row && $('#projects').classList.contains('is-max')) {
     ui.selected = row.dataset.slug;
@@ -1102,6 +1126,7 @@ async function pollLogs() {
   } catch { /* transient */ }
 }
 document.addEventListener('card:max', e => {
+  if (e.detail.id === 'now' && !e.detail.on) { ui.wxDay = null; return; }
   if (e.detail.id !== 'projects') return;
   clearInterval(logTimer);
   if (e.detail.on) { ui.logText = ''; pollLogs(); logTimer = setInterval(pollLogs, 3000); }

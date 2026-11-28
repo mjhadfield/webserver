@@ -15,7 +15,10 @@
 <link rel="stylesheet" href="css/news.css">
 <link rel="stylesheet" href="css/stats.css">
 <link rel="stylesheet" href="css/audio.css">
+<link rel="stylesheet" href="css/controls.css">
 <link rel="stylesheet" href="css/routines.css">
+<link rel="stylesheet" href="css/schedule.css">
+<link rel="stylesheet" href="css/padd.css">
 <link rel="stylesheet" href="css/lcars.css">
 <link rel="stylesheet" href="css/lcars25.css">
 <link rel="stylesheet" href="css/borg.css">
@@ -31,6 +34,8 @@
     <a href="#stats" data-view="stats" data-group="command" title="Fleet"><svg class="i"><use href="#i-fleet"/></svg><span class="rail__label">Fleet</span></a>
     <a href="#news" data-view="news" data-group="command" title="News"><svg class="i"><use href="#i-news"/></svg><span class="rail__label">News</span></a>
     <a href="#music" data-view="music" data-group="command" title="Companion"><svg class="i"><use href="#i-disc"/></svg><span class="rail__label">Companion</span></a>
+    <a href="#schedule" data-view="schedule" data-group="command" title="Schedule"><svg class="i"><use href="#i-cal"/></svg><span class="rail__label">Schedule</span></a>
+    <a href="#padd" data-view="padd" data-group="command" title="PADD"><svg class="i"><use href="#i-padd"/></svg><span class="rail__label">PADD</span></a>
     <a href="#listen" data-view="listen" data-group="science" title="Music"><svg class="i"><use href="#i-wave"/></svg><span class="rail__label">Music</span></a>
     <a href="#media" data-view="media" data-group="science" title="Media"><svg class="i"><use href="#i-film"/></svg><span class="rail__label">Media</span></a>
     <a href="#casino" data-view="casino" data-group="science" title="Casino"><svg class="i"><use href="#i-spade"/></svg><span class="rail__label">Casino</span></a>
@@ -38,6 +43,7 @@
     <a href="#labels" data-view="labels" data-group="engineering" title="Labels"><svg class="i"><use href="#i-printer"/></svg><span class="rail__label">Labels</span></a>
     <a href="#house" data-view="house" data-group="engineering" title="House"><svg class="i"><use href="#i-tool"/></svg><span class="rail__label">House</span></a>
     <a href="#lab" data-view="lab" data-group="engineering" title="HomeLab"><svg class="i"><use href="#i-bulb"/></svg><span class="rail__label">HomeLab</span></a>
+    <a href="#controls" data-view="controls" data-group="engineering" title="Controls"><svg class="i"><use href="#i-lamp"/></svg><span class="rail__label">Controls</span></a>
     <a href="#routines" data-view="routines" data-group="engineering" title="Routines"><svg class="i"><use href="#i-alarm"/></svg><span class="rail__label">Routines</span></a>
     <a href="#ai" data-view="ai" data-group="engineering" title="Odysseus"><svg class="i"><use href="#i-spark"/></svg><span class="rail__label">Odysseus</span></a>
     <span class="spacer"></span>
@@ -48,7 +54,7 @@
 
   <main class="main">
     <header class="top">
-      <div class="top__brand"><button class="top__logo" type="button" data-alerts-toggle aria-expanded="false" aria-controls="alerts" aria-label="Reminders" title="Reminders"><svg class="i"><use href="#i-logo"/></svg><span class="top__badge" id="alerts-count" hidden></span></button><span class="wordmark">Citadel</span><span class="hud" id="host-label"></span><span class="chip demo-chip" title="A frozen copy of my home dashboard (25 Nov 2026): nothing here is live or saved"><span class="demo-chip__full">Snapshot · 25 Nov 2026 · read-only</span><span class="demo-chip__short" aria-hidden="true">Demo · 25 Nov</span></span></div>
+      <div class="top__brand"><button class="top__logo" type="button" data-alerts-toggle aria-expanded="false" aria-controls="alerts" aria-label="Reminders" title="Reminders"><svg class="i"><use href="#i-logo"/></svg><span class="top__badge" id="alerts-count" hidden></span></button><span class="wordmark">Citadel</span><span class="hud" id="host-label"></span><span class="chip demo-chip" title="A frozen copy of my home dashboard (28 Nov 2026): nothing here is live or saved"><span class="demo-chip__full">Snapshot · 28 Nov 2026 · read-only</span><span class="demo-chip__short" aria-hidden="true">Demo · 28 Nov</span></span></div>
       <div class="top__mid"><div class="top__ctx" id="top-ctx" hidden><span class="top__page" id="top-page"></span><span class="top__src" id="top-src"></span><span class="top__acts" id="top-acts" hidden><button class="btn top__act" type="button" data-frame-reload title="Reload"><svg class="i"><use href="#i-refresh"/></svg><span>Reload</span></button><button class="btn top__act" type="button" data-frame-open title="Open in a new tab"><svg class="i"><use href="#i-ext"/></svg><span>New tab</span></button></span></div><nav class="shortcuts" id="shortcuts" aria-label="Bookmarks" hidden></nav><div class="bmbar" id="bm-bar" hidden></div><dl class="readout" id="readout" role="button" tabindex="0" aria-label="Monitoring" title="Monitoring"></dl><section class="mu-bar" id="mu-bar" aria-label="Now playing"></section></div>
       <div class="top__right"><a class="btn btn--icon top__settings" href="#settings" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></a><span class="vol-group" id="vol-group" hidden></span><div class="bmbar volbar" id="vol-bar" hidden></div><span class="look-group" id="look-group"><button class="btn look-btn" type="button" data-mode-toggle aria-label="Switch to Day" title="Switch to Day"><svg class="i"><use href="#i-sun"/></svg><span class="look-btn__word">Day</span></button><button class="btn look-btn" type="button" data-theme-menu aria-haspopup="menu" aria-expanded="false" aria-controls="style-bar" aria-label="Theme" title="Theme"><svg class="i"><use href="#i-palette"/></svg><span class="look-btn__word">Theme</span><svg class="i look-btn__chev"><use href="#i-down"/></svg></button></span><div class="bmbar stylebar" id="style-bar" hidden></div><span class="hud hud--plain badge-role"><span class="dot" id="conn-dot" title="connecting…"></span><span id="device-label">Owner device</span></span></div>
     </header>
@@ -93,7 +99,10 @@
       <div class="frame-shell" hidden><iframe id="lab-frame" title="Home Assistant" allow="fullscreen" allowfullscreen></iframe></div>
       <div class="demo-na"><div class="demo-na__card"><svg class="i"><use href="#i-bulb"/></svg><b>Not available in the online demo</b><span>HomeLab is my Home Assistant smart home controller, on my home network only.</span></div></div>
     </section>
+    <section class="view" id="view-controls" data-view="controls" aria-label="Controls"></section>
     <section class="view" id="view-routines" data-view="routines" aria-label="Routines"></section>
+    <section class="view" id="view-schedule" data-view="schedule" aria-label="Schedule"></section>
+    <section class="view" id="view-padd" data-view="padd" aria-label="PADD"></section>
     <section class="view" id="view-stats" data-view="stats" aria-label="Fleet"></section>
     <section class="view" id="view-curate" data-view="curate" aria-label="Curate">
       <div class="frame-shell" hidden><iframe id="curate-frame" title="Music Maintenance"></iframe></div>
@@ -115,6 +124,9 @@
   <a href="#casino" data-view="casino"><svg class="i"><use href="#i-spade"/></svg><span class="tabbar__label">Casino</span></a>
   <a href="#ai" data-view="ai"><svg class="i"><use href="#i-spark"/></svg><span class="tabbar__label">Odysseus</span></a>
   <a href="#house" data-view="house"><svg class="i"><use href="#i-tool"/></svg><span class="tabbar__label">House</span></a>
+  <a href="#controls" data-view="controls"><svg class="i"><use href="#i-lamp"/></svg><span class="tabbar__label">Controls</span></a>
+  <a href="#schedule" data-view="schedule"><svg class="i"><use href="#i-cal"/></svg><span class="tabbar__label">Schedule</span></a>
+  <a href="#padd" data-view="padd"><svg class="i"><use href="#i-padd"/></svg><span class="tabbar__label">PADD</span></a>
 </nav>
 <nav class="more-sheet" id="more-sheet" aria-label="More pages" hidden></nav>
 

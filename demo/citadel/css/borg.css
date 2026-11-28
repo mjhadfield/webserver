@@ -549,7 +549,24 @@ html[data-family="borg"] .now__label::after {
   content: ""; flex: 1; height: 1px;
   background: linear-gradient(90deg, var(--brg-axis) 0 18px, color-mix(in srgb, var(--brg-frame) 45%, transparent) 18px, transparent);
 }
-html[data-family="borg"] .bin__swatch { width: 6px; border-radius: 0; }
+html[data-family="borg"] .now__label--wx::after { order: 1; }
+html[data-family="borg"] .now__label--wx .wx__now { order: 2; margin-left: 0; color: var(--silver); }
+html[data-family="borg"] .now__label--wx .wx__now .i { color: var(--brg-node); }
+html[data-family="borg"] .wx__day { border-radius: 0; border-color: color-mix(in srgb, var(--brg-frame) 26%, transparent); }
+html[data-family="borg"] .wx__day--btn:hover, html[data-family="borg"] .wx__day--btn:focus-visible { border-color: var(--brg-node); background: color-mix(in srgb, var(--brg-node) 8%, var(--surface-2)); }
+html[data-family="borg"] .wx__day.is-today { border-color: var(--brg-node); border-top: 2px solid var(--brg-axis); background: color-mix(in srgb, var(--brg-node) 10%, var(--surface-2)); }
+html[data-family="borg"] .wx__day.is-selected { border-color: var(--brg-axis); border-top: 2px solid var(--brg-node); background: color-mix(in srgb, var(--brg-node) 16%, var(--surface-2)); }
+html[data-family="borg"] .wx__day.is-today .wx__dow, html[data-family="borg"] .wx__day.is-today .i,
+html[data-family="borg"] .wx__day.is-selected .wx__dow, html[data-family="borg"] .wx__day.is-selected .i { color: var(--brg-node); }
+html[data-family="borg"] .wx__rain { color: var(--brg-cyan); }
+html[data-family="borg"] .wx__hourly { border-radius: 0; border-color: color-mix(in srgb, var(--brg-node) 45%, transparent); }
+html[data-family="borg"] .wx__htitle { color: var(--brg-cyan); }
+html[data-family="borg"] .wx__hr { border-radius: 0; border-color: color-mix(in srgb, var(--brg-frame) 24%, transparent); }
+html[data-family="borg"] .wx__hr.is-now { border-color: var(--brg-node); border-top: 2px solid var(--brg-axis); background: color-mix(in srgb, var(--brg-node) 14%, var(--surface-2)); }
+html[data-family="borg"] .wx__hr.is-now .wx__ht, html[data-family="borg"] .wx__hr.is-now .i { color: var(--brg-node); }
+html[data-family="borg"] .wx__hrain { color: var(--brg-cyan); }
+html[data-family="borg"] .now:not(.is-max) .rows--bins > li.bin { border-radius: 0; border-color: color-mix(in srgb, var(--brg-frame) 26%, transparent); }
+html[data-family="borg"] .bin__swatch { width: 5px; border-radius: 0; }
 html[data-family="borg"] .cd { border-radius: 0; border-color: color-mix(in srgb, var(--brg-frame) 18%, transparent); }
 html[data-family="borg"] .cd--today {
   border-color: var(--brg-node); background: color-mix(in srgb, var(--brg-node) 18%, var(--surface));

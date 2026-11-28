@@ -337,8 +337,11 @@
   html[data-family="lcars"][data-theme="lcars25"][data-page="listen"] .top__ctx,
   html[data-family="lcars"][data-theme="lcars25"][data-page="routines"] .top__ctx,
   html[data-family="lcars"][data-theme="lcars25"][data-page="stats"] .top__ctx { --lc-c: var(--lc-1); }
-  html[data-family="lcars"][data-theme="lcars25"][data-page="ai"] .top__ctx { --lc-c: var(--lc-6); }
+  html[data-family="lcars"][data-theme="lcars25"][data-page="ai"] .top__ctx,
+  html[data-family="lcars"][data-theme="lcars25"][data-page="schedule"] .top__ctx { --lc-c: var(--lc-6); }
   html[data-family="lcars"][data-theme="lcars25"][data-page="labels"] .top__ctx,
+  html[data-family="lcars"][data-theme="lcars25"][data-page="controls"] .top__ctx,
+  html[data-family="lcars"][data-theme="lcars25"][data-page="padd"] .top__ctx,
   html[data-family="lcars"][data-theme="lcars25"][data-page="curate"] .top__ctx { --lc-c: var(--lc-2); }
   /* Narrower screens: framed pages keep only the Bookmarks button, so the row never overflows */
   @media (max-width: 1500px) {
@@ -1150,8 +1153,68 @@ html[data-family="lcars"][data-theme="lcars25"] .ev__t {
   padding: 0 8px;
 }
 html[data-family="lcars"][data-theme="lcars25"] .bin__swatch {
-  width: 10px;
+  width: 6px;
   border-radius: 2px;
+}
+html[data-family="lcars"][data-theme="lcars25"] .now:not(.is-max) .rows--bins > li.bin {
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--sw) 28%, var(--edge));
+}
+html[data-family="lcars"][data-theme="lcars25"] .wx__day {
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--lc-c) 22%, var(--edge));
+  box-shadow: none;
+}
+html[data-family="lcars"][data-theme="lcars25"] .wx__day--btn:hover,
+html[data-family="lcars"][data-theme="lcars25"] .wx__day--btn:focus-visible {
+  border-color: color-mix(in srgb, var(--lc-c) 65%, var(--edge));
+}
+html[data-family="lcars"][data-theme="lcars25"] .wx__day.is-today {
+  border-color: color-mix(in srgb, var(--lc-c) 55%, var(--edge));
+  border-top: 2px solid var(--lc-c);
+  box-shadow: none;
+}
+html[data-family="lcars"][data-theme="lcars25"] .wx__day.is-selected {
+  border-color: var(--lc-c);
+  border-top: 2px solid var(--lc-c);
+  background: color-mix(in srgb, var(--lc-c) 24%, var(--surface-2));
+  box-shadow: none;
+}
+html[data-family="lcars"][data-theme="lcars25"] .wx__hourly {
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--lc-c) 35%, var(--edge));
+  box-shadow: none;
+}
+html[data-family="lcars"][data-theme="lcars25"] .wx__hr {
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--lc-c) 18%, var(--edge));
+  box-shadow: none;
+}
+html[data-family="lcars"][data-theme="lcars25"] .wx__hr.is-now {
+  border-color: var(--lc-c);
+  border-top: 2px solid var(--lc-c);
+  box-shadow: none;
+}
+html[data-family="lcars"][data-theme="lcars25"][data-mode="day"] .wx__day {
+  background: color-mix(in srgb, var(--silver-dim) 9%, var(--surface-2));
+  border-color: var(--edge);
+}
+html[data-family="lcars"][data-theme="lcars25"][data-mode="day"] .wx__day.is-today,
+html[data-family="lcars"][data-theme="lcars25"][data-mode="day"] .wx__day.is-selected {
+  background: color-mix(in srgb, var(--silver-dim) 16%, var(--surface-2));
+  border-color: var(--lc-c);
+}
+html[data-family="lcars"][data-theme="lcars25"][data-mode="day"] .wx__hourly {
+  background: color-mix(in srgb, var(--silver-dim) 8%, var(--surface-2));
+  border-color: var(--edge);
+}
+html[data-family="lcars"][data-theme="lcars25"][data-mode="day"] .wx__hr {
+  background: var(--surface);
+  border-color: var(--edge);
+}
+html[data-family="lcars"][data-theme="lcars25"][data-mode="day"] .wx__hr.is-now {
+  background: color-mix(in srgb, var(--silver-dim) 16%, var(--surface-2));
+  border-color: var(--lc-c);
 }
 html[data-family="lcars"][data-theme="lcars25"] .cover {
   border-radius: 4px;

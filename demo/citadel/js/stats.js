@@ -7,7 +7,7 @@
 // temperature and a CPU trend over the range; the picked one as four equal panels (Load, Memory, Temperature,
 // Storage), with its High CPU moments full width underneath only when there are any. Above the machines, the Fleet
 // tile opens an overview of every machine's CPU / GPU load and temperatures, three ways (switch beside the range):
-// Heatmap (default), Grid and Overlay. Each machine keeps one colour (--rs-m1..5, its place in the list) in all three.
+// Heatmap (default), Grid and Overlay, with every machine's Specifications (CPU, graphics, memory, system) under them. Each machine keeps one colour (--rs-m1..5, its place in the list) in all three.
 //
 // Charts are drawn here as SVG (no chart library: CSP 'self', no build step). The plot stretches to its box
 // (preserveAspectRatio none, non-scaling strokes) and the axis labels are HTML on top, so text never distorts. A gap in
@@ -393,10 +393,27 @@ function drawFleet() {
   const grid = $('#rs-grid'), rows = fleetRows();
   grid.classList.toggle('rs__grid--one', fview !== 'overlay');
   if (!rows.length) {
-    grid.innerHTML = `<div class="rs-empty">${ico('alert')}<b>No history right now</b>${esc(collector && collector.ok === false ? collector.error : 'The stats collector isn’t answering')}</div>`;
+    grid.innerHTML = `<div class="rs-empty">${ico('alert')}<b>No history right now</b>${esc(collector && collector.ok === false ? collector.error : 'The stats collector isn’t answering')}</div>${fleetSpecs()}`;
     return;
   }
-  grid.innerHTML = fview === 'grid' ? fleetGrid(rows) : fview === 'overlay' ? fleetOverlay(rows) : fleetHeat(rows);
+  grid.innerHTML = (fview === 'grid' ? fleetGrid(rows) : fview === 'overlay' ? fleetOverlay(rows) : fleetHeat(rows)) + fleetSpecs();
+}
+
+// ---- Specifications ----
+// What each machine is, under every view: from its latest reading (app/machines.py spec_view tidies the names), so an
+// asleep machine shows what it reported last. In Remote Access order, not asleep-last: this list doesn't change.
+function fleetSpecs() {
+  const gb = v => `${Number.isInteger(v) ? v : v.toFixed(1)} GB`;
+  const cell = (label, main, sub) => `<div class="rs-scell" data-label="${label}"><b>${esc(main || '—')}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</div>`;
+  const rows = machines.map(m => {
+    const sp = m.spec || {}, g = sp.gpus || [];
+    const cores = sp.cores && sp.threads && sp.cores !== sp.threads ? `${sp.cores} cores · ${sp.threads} threads` : sp.threads ? `${sp.threads} cores` : '';
+    const gpu = g.map(x => x.name).join(' + '), vram = g.filter(x => x.vram_gb).map(x => `${gb(x.vram_gb)} VRAM`).join(' + ');
+    return `<div class="rs-srow${isOff(m) ? ' is-off' : ''}"><button type="button" class="rs-gname" data-rs-pick="${esc(m.id)}"><b><i class="rs-msw" style="background:${colourOf(m)}"></i>${esc(m.name)}</b><small>${esc(sp.model || (m.spec ? '' : 'No reading yet'))}</small></button>
+      ${cell('CPU', sp.cpu, [cores, sp.ghz ? `${sp.ghz} GHz` : ''].filter(Boolean).join(' · '))}${cell('Graphics', gpu, vram)}${cell('Memory', sp.ram_gb ? `${sp.ram_gb} GB${sp.ram_type ? ` ${sp.ram_type}` : ''}` : '', [sp.ram_sticks, sp.ram_mts ? `${sp.ram_mts} MT/s` : ''].filter(Boolean).join(' · '))}${cell('System', sp.os, sp.kernel)}</div>`;
+  }).join('');
+  const head = ['', 'CPU', 'Graphics', 'Memory', 'System'].map(t => `<div class="rs-gh">${t}</div>`).join('');
+  return fcard('Specifications', `<div class="rs-specs">${head}${rows}</div>`, '', 'var(--lc-6)', 'rs-card--wide');
 }
 
 // ---- Heatmap ----
